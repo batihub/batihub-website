@@ -3,18 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="style.css">
+    <title>RANDOM QUOTE</title>
+
+    <link rel="stylesheet" href="style\header.css">
+    <link rel="stylesheet" href="style\general.css">
+    <link rel="stylesheet" href="style\bottombar.css">
+    <link rel="stylesheet" href="style\sidebar.css">
+    <link rel="stylesheet" href="style\main.css">
+
+
 </head>
 <body>
-    <div id="container">
-        <h2>Chuck Norris API</h2>
-        <div class="joke-container">
-            <p id="loadingJoke">press "load another" for joke</p>
+    <header class="header-top">
+        <div class="left-section">
+            <button class="menu-button">
+                <img class="menu-icon" src="fotos\menu-icon.png" alt="menu-icon">
+            </button>
+            <div class="menu-text">
+                this icon does nothing for now
+            </div>
         </div>
-        <button id="loadJokeBtn">load another</button>
-    </div>
+        <div class="middle-section">
+            CHUCK NORRIS JOKE GENERATOR
+        </div>
+        <div class="right-section">
+            Brought to you by GitHub pages
+        </div>
+    </header>
+
+    <main class="main-body">
+        <div id="loadingJoke">
+            press new quote for joke
+            <div id="quote-author">
+                    
+            </div> 
+        </div>
+        <button id="loadJokeBtn">
+            new quote
+        </button>
+    </main>
+
     <script src="index.js"></script>
 </body>
-
 </html>

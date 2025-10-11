@@ -1,0 +1,37 @@
+.main-body{
+    display: flex;
+    flex-direction: column;
+    margin: 100px 50px 100px 80px;
+    height: 300px;
+    padding: 20px;
+}
+#loadingJoke{
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    text-align: center;
+}
+#quote-author{
+    
+    margin-top: auto;
+    margin-left: auto;
+}
+#loadJokeBtn{
+    width: 200px;
+    height: 60px; 
+    font-size: 20px;
+    margin-left: auto;   
+    color: rgb(57, 54, 54);
+    background-color: hsl(214, 100%, 74%);
+    transition: background-color .25s ease;
+    border:2px solid rgb(174, 170, 170);
+    cursor: pointer;
+    border-radius: 5px;
+
+}
+#new-quote-button:hover{
+    background-color: hsl(214, 100%, 65%);
+}
+
