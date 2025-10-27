@@ -1,48 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RANDOM QUOTE</title>
-
-    <link rel="stylesheet" href="style\header.css">
-    <link rel="stylesheet" href="style\general.css">
-    <link rel="stylesheet" href="style\bottombar.css">
-    <link rel="stylesheet" href="style\sidebar.css">
-    <link rel="stylesheet" href="style\main.css">
-
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimalist Page</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <header class="header-top">
-        <div class="left-section">
-            <button class="menu-button">
-                <img class="menu-icon" src="fotos\menu-icon.png" alt="menu-icon">
-            </button>
-            <div class="menu-text">
-                this icon does nothing for now
-            </div>
-        </div>
-        <div class="middle-section">
-            CHUCK NORRIS JOKE GENERATOR
-        </div>
-        <div class="right-section">
-            Brought to you by GitHub pages
-        </div>
-    </header>
+  <header>
+    <nav class="navbar">
+      <div class="logo">beelog</div>  
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
 
-    <main class="main-body">
-        <div id="loadingJoke">
-            press new quote for joke
-            <div id="quote-author">
-                    
-            </div> 
-        </div>
-        <button id="loadJokeBtn">
-            new quote
-        </button>
-    </main>
+        <!-- Projects dropdown -->
+        <li class="dropdown">
+          <a href="#" id="projects-btn">Projects ▾</a>
+          <ul class="dropdown-menu" id="projects-menu">
+            <li><a href="jokes.html">Jokes</a></li>
+            <li><a href="weather.html">Weather</a></li>
+            <li><a href="calculator.html">Calculator</a></li>
+          </ul>
+        </li>
 
-    <script src="index.js"></script>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Welcome to beelog</h1>
+      <p>Clean. Simple. Modern.</p>
+      <button>Get Started</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 MySite — All rights reserved.</p>
+  </footer>
+
+  <script src="index.js"></script>
 </body>
 </html>
+

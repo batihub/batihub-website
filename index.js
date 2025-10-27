@@ -1,19 +1,39 @@
-async function loadJoke() 
-{
-    try{
-        const chuckNorrisFetch = await fetch("https://api.chucknorris.io/jokes/random" , {
-            headers: {
-                Accept: "application/json"
-            }
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  const projectsBtn = document.getElementById("projects-btn");
+  const projectsMenu = document.getElementById("projects-menu");
+  let hideTimeout;
 
-    const jokeData = await chuckNorrisFetch.json();
-    document.getElementById("loadingJoke").textContent = jokeData.value;  // innerHTML can be used instead od textContent but its less secure
+  function showMenu() {
+    clearTimeout(hideTimeout);
+    projectsMenu.classList.add("show");
+  }
 
+  function hideMenuWithDelay() {
+    hideTimeout = setTimeout(() => {
+      projectsMenu.classList.remove("show");
+    }, 250); // Delay before hiding
+  }
+
+  // Hover behavior
+  projectsBtn.parentElement.addEventListener("mouseenter", showMenu);
+  projectsBtn.parentElement.addEventListener("mouseleave", hideMenuWithDelay);
+
+  // Click toggle
+  projectsBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isVisible = projectsMenu.classList.contains("show");
+    if (isVisible) {
+      projectsMenu.classList.remove("show");
+    } else {
+      showMenu();
     }
-    catch(error){
-        console.log(error);
-    }
-}
+  });
 
-document.getElementById("loadJokeBtn").addEventListener("click", loadJoke);
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    const clickedInside = projectsBtn.parentElement.contains(e.target);
+    if (!clickedInside) {
+      projectsMenu.classList.remove("show");
+    }
+  });
+});
