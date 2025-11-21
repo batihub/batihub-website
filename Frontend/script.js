@@ -1,5 +1,5 @@
 // CRITICAL: Ensure this URL matches your Uvicorn host and port
-const API_URL = 'http://127.0.0.1:8000/posts';
+const API_URL = 'https://beelog-poes.onrender.com/posts';
 
 // --- 1. GET ALL POSTS (RELOAD) ---
 async function fetchPosts() {
