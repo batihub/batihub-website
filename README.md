@@ -1,3 +1,5 @@
-A BLOG SITE ATTEMPT 
-using FastAPI PostgreSQL SQLAlchemy Vanilla JS etc.
-in frontend used HTML,CSS,JS
+# A BLOG SITE ATTEMPT
+
+A simple blog site built with FastAPI, PostgreSQL and SQLAlchemy.
+
+Frontend: HTML, CSS, JavaScript
