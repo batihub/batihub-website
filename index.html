@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Blog Client</title>
+
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --text-color: #333;
+            --bg-color: #f8f8f8;
+            --card-bg: #fff;
+            --border-color: #eee;
+            --shadow-light: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        h2 {
+            font-weight: 400;
+            margin-top: 30px;
+        }
+
+        /* --- FORM STYLES --- */
+        #create-post-form label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        #create-post-form input[type="text"],
+        #create-post-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* --- BUTTONS --- */
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .actions {
+            margin-bottom: 20px;
+        }
+
+        /* --- POST CARD DESIGN --- */
+        .post-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-light);
+            transition: transform 0.1s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+
+        .post-card h3 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .post-card p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .post-status {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .loader {
+            font-style: italic;
+            color: #888;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FastAPI Blog API Client</h1>
+
+        <h2>Create New Post</h2>
+        <form id="create-post-form" onsubmit="event.preventDefault(); createNewPost();">
+            <label for="post-title">Title</label>
+            <input type="text" id="post-title" required placeholder="Enter the post title">
+
+            <label for="post-content">Content</label>
+            <textarea id="post-content" rows="4" required placeholder="Write the full body content here"></textarea>
+
+            <div style="margin-bottom: 15px; margin-top: 15px;">
+                <input type="checkbox" id="post-published" checked>
+                <label for="post-published" style="display: initial;">Publish Immediately?</label>
+            </div>
+
+            <button type="submit">Create & Publish Post</button>
+            <button type="button" onclick="fetchPosts()">Reload Posts</button>
+            <p id="post-message" style="margin-top: 10px; font-size: 0.9em;"></p>
+        </form>
+
+        <hr>
+
+        <h2>All Posts</h2>
+        <div id="posts-container" class="loader">Fetching posts...</div>
+    </div>
+
+    <script>
+        // CRITICAL: Ensure this URL matches your Uvicorn host and port
+        const API_URL = 'http://127.0.0.1:8000/posts';
+
+        // --- 1. GET ALL POSTS (RELOAD) ---
+        async function fetchPosts() {
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '<div class="loader">Fetching posts...</div>';
+
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const posts = await response.json();
+
+                container.innerHTML = ''; // Clear the loader
+
+                if (posts.length === 0) {
+                    container.innerHTML = '<p class="loader">No posts found. Try creating one!</p>';
+                    return;
+                }
+
+                // Render each post as a card
+                posts.reverse().forEach(post => { // Display newest posts first
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+
+                    const title = document.createElement('h3');
+                    title.textContent = post.title;
+
+                    const idStatus = document.createElement('p');
+                    idStatus.className = 'post-status';
+                    idStatus.textContent = `ID: ${post.id} | Status: ${post.is_published ? 'PUBLISHED' : 'DRAFT'}`;
+
+                    const content = document.createElement('p');
+                    // Display a snippet of the content
+                    content.textContent = post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '');
+
+                    card.appendChild(title);
+                    card.appendChild(idStatus);
+                    card.appendChild(content);
+                    container.appendChild(card);
+                });
+
+            } catch (e) {
+                console.error("Could not fetch posts:", e);
+                container.innerHTML = `<p class="loader" style="color: red;">Network Error: Could not connect to API at ${API_URL}. Is your server running?</p>`;
+            }
+        }
+
+        // --- 2. CREATE NEW POST ---
+        async function createNewPost() {
+            // Get references to the input fields and message area
+            const titleInput = document.getElementById('post-title');
+            const contentInput = document.getElementById('post-content');
+            const publishedInput = document.getElementById('post-published');
+            const messageDisplay = document.getElementById('post-message');
+
+            messageDisplay.textContent = 'Submitting...';
+            messageDisplay.style.color = "blue";
+
+            const newPostData = {
+                title: titleInput.value.trim(),
+                content: contentInput.value.trim(),
+                is_published: publishedInput.checked
+            };
+
+            // Basic validation
+            if (!newPostData.title || !newPostData.content) {
+                messageDisplay.textContent = "Title and Content are required!";
+                messageDisplay.style.color = "red";
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newPostData)
+                });
+
+                if (response.ok) {
+                    // Success: Clear the form and reload
+                    titleInput.value = '';
+                    contentInput.value = '';
+                    publishedInput.checked = true;
+
+                    const createdPost = await response.json();
+
+                    messageDisplay.textContent = `Post created successfully! (ID: ${createdPost.id})`;
+                    messageDisplay.style.color = "green";
+
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    fetchPosts(); // Reload the list
+
+                } else {
+                    // Failure: Read error message from the API response
+                    const error = await response.json();
+                    console.error("Creation Failed:", error);
+                    messageDisplay.textContent = `Creation Failed (${response.status}). Detail: ${error.detail ? error.detail.content : 'Unknown Error'}`;
+                    messageDisplay.style.color = "red";
+                }
+
+            } catch (e) {
+                // Network Error
+                console.error("Network Error during creation:", e);
+                messageDisplay.textContent = "Network Error: Could not connect to API.";
+                messageDisplay.style.color = "red";
+            }
+
+            // Reload the post list to show the new entry
+            fetchPosts();
+        }
+
+        // Initial load of posts when the page loads
+        fetchPosts();
+    </script>
+</body>
+</html>
