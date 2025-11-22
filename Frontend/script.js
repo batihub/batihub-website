@@ -37,7 +37,7 @@ async function fetchPosts() {
 
          const content = document.createElement('p');
          // Display a snippet of the content
-         content.textContent = post.content.substring(0, 500) + (post.content.length > 500 ? '...' : '');   // this part decides the visible text's lenght 150->500
+         content.textContent = post.content.substring(0, 1000) + (post.content.length > 1000 ? '...' : '');   // this part decides the visible text's lenght
 
          // delete buton
          const xHolder = document.createElement("a");
