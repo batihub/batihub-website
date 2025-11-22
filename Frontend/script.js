@@ -1,4 +1,7 @@
-// CRITICAL: Ensure this URL matches your Uvicorn host and port
+// CRITICAL: Ensure this URL matches your Uvicorn host and port or Render link
+//Check: Does it contain the const API_URL = ... line at the very top?
+//Check: Is the URL set to your Render link?
+
 const API_URL = 'https://beelog-poes.onrender.com/posts';
 
 // --- 1. GET ALL POSTS (RELOAD) ---
@@ -34,7 +37,7 @@ async function fetchPosts() {
 
          const content = document.createElement('p');
          // Display a snippet of the content
-         content.textContent = post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '');
+         content.textContent = post.content.substring(0, 150) + (post.content.length > 500 ? '...' : '');   // this part decides the visible text's lenght 150->500
 
          // delete buton
          const xHolder = document.createElement("a");
