@@ -36,8 +36,32 @@ async function fetchPosts() {
          idStatus.textContent = `ID: ${post.id} | Status: ${post.is_published ? 'PUBLISHED' : 'DRAFT'}`;
 
          const content = document.createElement('p');
-         // Display a snippet of the content
-         content.textContent = post.content.substring(0, 1000) + (post.content.length > 1000 ? '...' : '');   // this part decides the visible text's lenght
+
+         // Karakter limiti (İstediğiniz sayıya ayarlayabilirsiniz)
+         const charLimit = 200;
+
+         if (post.content.length > charLimit) {
+            // Limiti aşıyorsa kısalt ve sonuna ... ekle
+            content.textContent = post.content.substring(0, charLimit) + '...';
+            content.style.cursor = 'pointer'; // Tıklanabilir olduğunu göster
+            content.title = "Tamamını görmek için tıklayın";
+
+            let isExpanded = false;
+            content.onclick = () => {
+               if (isExpanded) {
+                  // Açıksa tekrar kısalt
+                  content.textContent = post.content.substring(0, charLimit) + '...';
+                  isExpanded = false;
+               } else {
+                  // Kapalıysa tamamını göster
+                  content.textContent = post.content;
+                  isExpanded = true;
+               }
+            };
+         } else {
+            // Limit altındaysa direkt göster
+            content.textContent = post.content;
+         }
 
          // delete buton
          const xHolder = document.createElement("a");
