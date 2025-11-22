@@ -49,6 +49,34 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content" style="width: 90%; max-width: 500px; text-align: left;">
+            <h3 style="margin-top: 0;">Edit Post</h3>
+            <form id="edit-post-form" onsubmit="event.preventDefault(); submitEditPost();">
+                <input type="hidden" id="edit-post-id">
+
+                <label for="edit-post-title">Title</label>
+                <input type="text" id="edit-post-title" required
+                    style="width: 100%; padding: 8px; margin-bottom: 10px;">
+
+                <label for="edit-post-content">Content</label>
+                <textarea id="edit-post-content" rows="6" required
+                    style="width: 100%; padding: 8px; margin-bottom: 10px; resize: vertical;"></textarea>
+
+                <div style="margin-bottom: 15px;">
+                    <input type="checkbox" id="edit-post-published">
+                    <label for="edit-post-published" style="display: initial;">Published</label>
+                </div>
+
+                <div class="modal-actions" style="justify-content: flex-end;">
+                    <button type="submit" style="background-color: #28a745;">Save</button>
+                    <button type="button" onclick="closeEditModal()" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="Frontend/script.js"></script>
 </body>
 

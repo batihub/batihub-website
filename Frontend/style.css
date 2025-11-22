@@ -130,6 +130,19 @@ hr {
    color: #dd1919;
 }
 
+.editHolder {
+   position: absolute;
+   top: 8px;
+   right: 45px;
+   /* 15px (xHolder right) + ~20px (icon width) + 10px (gap) */
+   color: #007bff;
+   cursor: pointer;
+}
+
+.editHolder:hover {
+   color: #0056b3;
+}
+
 /* --- MODAL STYLES --- */
 .modal {
    display: none;

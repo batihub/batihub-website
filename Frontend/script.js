@@ -71,6 +71,17 @@ async function fetchPosts() {
          const xMark = document.createElement("i");
          xMark.className = "fa-solid fa-xmark";
 
+         // edit buton
+         const editHolder = document.createElement("a");
+         editHolder.className = "editHolder";
+         editHolder.href = "javascript:void(0)";
+         editHolder.onclick = () => openEditModal(post);
+         const editIcon = document.createElement("i");
+         editIcon.className = "fa-solid fa-pen";
+
+         editHolder.appendChild(editIcon);
+         card.appendChild(editHolder);
+
          xHolder.appendChild(xMark);
          card.appendChild(xHolder);
          card.appendChild(title);
@@ -153,54 +164,100 @@ async function createNewPost() {
 }
 
 // --- 3. DELETE POST ---
-async function deletePost(postId) {
-   // Modal kullanıldığı için window.confirm kaldırıldı
+let postToDeleteId = null;
+
+function openDeleteModal(id) {
+   postToDeleteId = id;
+   document.getElementById('confirmation-modal').style.display = 'flex';
+}
+
+function closeModal() {
+   postToDeleteId = null;
+   document.getElementById('confirmation-modal').style.display = 'none';
+}
+
+document.getElementById('confirm-delete-btn').onclick = async function () {
+   if (!postToDeleteId) return;
 
    try {
-      // Backend'e DELETE isteği gönder
-      const response = await fetch(`${API_URL}/${postId}`, {
+      const response = await fetch(`${API_URL}/${postToDeleteId}`, {
          method: 'DELETE'
       });
 
       if (response.ok) {
-         // Başarılıysa listeyi yenile
-         fetchPosts();
+         closeModal();
+         fetchPosts(); // Reload the list
       } else {
-         alert('Silme işlemi başarısız oldu.');
+         alert("Failed to delete post.");
       }
    } catch (e) {
-      console.error("Hata:", e);
-      alert('Bir hata oluştu.');
+      console.error("Error deleting post:", e);
+      alert("Error deleting post.");
    }
 }
 
-// --- MODAL LOGIC ---
-let postToDeleteId = null;
+// --- 4. EDIT POST ---
+function openEditModal(post) {
+   document.getElementById('edit-post-id').value = post.id;
+   document.getElementById('edit-post-title').value = post.title;
+   document.getElementById('edit-post-content').value = post.content;
+   document.getElementById('edit-post-published').checked = post.is_published;
 
-function openDeleteModal(postId) {
-   postToDeleteId = postId;
-   const modal = document.getElementById('confirmation-modal');
-   modal.style.display = 'flex';
+   document.getElementById('edit-modal').style.display = 'flex';
+}
 
-   // Set up the confirm button
-   const confirmBtn = document.getElementById('confirm-delete-btn');
-   confirmBtn.onclick = () => {
-      deletePost(postToDeleteId);
-      closeModal();
+function closeEditModal() {
+   document.getElementById('edit-modal').style.display = 'none';
+}
+
+async function submitEditPost() {
+   const id = document.getElementById('edit-post-id').value;
+   const title = document.getElementById('edit-post-title').value.trim();
+   const content = document.getElementById('edit-post-content').value.trim();
+   const is_published = document.getElementById('edit-post-published').checked;
+
+   if (!title || !content) {
+      alert("Title and Content are required!");
+      return;
+   }
+
+   const updateData = {
+      title: title,
+      content: content,
+      is_published: is_published
    };
+
+   try {
+      const response = await fetch(`${API_URL}/${id}`, {
+         method: 'PATCH',
+         headers: {
+            'Content-Type': 'application/json'
+         },
+         body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+         closeEditModal();
+         fetchPosts(); // Reload the list
+      } else {
+         const errorData = await response.json();
+         alert(`Failed to update post: ${errorData.detail?.content || 'Unknown error'}`);
+      }
+   } catch (e) {
+      console.error("Error updating post:", e);
+      alert("Error updating post.");
+   }
 }
 
-function closeModal() {
-   const modal = document.getElementById('confirmation-modal');
-   modal.style.display = 'none';
-   postToDeleteId = null;
-}
-
-// Close modal if clicking outside of it
+// Close modals when clicking outside
 window.onclick = function (event) {
-   const modal = document.getElementById('confirmation-modal');
-   if (event.target == modal) {
+   const deleteModal = document.getElementById('confirmation-modal');
+   const editModal = document.getElementById('edit-modal');
+   if (event.target == deleteModal) {
       closeModal();
+   }
+   if (event.target == editModal) {
+      closeEditModal();
    }
 }
 
