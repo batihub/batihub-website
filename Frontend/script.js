@@ -138,8 +138,10 @@ async function createNewPost() {
 
          const createdPost = await response.json();
 
+         
          messageDisplay.textContent = `Post created successfully! (ID: ${createdPost.id})`;
          messageDisplay.style.color = "green";
+         setTimeout(() => { messageDisplay.textContent = ""; }, 2000);
 
          await new Promise(resolve => setTimeout(resolve, 100));
          fetchPosts(); // Reload the list

@@ -100,6 +100,8 @@ button:hover {
 .post-card p {
    font-size: 14px;
    margin: 5px 0;
+   overflow-wrap: break-word;
+   word-wrap: break-word;
 }
 
 .post-status {
