@@ -1,11 +1,14 @@
 from typing import Optional
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 class PostBase(BaseModel):
     title: str
     content: str
+    author_id : int
     is_published:bool= True
+
+class AuthorBase(BaseModel):
+    name: str
 
 class PostOut(PostBase):
     id: int
