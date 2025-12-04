@@ -42,14 +42,21 @@ Base = declarative_base()
 #   pass
 
 class PostPostgres(Base):
-    __tablename__ = "postsP"          ## left side for python right side for SQL content:Mapped[str] (py) = (sql)  mapped_column[Text] since python has no Text type it uses str for it
+    __tablename__ = "poststable"
     id : Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title : Mapped[str] = mapped_column(String, index=True)
     content : Mapped[str] = mapped_column(Text)
     is_published : Mapped[bool] = mapped_column(Boolean, default=True)
+    author_id : Mapped[int] = mapped_column(ForeignKey("authors.id"))
+    author : Mapped["AuthorPostgres"] = relationship(back_populates="posts")
 
-    #def __repr__(self) -> str:
-    #    return f"User(id={self.id!r}, name={self.name!r}, fullname={self.fullname!r})"
+class AuthorPostgres(Base):
+    __tablename__ = "authors"
+    id : Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name : Mapped[str] = mapped_column(String)
+
+    posts : Mapped["PostPostgres"] = relationship(back_populates="author")
+
 
 
 async def init_db_postgres():
