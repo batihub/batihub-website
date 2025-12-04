@@ -5,8 +5,9 @@ import crud_postgres
 import schemas
 import postgreq_database
 from postgreq_database import get_db_postgres
-from schemas import PostUpdate
 from fastapi.middleware.cors import CORSMiddleware
+
+
 
 app = FastAPI(title = "Blog Api")
 
@@ -44,11 +45,30 @@ async def get_post(db:AsyncSession = Depends(get_db_postgres), post_id:int= Path
 
 @app.post("/posts", response_model=schemas.PostOut , status_code= status.HTTP_201_CREATED)
 async def create_post(new_post: schemas.PostBase, db:AsyncSession = Depends(get_db_postgres)):
-    new_post = await crud_postgres.create_post_postgres(db=db,title= new_post.title, content= new_post.content, is_published=new_post.is_published)
+    new_post = await crud_postgres.create_post_postgres(db=db,title= new_post.title, content= new_post.content, author_id= new_post.author_id ,is_published=new_post.is_published)
     if new_post:
         return new_post
     else:
         raise HTTPException(detail={"status": "unsuccess" , "content": ""}, status_code=status.HTTP_400_BAD_REQUEST)
+
+@app.post("/authors/")
+async def create_author(new_author: schemas.AuthorBase , db:AsyncSession = Depends(get_db_postgres)):
+    new_author = await crud_postgres.create_author_postgres(name=new_author.name, db= db)
+    if new_author :
+        return new_author
+    else:
+        raise HTTPException(detail={"status": "unsuccess", "content" : ""}, status_code=status.HTTP_400_BAD_REQUEST)
+@app.get("/authors/")
+async def get_all_authors(db: AsyncSession = Depends(get_db_postgres)):
+    all_authors = await crud_postgres.get_all_authors(db=db)
+    return all_authors or []
+
+@app.get("/authors/{author_id}")
+async def get_authors_all_posts(author_id :int , db: AsyncSession = Depends(get_db_postgres)):
+    all_posts_of_author = await crud_postgres.get_authors_all_posts(author_id = author_id, db=db)
+    return all_posts_of_author or []
+
+
 
 @app.patch("/posts/{post_id}")
 async def update_post_by_id (post_update: schemas.PostUpdate, post_id: int = Path(gt=0), db:AsyncSession = Depends(get_db_postgres)):
@@ -84,7 +104,3 @@ async def delete_post(db:AsyncSession = Depends(get_db_postgres), post_id: int =
         return JSONResponse(content={"status": "success", "content": ""}, status_code=status.HTTP_200_OK)
 
     return JSONResponse(content={"status" : "unsuccess" , "content" : ""}, status_code=status.HTTP_400_BAD_REQUEST)
-
-
-
-
