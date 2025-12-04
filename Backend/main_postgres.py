@@ -88,16 +88,3 @@ async def delete_post(db:AsyncSession = Depends(get_db_postgres), post_id: int =
 
 
 
-from sqlalchemy import text
-
-@app.get("/fix-db-column")
-async def fix_db_column(db: AsyncSession = Depends(get_db_postgres)):
-    try:
-        # This is the raw SQL command
-        sql = text("ALTER TABLE poststable ADD COLUMN author_id INTEGER;")
-        
-        await db.execute(sql)
-        await db.commit()
-        return {"message": "SUCCESS: Column 'author_id' added!"}
-    except Exception as e:
-        return {"message": f"FAILED: {e}"}
