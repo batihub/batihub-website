@@ -19,6 +19,7 @@ origins = [
     "http://127.0.0.1:8000",     # Localhost IP with port
     "http://localhost:3000", # Example if you use React/Vite
     "http://127.0.0.1:8080", # Another common local port
+    "*"
 ]
 
 app.add_middleware(
