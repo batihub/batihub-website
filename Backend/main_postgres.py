@@ -104,4 +104,3 @@ async def delete_post(db:AsyncSession = Depends(get_db_postgres), post_id: int =
         return JSONResponse(content={"status": "success", "content": ""}, status_code=status.HTTP_200_OK)
 
     return JSONResponse(content={"status" : "unsuccess" , "content" : ""}, status_code=status.HTTP_400_BAD_REQUEST)
-
