@@ -13,6 +13,10 @@ app = FastAPI(title = "Blog Api")
 
 # --- CORS CONFIGURATION ---
 origins = [
+    "http://localhost",           # Default HTTP port (80)
+    "http://localhost:8000",      # FastAPI / Django default
+    "http://127.0.0.1",          # Localhost IP
+    "http://127.0.0.1:8000",     # Localhost IP with port
     "http://localhost:3000", # Example if you use React/Vite
     "http://127.0.0.1:8080", # Another common local port
     "*" # called a wildcard to say that all are allowed DANGER: Use "*" only for development/testing
