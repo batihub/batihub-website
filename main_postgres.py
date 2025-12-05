@@ -19,7 +19,6 @@ origins = [
     "http://127.0.0.1:8000",     # Localhost IP with port
     "http://localhost:3000", # Example if you use React/Vite
     "http://127.0.0.1:8080", # Another common local port
-    "*" # called a wildcard to say that all are allowed DANGER: Use "*" only for development/testing
 ]
 
 app.add_middleware(
