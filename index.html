@@ -1,83 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeeLog Site</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --primary-hover: #0056b3;
+            --danger-red: #dc3545;
+            --text-dark: #212529;
+            --text-light: #6c757d;
+            --bg-light: #f8f9fa;
+            --border-color: #dee2e6;
+        }
 
-    <link rel="stylesheet" href="Frontend/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #ffffff;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* --- Header --- */
+        h1.site-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary-blue);
+            display: inline-block;
+            width: 100%;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #444;
+        }
+
+        /* --- Sections --- */
+        .section-card {
+            background: #fff;
+            padding: 20px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* --- Forms --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 400;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box; /* Padding includes border */
+            transition: border-color 0.2s;
+            background-color: #fff;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-red);
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+        .btn-danger:hover {
+            background-color: #a71d2a;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-light);
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* --- Post List --- */
+        .post-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .post-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .post-title {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #333;
+        }
+
+        .post-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .post-content {
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap;
+
+            word-break: break-word;      /* Kelime çok uzunsa böl */
+            overflow-wrap: break-word;   /* Taşan metni alt satıra kaydır */
+        }
+
+        .post-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 10px;
+        }
+
+        /* --- Messages --- */
+        .status-message {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .error { color: var(--danger-red); }
+        .success { color: #198754; }
+
+        /* --- Modal (Edit) --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .author-badge {
+            background-color: #e7f1ff;
+            color: #007bff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+    </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>BeeLog Site</h1>
 
+<div class="container">
+    <h1 class="site-title">BeeLog Site</h1>
+
+    <!-- SECTION: CREATE AUTHOR -->
+    <div class="section-card" style="background-color: #fcfcfc; border:1px dashed #ccc; padding: 20px;">
+        <h2 style="font-size: 1.2rem; color: #555;"><i class="fa-solid fa-user-plus"></i> Create New Author</h2>
+        <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <div style="flex-grow: 1;">
+                <label for="author-name">Author Name</label>
+                <input type="text" id="author-name" placeholder="Enter name (e.g., John Doe)">
+            </div>
+            <button class="btn btn-primary" onclick="createAuthor()">Create Author</button>
+        </div>
+        <div id="author-msg" class="status-message"></div>
+    </div>
+
+    <!-- SECTION: CREATE POST -->
+    <div class="section-card">
         <h2>Create New Post</h2>
-        <form id="create-post-form" onsubmit="event.preventDefault(); createNewPost();">
+
+        <div class="form-group">
             <label for="post-title">Title</label>
-            <input type="text" id="post-title" required placeholder="Enter the post title">
+            <input type="text" id="post-title" placeholder="Enter post title">
+        </div>
 
+        <div class="form-group">
+            <label for="post-author-id">Author ID <small style="color:red;">(Required)</small></label>
+            <input type="number" id="post-author-id" placeholder="Enter the ID of the author (e.g., 1)">
+        </div>
+
+        <div class="form-group">
             <label for="post-content">Content</label>
-            <textarea id="post-content" rows="4" required placeholder="Write the full body content here"></textarea>
+            <textarea id="post-content" rows="4" placeholder="Write something amazing..."></textarea>
+        </div>
 
-            <div style="margin-bottom: 15px; margin-top: 15px;">
-                <input type="checkbox" id="post-published" checked>
-                <label for="post-published" style="display: initial;">Publish Immediately ?</label>
-            </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="post-published" checked>
+            <label for="post-published" style="margin:0; cursor:pointer;">Publish Immediately?</label>
+        </div>
 
-            <button type="submit">Create & Publish Post</button>
-            <button type="button" onclick="fetchPosts()">Reload Posts</button>
-            <p id="post-message" style="margin-top: 10px; font-size: 0.9em;"></p>
-        </form>
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="createPost()">Create & Publish Post</button>
+            <button class="btn btn-primary" style="background-color: #0dcaf0; border:none;" onclick="fetchPosts()">Reload Posts</button>
+        </div>
+        <div id="post-msg" class="status-message"></div>
+    </div>
 
-        <hr>
-
+    <!-- SECTION: ALL POSTS -->
+    <div class="section-card" style="border:none;">
         <h2>All Posts</h2>
-        <div id="posts-container" class="loader">Fetching posts...</div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirmation-modal" class="modal">
-        <div class="modal-content">
-            <p>Silmek istediğinizden emin misiniz?</p>
-            <div class="modal-actions">
-                <button id="confirm-delete-btn" class="btn-danger">Evet</button>
-                <button onclick="closeModal()" class="btn-secondary">Hayır</button>
-            </div>
+        <div id="posts-container" class="post-list">
+            <p style="color:#777; font-style:italic;">Loading posts...</p>
         </div>
     </div>
+</div>
 
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content" style="width: 90%; max-width: 500px; text-align: left;">
-            <h3 style="margin-top: 0;">Edit Post</h3>
-            <form id="edit-post-form" onsubmit="event.preventDefault(); submitEditPost();">
-                <input type="hidden" id="edit-post-id">
+<!-- EDIT MODAL -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <h2>Edit Post</h2>
+        <input type="hidden" id="edit-id">
 
-                <label for="edit-post-title">Title</label>
-                <input type="text" id="edit-post-title" required
-                    style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="edit-title">
+        </div>
+        <div class="form-group">
+            <label>Content</label>
+            <textarea id="edit-content" rows="4"></textarea>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="edit-published">
+            <label for="edit-published">Published</label>
+        </div>
 
-                <label for="edit-post-content">Content</label>
-                <textarea id="edit-post-content" rows="6" required
-                    style="width: 100%; padding: 8px; margin-bottom: 10px; resize: vertical;"></textarea>
-
-                <div style="margin-bottom: 15px;">
-                    <input type="checkbox" id="edit-post-published">
-                    <label for="edit-post-published" style="display: initial;">Published</label>
-                </div>
-
-                <div class="modal-actions" style="justify-content: flex-end;">
-                    <button type="submit" style="background-color: #28a745;">Save</button>
-                    <button type="button" onclick="closeEditModal()" class="btn-secondary">Cancel</button>
-                </div>
-            </form>
+        <div class="button-group" style="justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitEdit()">Save Changes</button>
         </div>
     </div>
+</div>
 
-    <script src="Frontend/script.js"></script>
+<script>
+    // --- CONFIGURATION ---
+    // Ensure this URL matches your Render deployment URL exactly (no trailing slash)
+    const API_URL = "http://127.0.0.1:8000";
+
+    // --- ON LOAD ---
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchPosts();
+    });
+
+    // --- 1. CREATE AUTHOR ---
+    async function createAuthor() {
+        const nameInput = document.getElementById('author-name');
+        const msgDiv = document.getElementById('author-msg');
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            msgDiv.innerHTML = '<span class="error">Please enter a name.</span>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/authors/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                msgDiv.innerHTML = `<span class="success">Author created! <b>ID: ${data.id}</b> (Use this ID below)</span>`;
+                nameInput.value = '';
+                // Automatically fill the Author ID input for convenience
+                document.getElementById('post-author-id').value = data.id;
+            } else {
+                msgDiv.innerHTML = '<span class="error">Failed to create author.</span>';
+            }
+        } catch (error) {
+            console.error(error);
+            msgDiv.innerHTML = '<span class="error">Network error.</span>';
+        }
+    }
+
+    // --- 2. CREATE POST ---
+    async function createPost() {
+        const title = document.getElementById('post-title').value.trim();
+        const content = document.getElementById('post-content').value.trim();
+        const authorId = document.getElementById('post-author-id').value;
+        const isPublished = document.getElementById('post-published').checked;
+        const msgDiv = document.getElementById('post-msg');
+
+        msgDiv.textContent = "";
+
+        if (!title || !content || !authorId) {
+            msgDiv.innerHTML = '<span class="error">Title, Content and Author ID are required!</span>';
+            return;
+        }
+
+        const payload = {
+            title: title,
+            content: content,
+            author_id: parseInt(authorId), // Backend expects an integer
+            is_published: isPublished
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/posts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                msgDiv.innerHTML = '<span class="success">Post created successfully!</span>';
+                // Clear form
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-content').value = '';
+                fetchPosts(); // Reload list
+            } else {
+                const err = await response.json();
+                // Usually returns error if Author ID not found (Foreign Key Constraint)
+                msgDiv.innerHTML = `<span class="error">Creation Failed (${response.status}). Detail: ${err.detail?.content || err.detail || 'Unknown Error'}</span>`;
+            }
+        } catch (error) {
+            console.error(error);
+            msgDiv.innerHTML = '<span class="error">Network error. API down?</span>';
+        }
+    }
+
+    // --- 3. FETCH POSTS ---
+    async function fetchPosts() {
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '<p style="color:#777;">Loading...</p>';
+
+        try {
+            const response = await fetch(`${API_URL}/posts`);
+            if (!response.ok) throw new Error("Failed to fetch");
+
+            let posts = await response.json();
+
+            // Sort: Newest first (by ID)
+            posts.sort((a, b) => b.id - a.id);
+
+            container.innerHTML = '';
+
+            if (posts.length === 0) {
+                container.innerHTML = '<p style="color:#777; font-style:italic;">No posts found. Try creating one!</p>';
+                return;
+            }
+
+            // ... fetchPosts fonksiyonunun içi ...
+
+        posts.forEach(post => {
+            const card = document.createElement('div');
+            card.className = 'post-card';
+
+            const safeTitle = escapeHtml(post.title);
+
+            // --- YENİ MANTIK BURADA BAŞLIYOR ---
+            let contentHtml = '';
+            const fullText = escapeHtml(post.content);
+
+            if (post.content.length > 200) {
+                // Eğer 200 karakterden uzunsa:
+                const shortText = escapeHtml(post.content.substring(0, 200));
+                contentHtml = `
+                    <span id="summary-${post.id}">
+                        ${shortText}...
+                        <a href="javascript:void(0)" onclick="togglePost(${post.id})" style="color: #007bff; text-decoration: none; font-weight: bold;">Read More</a>
+                    </span>
+                    <span id="full-${post.id}" style="display: none;">
+                        ${fullText}
+                        <a href="javascript:void(0)" onclick="togglePost(${post.id})" style="color: #007bff; text-decoration: none; font-weight: bold;">Show Less</a>
+                    </span>
+                `;
+            } else {
+                // Kısa ise olduğu gibi göster
+                contentHtml = fullText;
+            }
+            // --- YENİ MANTIK BİTTİ ---
+
+            card.innerHTML = `
+                <div class="post-header">
+                    <h3 class="post-title">${safeTitle}</h3>
+                    <span class="author-badge">ID: ${post.id}</span>
+                </div>
+                <div class="post-meta">
+                    Author ID: <b>${post.author_id}</b> |
+                    Status: <span style="color:${post.is_published ? 'green' : 'orange'}">${post.is_published ? 'Published' : 'Draft'}</span>
+                </div>
+
+                <div class="post-content">${contentHtml}</div>
+
+                <div class="post-actions">
+                    <button class="btn btn-secondary" onclick='openEditModal(${JSON.stringify(post)})'><i class="fa-solid fa-pen"></i> Edit</button>
+                    <button class="btn btn-danger" onclick="deletePost(${post.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = '<p style="color:red;">Error fetching posts. Check console.</p>';
+        }
+    }
+
+    // --- 4. DELETE POST ---
+    async function deletePost(id) {
+        if(!confirm("Are you sure you want to delete this post?")) return;
+
+        try {
+            const response = await fetch(`${API_URL}/posts/${id}`, { method: 'DELETE' });
+            if(response.ok) {
+                fetchPosts();
+            } else {
+                alert("Failed to delete.");
+            }
+        } catch(e) {
+            alert("Error deleting.");
+        }
+    }
+
+    // --- 5. EDIT POST ---
+    const editModal = document.getElementById('edit-modal');
+
+    function openEditModal(post) {
+        document.getElementById('edit-id').value = post.id;
+        document.getElementById('edit-title').value = post.title;
+        document.getElementById('edit-content').value = post.content;
+        document.getElementById('edit-published').checked = post.is_published;
+        editModal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        editModal.style.display = 'none';
+    }
+
+    async function submitEdit() {
+        const id = document.getElementById('edit-id').value;
+        const title = document.getElementById('edit-title').value;
+        const content = document.getElementById('edit-content').value;
+        const isPublished = document.getElementById('edit-published').checked;
+
+        const payload = {
+            title: title,
+            content: content,
+            is_published: isPublished
+            // Patch request does not need author_id
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/posts/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(response.ok) {
+                closeEditModal();
+                fetchPosts();
+            } else {
+                alert("Update failed.");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error updating.");
+        }
+    }
+    // --- 6. TOGGLE POST CONTENT (Read More / Show Less) ---
+    function togglePost(id) {
+        const shortVer = document.getElementById(`summary-${id}`);
+        const fullVer = document.getElementById(`full-${id}`);
+
+        if (shortVer.style.display === 'none') {
+            // Kısaltılmışa dön
+            shortVer.style.display = 'inline';
+            fullVer.style.display = 'none';
+        } else {
+            // Tamamını göster
+            shortVer.style.display = 'none';
+            fullVer.style.display = 'inline';
+        }
+    }
+
+
+    // Utility: XSS Protection
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Close modal if clicked outside
+    window.onclick = function(event) {
+        if (event.target == editModal) {
+            closeEditModal();
+        }
+    }
+</script>
+
 </body>
-
 </html>
