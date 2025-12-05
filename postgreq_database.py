@@ -1,3 +1,4 @@
+import os  ##########
 from pydantic import with_config
 import asyncio
 from sqlalchemy import  Integer, Text, String, Boolean
@@ -7,7 +8,7 @@ from operator import index
 import logging
 ##########from sqlalchemy.testing.schema import mapped_column
 from sqlalchemy.orm import mapped_column
-import os  ##########
+
 """
 
 databaseforfastapi=# INSERT INTO "postsP" (title , content , is_published)
@@ -17,7 +18,7 @@ INSERT 0 1
 """
 
 #####DATABASE_URL = "postgresql+asyncpg://postgres:1234@localhost:5432/databaseforfastapi"
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:1234@localhost:5432/databaseforfastapi")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:1234@localhost:5432/soruncozdb")
 
 #########-------------------------
 
