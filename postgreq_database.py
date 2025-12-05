@@ -1,13 +1,13 @@
 import os  ##########
 from pydantic import with_config
 import asyncio
-from sqlalchemy import  Integer, Text, String, Boolean
+
+from sqlalchemy import Integer, Text, String, Boolean, ForeignKey
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import sessionmaker, declarative_base, Mapped, mapped_column, relationship
+
 from operator import index
 import logging
-##########from sqlalchemy.testing.schema import mapped_column
-from sqlalchemy.orm import mapped_column
 
 """
 
