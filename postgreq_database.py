@@ -18,7 +18,7 @@ INSERT 0 1
 """
 
 #####DATABASE_URL = "postgresql+asyncpg://postgres:1234@localhost:5432/databaseforfastapi"
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:1234@localhost:5432/soruncozdb")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:1234@localhost:5432/fastapi-blog-db")
 
 #########-------------------------
 
