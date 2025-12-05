@@ -2,7 +2,7 @@
 //Check: Does it contain the const API_URL = ... line at the very top?
 //Check: Is the URL set to your Render link?
 
-const API_URL = 'https://beelog-poes.onrender.com/posts';
+const API_URL = 'https://beelog-poes.onrender.com';
 
 // --- 1. GET ALL POSTS (RELOAD) ---
 async function fetchPosts() {
