@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeLog – Tweet Feed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="blog.css">
+    <script>
+        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="index.html" class="nav-logo">
+            <span class="bold">baer</span><span class="light">hub</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="blog.html" class="active">BeeLog</a>
+            <a href="chat.html">Live Chat</a>
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <a href="https://github.com/batihub" target="_blank" class="github-link">
+                <i class="fa-brands fa-github"></i> GitHub
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="site-title">BeeLog Feed</h1>
+            <p>Share your thoughts — 280 characters at a time</p>
+        </div>
+
+        <!-- ── Auth Section ─────────────────────────────────────────── -->
+        <div id="auth-section" class="section-card author-section">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log In
+                </button>
+                <button class="auth-tab" data-tab="register">
+                    <i class="fa-solid fa-user-plus"></i> Register
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <div class="input-group" style="margin-top: 20px;">
+                    <div class="input-wrapper">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" placeholder="your_username">
+                    </div>
+                    <div class="input-wrapper">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="••••••••"
+                               onkeypress="if(event.key==='Enter') login()">
+                    </div>
+                    <button class="btn btn-primary" style="align-self:flex-end" onclick="login()">
+                        <i class="fa-solid fa-right-to-bracket"></i> Log In
+                    </button>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form" style="display:none">
+                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <label for="reg-username">Username <small class="text-danger">*</small></label>
+                            <input type="text" id="reg-username" placeholder="unique_handle" maxlength="50">
+                        </div>
+                        <div class="input-wrapper">
+                            <label for="reg-displayname">Display Name</label>
+                            <input type="text" id="reg-displayname" placeholder="Your Name">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <label for="reg-password">Password <small class="text-danger">*</small></label>
+                            <input type="password" id="reg-password" placeholder="••••••••"
+                                   onkeypress="if(event.key==='Enter') register()">
+                        </div>
+                        <button class="btn btn-primary" style="align-self:flex-end" onclick="register()">
+                            <i class="fa-solid fa-user-plus"></i> Create Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Logged-In Banner ────────────────────────────────────────── -->
+        <div id="logged-in-section" class="section-card author-section" style="display:none">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+                    Logged in as <strong id="logged-in-username"></strong>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()" style="padding:8px 16px; font-size:0.85rem">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Post a Tweet ────────────────────────────────────────────── -->
+        <div id="post-section" class="section-card" style="display:none">
+            <h2><i class="fa-solid fa-feather-pointed"></i> New Tweet</h2>
+            <div class="form-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label for="post-content" style="margin:0">What's on your mind?</label>
+                    <span id="char-count" style="font-size:0.8rem; color:var(--text-muted)">0/280</span>
+                </div>
+                <textarea id="post-content" rows="3" maxlength="280"
+                          placeholder="Share something... (max 280 characters)"></textarea>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="createPost()">
+                    <i class="fa-solid fa-paper-plane"></i> Tweet
+                </button>
+                <button class="btn btn-secondary" onclick="fetchTweets()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Refresh when not logged in ─────────────────────────────── -->
+        <div id="public-refresh" class="section-card" style="display:none; padding: 16px 32px;">
+            <!-- shown by JS when logged out so user can still refresh -->
+        </div>
+
+        <!-- ── Tweet Feed ──────────────────────────────────────────────── -->
+        <div class="section-card bg-transparent">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="margin:0">Feed</h2>
+                <button class="btn btn-secondary" style="padding:8px 16px; font-size:0.85rem" onclick="fetchTweets()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+            <div id="posts-container" class="post-list">
+                <p class="loading-text">Loading tweets...</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ── Edit Modal ──────────────────────────────────────────────────────── -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <h2><i class="fa-solid fa-pen"></i> Edit Tweet</h2>
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <label>Content</label>
+            <textarea id="edit-content" rows="4" maxlength="280"></textarea>
+        </div>
+        <div class="button-group modal-actions">
+            <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Delete Modal ────────────────────────────────────────────────────── -->
+<div id="delete-modal" class="modal">
+    <div class="modal-content" style="max-width:400px; padding:32px; text-align:center;">
+        <div class="warning-icon-circle">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+        <h2 style="margin:0 0 8px 0; font-size:1.25rem;">Delete Tweet</h2>
+        <p style="margin:0 0 24px 0; color:var(--text-muted); font-size:0.95rem; line-height:1.6;">
+            Are you sure? This cannot be undone.
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <button class="btn btn-secondary" style="width:100%; margin:0; padding:12px;" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger"    style="width:100%; margin:0; padding:12px;" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="blog.js"></script>
+</body>
+</html>

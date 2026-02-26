@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batıhan's Projects</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+
+    <style>
+        :root {
+            /* Default Theme: Bright/Light */
+            --bg-color: #f4f4f9;
+            --bg-gradient-center: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --nav-border: rgba(0, 0, 0, 0.05);
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --input-border: #e2e8f0;
+        }
+
+        [data-theme="dark"] {
+            /* Elegant Dark Theme */
+            --bg-color: #0f172a;
+            --bg-gradient-center: #1e293b;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #818cf8;
+            --accent-glow: rgba(129, 140, 248, 0.15);
+            --nav-border: rgba(255, 255, 255, 0.1);
+            --nav-bg: rgba(30, 41, 59, 0.85);
+            --input-border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, var(--bg-gradient-center), var(--bg-color));
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- Stylish Navigation --- */
+        .top-nav {
+            background-color: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--nav-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .nav-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.25rem;
+            color: var(--text-main);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo .bold { font-weight: 800; }
+        .nav-logo .light { font-weight: 400; color: var(--text-muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text-main);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* --- Theme Toggle Button --- */
+        .theme-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease, transform 0.2s;
+            border-radius: 50%;
+        }
+
+        .theme-toggle-btn:hover {
+            color: var(--accent);
+            transform: rotate(15deg);
+        }
+
+        .nav-links .github-link {
+            background-color: var(--text-main);
+            color: var(--card-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: transform 0.2s, background-color 0.3s, color 0.3s;
+        }
+
+        .nav-links .github-link:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* --- Main Layout --- */
+        .main-content {
+            min-height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin: 0 0 12px 0;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            color: var(--text-main);
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .project-grid {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        .project-card {
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px 30px;
+            width: 280px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, var(--accent-glow) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -10px var(--accent-glow);
+            border-color: var(--nav-border);
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .icon-wrapper {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover .icon-wrapper {
+            transform: scale(1.1);
+        }
+
+        .project-card h2 {
+            font-size: 1.5rem;
+            margin: 0 0 12px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .project-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <span class="bold">baer</span><span class="light">hub</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="blog.html">BeeLog</a>
+                <a href="chat.html">Live Chat</a>
+
+                <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+
+                <a href="https://github.com/batihub" target="_blank" class="github-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Projects</h1>
+            <p>Select an application to launch</p>
+        </div>
+
+        <div class="project-grid">
+            <a href="blog.html" class="project-card">
+                <div class="icon-wrapper">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h2>BeeLog</h2>
+                <p>A full-stack CRUD blog platform built with FastAPI and PostgreSQL.</p>
+            </a>
+
+            <a href="chat.html" class="project-card">
+                <div class="icon-wrapper">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <h2>Live Chat</h2>
+                <p>Real-time messaging rooms powered by WebSockets.</p>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                const icon = themeToggle.querySelector('i');
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+
+                // Set initial icon
+                if (currentTheme === 'dark') {
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                }
+
+                themeToggle.addEventListener('click', () => {
+                    let theme = document.documentElement.getAttribute('data-theme');
+                    if (theme === 'dark') {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('baerhub-theme', 'light');
+                        icon.classList.replace('fa-sun', 'fa-moon');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('baerhub-theme', 'dark');
+                        icon.classList.replace('fa-moon', 'fa-sun');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

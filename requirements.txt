@@ -1,0 +1,11 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+sqlmodel>=0.0.19
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.20.0          # SQLite async driver — swap for asyncpg when moving to PostgreSQL
+PyJWT>=2.8.0
+passlib[bcrypt]>=1.7.4
+bcrypt==3.2.0              # pin to 3.x — newer versions break passlib's bcrypt handler
+python-dotenv>=1.0.0
+python-multipart>=0.0.9    # required for OAuth2PasswordRequestForm (login endpoint)
+websockets>=12.0           # WebSocket support for the chat router
