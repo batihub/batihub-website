@@ -1,172 +1,73 @@
-const API_URL = "http://127.0.0.1:8000";
+// chat.js — Live Chat page logic
+// Auth (login/logout/register/renderNavUser/initTheme) is handled by auth.js
 
-// Shared auth from localStorage — no re-login needed
-let authToken   = localStorage.getItem('baerhub-token') || null;
-let currentUser = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
-
-let ws              = null;
-let currentRoom     = null;
-let onlineUsers     = [];
+let ws          = null;
+let currentRoom = null;
+let onlineUsers = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    renderNavUser();
+    document.getElementById('message-input')?.addEventListener('keypress',   e => { if (e.key === 'Enter') sendMessage(); });
+    document.getElementById('room-name-input')?.addEventListener('keypress', e => { if (e.key === 'Enter') createRoom(); });
 
+    // Show correct panel on load
+    _updatePanel();
+});
+
+// Listen for auth events from auth.js
+document.addEventListener('auth:login',  () => { _updatePanel(); });
+document.addEventListener('auth:logout', () => {
+    if (ws) { ws.close(); ws = null; }
+    currentRoom = null;
+    _updatePanel();
+});
+
+function _updatePanel() {
     if (authToken && currentUser) {
         showRoomsPanel();
         loadRooms();
     } else {
-        showAuthPanel();
-    }
-
-    document.getElementById('login-password')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
-    document.getElementById('reg-password')?.addEventListener('keypress',   e => { if (e.key === 'Enter') register(); });
-    document.getElementById('message-input')?.addEventListener('keypress',  e => { if (e.key === 'Enter') sendMessage(); });
-    document.getElementById('room-name-input')?.addEventListener('keypress',e => { if (e.key === 'Enter') createRoom(); });
-
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
-            document.getElementById(`${tab.dataset.tab}-form`).style.display = 'block';
-            document.getElementById('auth-error').textContent = '';
-        });
-    });
-});
-
-// ── Theme ─────────────────────────────────────────────────────────────────────
-function initTheme() {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    const icon = btn.querySelector('i');
-    if (document.documentElement.getAttribute('data-theme') === 'dark') icon.classList.replace('fa-moon', 'fa-sun');
-    btn.addEventListener('click', () => {
-        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (dark) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('baerhub-theme','light'); icon.classList.replace('fa-sun','fa-moon'); }
-        else      { document.documentElement.setAttribute('data-theme','dark'); localStorage.setItem('baerhub-theme','dark'); icon.classList.replace('fa-moon','fa-sun'); }
-    });
-}
-
-// ── Nav user pill ─────────────────────────────────────────────────────────────
-function renderNavUser() {
-    const slot = document.getElementById('nav-user-slot');
-    if (!slot) return;
-    if (authToken && currentUser) {
-        const letter = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
-        slot.innerHTML = `
-            <div class="nav-user-pill" id="user-pill" onclick="toggleUserMenu(event)">
-                <span class="nav-avatar">${letter}</span>
-                <span class="nav-username">@${escapeHtml(currentUser.username)}</span>
-                <i class="fa-solid fa-chevron-down toggle-icon" style="font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s"></i>
-            </div>
-            <div class="user-dropdown" id="user-dropdown">
-                <div class="dropdown-info">
-                    <span class="dropdown-display">${escapeHtml(currentUser.display_name || currentUser.username)}</span>
-                    <span class="dropdown-handle">@${escapeHtml(currentUser.username)}</span>
-                </div>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item danger" onclick="logout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
-                </button>
-            </div>`;
-    } else {
-        slot.innerHTML = '';
+        // Not logged in — hide all panels, the nav Login button (from auth.js) handles it
+        document.getElementById('auth-panel').style.display  = 'none';
+        document.getElementById('rooms-panel').style.display = 'none';
+        document.getElementById('chat-panel').style.display  = 'none';
+        _showGuestPrompt();
     }
 }
 
-function toggleUserMenu(e) {
-    e.stopPropagation();
-    const dropdown = document.getElementById('user-dropdown');
-    const pill     = document.getElementById('user-pill');
-    if (!dropdown) return;
-    const open = dropdown.classList.toggle('open');
-    pill.querySelector('.toggle-icon').style.transform = open ? 'rotate(180deg)' : '';
-    if (open) setTimeout(() => { document.addEventListener('click', closeDropdown, { once: true }); }, 0);
-}
-function closeDropdown() {
-    const d = document.getElementById('user-dropdown');
-    const p = document.getElementById('user-pill');
-    if (d) d.classList.remove('open');
-    if (p) { const i = p.querySelector('.toggle-icon'); if (i) i.style.transform = ''; }
+function _showGuestPrompt() {
+    // Show a friendly "log in to chat" message instead of the old embedded auth form
+    const container = document.querySelector('.chat-container');
+    if (!container) return;
+    container.innerHTML = `
+        <div class="panel" style="text-align:center;padding:60px 40px">
+            <i class="fa-solid fa-comments" style="font-size:3rem;color:var(--accent);margin-bottom:20px;display:block"></i>
+            <h2 style="margin:0 0 12px 0">Join the conversation</h2>
+            <p style="color:var(--text-muted);margin:0 0 28px 0">Log in or create an account to access Live Rooms.</p>
+            <button class="btn btn-primary" style="padding:14px 32px;font-size:1rem" onclick="openLoginModal()">
+                <i class="fa-solid fa-right-to-bracket"></i> Log In / Register
+            </button>
+        </div>`;
 }
 
 // ── Panel visibility helpers ──────────────────────────────────────────────────
-function showAuthPanel()  { document.getElementById('auth-panel').style.display  = 'block'; document.getElementById('rooms-panel').style.display = 'none'; document.getElementById('chat-panel').style.display = 'none'; }
-function showRoomsPanel() { document.getElementById('auth-panel').style.display  = 'none';  document.getElementById('rooms-panel').style.display = 'block'; document.getElementById('chat-panel').style.display = 'none'; }
-function showChatPanel()  { document.getElementById('auth-panel').style.display  = 'none';  document.getElementById('rooms-panel').style.display = 'none'; document.getElementById('chat-panel').style.display = 'block'; }
-
-// ── Auth ──────────────────────────────────────────────────────────────────────
-async function login() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl    = document.getElementById('auth-error');
-    errEl.textContent = '';
-    if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
-
-    const form = new URLSearchParams();
-    form.append('username', username);
-    form.append('password', password);
-
-    try {
-        const res = await fetch(`${API_URL}/token`, {
-            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form,
-        });
-        if (res.ok) {
-            const data = await res.json();
-            authToken   = data.access_token;
-            currentUser = { username };
-            localStorage.setItem('baerhub-token', authToken);
-            localStorage.setItem('baerhub-user',  JSON.stringify(currentUser));
-            renderNavUser();
-            showRoomsPanel();
-            loadRooms();
-        } else { errEl.textContent = 'Incorrect username or password.'; }
-    } catch (e) { errEl.textContent = 'Network error. Is the backend running?'; }
+function showRoomsPanel() {
+    document.getElementById('auth-panel').style.display  = 'none';
+    document.getElementById('rooms-panel').style.display = 'block';
+    document.getElementById('chat-panel').style.display  = 'none';
 }
-
-async function register() {
-    const username    = document.getElementById('reg-username').value.trim();
-    const displayName = document.getElementById('reg-displayname').value.trim();
-    const password    = document.getElementById('reg-password').value;
-    const errEl       = document.getElementById('auth-error');
-    errEl.textContent = '';
-    if (!username || !password) { errEl.textContent = 'Username and password required.'; return; }
-    try {
-        const res = await fetch(`${API_URL}/user`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, display_name: displayName }),
-        });
-        if (res.ok) {
-            document.getElementById('login-username').value = username;
-            document.getElementById('login-password').value = password;
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector('[data-tab="login"]').classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
-            document.getElementById('login-form').style.display = 'block';
-            await login();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            errEl.textContent = err.detail || 'Registration failed.';
-        }
-    } catch (e) { errEl.textContent = 'Network error.'; }
-}
-
-function logout() {
-    if (ws) { ws.close(); ws = null; }
-    authToken = null; currentUser = null;
-    localStorage.removeItem('baerhub-token');
-    localStorage.removeItem('baerhub-user');
-    renderNavUser();
-    showAuthPanel();
+function showChatPanel() {
+    document.getElementById('auth-panel').style.display  = 'none';
+    document.getElementById('rooms-panel').style.display = 'none';
+    document.getElementById('chat-panel').style.display  = 'block';
 }
 
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 async function loadRooms() {
     const list = document.getElementById('rooms-list');
+    if (!list) return;
     list.innerHTML = '<p class="rooms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading rooms…</p>';
     try {
-        const res = await fetch(`${API_URL}/rooms`);
+        const res   = await fetch(`${API_URL}/rooms`);
         const rooms = await res.json();
         list.innerHTML = '';
         if (!rooms.length) { list.innerHTML = '<p class="rooms-loading">No rooms yet. Create one above!</p>'; return; }
@@ -177,10 +78,10 @@ async function loadRooms() {
 }
 
 function buildRoomCard(room) {
-    const card = document.createElement('div');
+    const card    = document.createElement('div');
     card.className = 'room-card';
-    card.id = `room-card-${room.name}`;
-    const isOwner = currentUser && room.owner === currentUser.username;
+    card.id        = `room-card-${room.name}`;
+    const isOwner  = currentUser && room.owner === currentUser.username;
     const onlineHtml = room.online > 0
         ? `<span class="online-badge"><span class="online-dot"></span>${room.online} online</span>` : '';
     card.innerHTML = `
@@ -196,7 +97,7 @@ function buildRoomCard(room) {
                 <i class="fa-solid fa-arrow-right-to-bracket"></i> Join
             </button>
             ${isOwner && room.name !== 'general' ? `
-            <button class="btn btn-danger" onclick="deleteRoom('${escapeHtml(room.name)}')">
+            <button class="room-delete-btn" onclick="deleteRoom('${escapeHtml(room.name)}')" title="Delete room">
                 <i class="fa-solid fa-trash"></i>
             </button>` : ''}
         </div>`;
@@ -231,7 +132,8 @@ async function createRoom() {
             list.prepend(card);
             requestAnimationFrame(() => {
                 card.style.transition = 'opacity 0.3s ease,transform 0.3s ease';
-                card.style.opacity = '1'; card.style.transform = 'translateY(0)';
+                card.style.opacity    = '1';
+                card.style.transform  = 'translateY(0)';
             });
         } else {
             const err = await res.json().catch(() => ({}));
@@ -248,7 +150,12 @@ async function deleteRoom(name) {
         });
         if (res.ok || res.status === 204) {
             const card = document.getElementById(`room-card-${name}`);
-            if (card) { card.style.transition = 'all 0.3s ease'; card.style.opacity = '0'; card.style.transform = 'scale(0.95)'; setTimeout(() => card.remove(), 300); }
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity    = '0';
+                card.style.transform  = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
+            }
         } else {
             const err = await res.json().catch(() => ({}));
             alert(err.detail || 'Failed to delete room.');
@@ -267,9 +174,7 @@ function joinRoom(roomName) {
     const wsUrl = `ws://127.0.0.1:8000/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
     ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-        loadRoomHistory(roomName);
-    };
+    ws.onopen = () => { loadRoomHistory(roomName); };
 
     ws.onmessage = event => {
         try {
@@ -286,8 +191,8 @@ function joinRoom(roomName) {
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     };
 
-    ws.onclose  = () => { appendSystemMessage('Disconnected.'); setTimeout(leaveRoom, 1500); };
-    ws.onerror  = () => { appendSystemMessage('Connection failed.'); };
+    ws.onclose = () => { appendSystemMessage('Disconnected.'); setTimeout(leaveRoom, 1500); };
+    ws.onerror = () => { appendSystemMessage('Connection failed.'); };
 }
 
 async function loadRoomHistory(roomName) {
@@ -295,9 +200,9 @@ async function loadRoomHistory(roomName) {
         const res = await fetch(`${API_URL}/chat_logs?room=${encodeURIComponent(roomName)}`, {
             headers: { 'Authorization': `Bearer ${authToken}` },
         });
-        if (res.status === 404) return; // no history yet
+        if (res.status === 404) return;
         if (!res.ok) return;
-        const logs = await res.json();
+        const logs   = await res.json();
         const recent = logs.slice(-50);
         if (recent.length > 0) {
             appendSystemMessage(`─── last ${recent.length} messages ───`);
@@ -313,7 +218,7 @@ function sendMessage() {
     const message = input.value.trim();
     if (message && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(message);
-        appendMessage(currentUser.username, message); // optimistic
+        appendMessage(currentUser.username, message);
         input.value = '';
     }
 }
@@ -325,15 +230,13 @@ function leaveRoom() {
     loadRooms();
 }
 
-// ── Online users list ─────────────────────────────────────────────────────────
+// ── Online users ──────────────────────────────────────────────────────────────
 function updateOnlineList(users) {
     onlineUsers = users;
-    const el = document.getElementById('online-list');
+    const el      = document.getElementById('online-list');
     const countEl = document.getElementById('online-count');
     if (countEl) countEl.textContent = users.length;
-    if (el) {
-        el.innerHTML = users.map(u => `<span class="online-user">${escapeHtml(u)}</span>`).join('');
-    }
+    if (el) el.innerHTML = users.map(u => `<span class="online-user">${escapeHtml(u)}</span>`).join('');
 }
 
 // ── Message rendering ─────────────────────────────────────────────────────────
@@ -341,10 +244,8 @@ function appendMessage(sender, text, isoTimestamp = null, isHistory = false) {
     const messagesDiv = document.getElementById('messages');
     const wrapper     = document.createElement('div');
     wrapper.classList.add('msg-wrapper');
-
     const msgDiv      = document.createElement('div');
     msgDiv.classList.add('message');
-
     const now        = isoTimestamp ? new Date(isoTimestamp) : new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const timeSpan   = `<span class="msg-time">${timeString}</span>`;
@@ -377,9 +278,4 @@ function appendSystemMessage(text) {
     wrapper.appendChild(msgDiv);
     messagesDiv.appendChild(wrapper);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }

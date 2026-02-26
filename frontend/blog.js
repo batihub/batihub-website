@@ -1,13 +1,10 @@
-const API_URL = "http://127.0.0.1:8000";
-
-let authToken = localStorage.getItem('baerhub-token') || null;
-let currentUser = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
+// blog.js — BeeLog page logic
+// Auth (login/logout/register/renderNavUser/initTheme) is handled by auth.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    renderNavUser();
     fetchTweets();
 
+    // Char counter
     const contentInput = document.getElementById('post-content');
     const charCountEl  = document.getElementById('char-count');
     if (contentInput && charCountEl) {
@@ -18,11 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Scroll to top button
     window.addEventListener('scroll', () => {
         const btn = document.getElementById('scroll-top-btn');
         if (btn) btn.classList.toggle('visible', window.scrollY > 400);
     });
 
+    // Composer toggle
     const composerToggle = document.getElementById('composer-toggle');
     const composerBody   = document.getElementById('composer-body');
     if (composerToggle && composerBody) {
@@ -32,168 +31,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Modal backdrop close
     window.addEventListener('click', e => {
-        if (e.target === document.getElementById('login-modal'))  closeLoginModal();
         if (e.target === document.getElementById('edit-modal'))   closeEditModal();
         if (e.target === document.getElementById('delete-modal')) closeDeleteModal();
     });
 
-    document.getElementById('login-password')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
-    document.getElementById('reg-password')?.addEventListener('keypress',   e => { if (e.key === 'Enter') register(); });
-    document.getElementById('post-content')?.addEventListener('keydown',    e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) createPost(); });
-
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
-            document.getElementById(`${tab.dataset.tab}-form`).style.display = 'block';
-        });
+    // Keyboard shortcuts
+    document.getElementById('post-content')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) createPost();
     });
+
+    // Show/hide composer based on login state
+    _updateComposerVisibility();
 });
 
-// ── Theme ─────────────────────────────────────────────────────────────────────
-function initTheme() {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    const icon = btn.querySelector('i');
-    if (document.documentElement.getAttribute('data-theme') === 'dark') icon.classList.replace('fa-moon', 'fa-sun');
-    btn.addEventListener('click', () => {
-        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (dark) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('baerhub-theme', 'light'); icon.classList.replace('fa-sun', 'fa-moon'); }
-        else      { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('baerhub-theme', 'dark'); icon.classList.replace('fa-moon', 'fa-sun'); }
-    });
-}
+// Listen for auth events from auth.js
+document.addEventListener('auth:login',      () => { _updateComposerVisibility(); fetchTweets(); });
+document.addEventListener('auth:logout',     () => { _updateComposerVisibility(); fetchTweets(); });
+document.addEventListener('auth:navRendered',() => { _updateComposerVisibility(); });
 
-// ── Nav user pill ─────────────────────────────────────────────────────────────
-function renderNavUser() {
-    const slot = document.getElementById('nav-user-slot');
-    if (!slot) return;
-
-    if (authToken && currentUser) {
-        const letter = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
-        slot.innerHTML = `
-            <div class="nav-user-pill" id="user-pill" onclick="toggleUserMenu(event)">
-                <span class="nav-avatar">${letter}</span>
-                <span class="nav-username">@${escapeHtml(currentUser.username)}</span>
-                <i class="fa-solid fa-chevron-down toggle-icon" style="font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s"></i>
-            </div>
-            <div class="user-dropdown" id="user-dropdown">
-                <div class="dropdown-info">
-                    <span class="dropdown-display">${escapeHtml(currentUser.display_name || currentUser.username)}</span>
-                    <span class="dropdown-handle">@${escapeHtml(currentUser.username)}</span>
-                </div>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item danger" onclick="logout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
-                </button>
-            </div>`;
-    } else {
-        slot.innerHTML = `<button class="btn btn-primary nav-login-btn" onclick="openLoginModal()"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>`;
-    }
-
+function _updateComposerVisibility() {
     const postSection = document.getElementById('post-section');
     if (postSection) postSection.style.display = (authToken && currentUser) ? 'block' : 'none';
-}
-
-function toggleUserMenu(e) {
-    e.stopPropagation();
-    const dropdown = document.getElementById('user-dropdown');
-    const pill = document.getElementById('user-pill');
-    if (!dropdown) return;
-    const open = dropdown.classList.toggle('open');
-    pill.querySelector('.toggle-icon').style.transform = open ? 'rotate(180deg)' : '';
-    if (open) {
-        setTimeout(() => { document.addEventListener('click', closeDropdown, { once: true }); }, 0);
-    }
-}
-
-function closeDropdown() {
-    const dropdown = document.getElementById('user-dropdown');
-    const pill = document.getElementById('user-pill');
-    if (dropdown) dropdown.classList.remove('open');
-    if (pill) { const icon = pill.querySelector('.toggle-icon'); if (icon) icon.style.transform = ''; }
-}
-
-// ── Login Modal ───────────────────────────────────────────────────────────────
-function openLoginModal() {
-    document.getElementById('login-modal').style.display = 'flex';
-    setTimeout(() => document.getElementById('login-username')?.focus(), 50);
-}
-function closeLoginModal() {
-    document.getElementById('login-modal').style.display = 'none';
-}
-
-async function login() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl    = document.getElementById('login-error');
-    errEl.textContent = '';
-    if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
-
-    const form = new URLSearchParams();
-    form.append('username', username);
-    form.append('password', password);
-
-    try {
-        const res = await fetch(`${API_URL}/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: form,
-        });
-        if (res.ok) {
-            const data = await res.json();
-            authToken   = data.access_token;
-            currentUser = { username };
-            localStorage.setItem('baerhub-token', authToken);
-            localStorage.setItem('baerhub-user',  JSON.stringify(currentUser));
-            closeLoginModal();
-            renderNavUser();
-            fetchTweets();
-            showToast(`Welcome back, ${username}!`);
-        } else {
-            errEl.textContent = 'Incorrect username or password.';
-        }
-    } catch (e) { errEl.textContent = 'Network error. Is the backend running?'; }
-}
-
-async function register() {
-    const username    = document.getElementById('reg-username').value.trim();
-    const displayName = document.getElementById('reg-displayname').value.trim();
-    const password    = document.getElementById('reg-password').value;
-    const errEl       = document.getElementById('reg-error');
-    errEl.textContent = '';
-    if (!username || !password) { errEl.textContent = 'Username and password required.'; return; }
-
-    try {
-        const res = await fetch(`${API_URL}/user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, display_name: displayName }),
-        });
-        if (res.ok) {
-            document.getElementById('login-username').value = username;
-            document.getElementById('login-password').value = password;
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector('[data-tab="login"]').classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
-            document.getElementById('login-form').style.display = 'block';
-            await login();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            errEl.textContent = err.detail || 'Registration failed.';
-        }
-    } catch (e) { errEl.textContent = 'Network error.'; }
-}
-
-function logout() {
-    authToken   = null;
-    currentUser = null;
-    localStorage.removeItem('baerhub-token');
-    localStorage.removeItem('baerhub-user');
-    renderNavUser();
-    fetchTweets();
-    showToast('Logged out.');
 }
 
 // ── Tweet CRUD ────────────────────────────────────────────────────────────────
@@ -296,7 +156,7 @@ function buildTweetCard(tweet) {
     return card;
 }
 
-// ── Like — pure in-place DOM update, NO page reload or scroll ─────────────────
+// ── Like ──────────────────────────────────────────────────────────────────────
 async function toggleLike(btn) {
     if (!authToken) return showToast('Log in to like tweets.', 'error');
     const tweetId = parseInt(btn.dataset.tweetId);
@@ -304,7 +164,6 @@ async function toggleLike(btn) {
     const icon    = btn.querySelector('i');
     const countEl = btn.querySelector('.like-count');
 
-    // Optimistic update
     btn.disabled = true;
     const newLiked = !isLiked;
     const newCount = parseInt(countEl.textContent) + (newLiked ? 1 : -1);
@@ -320,7 +179,6 @@ async function toggleLike(btn) {
         });
         if (!res.ok && res.status !== 204) throw new Error();
     } catch {
-        // Rollback
         countEl.textContent  = parseInt(countEl.textContent) + (newLiked ? -1 : 1);
         icon.className       = `${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`;
         btn.classList.toggle('is-liked', isLiked);
@@ -337,12 +195,19 @@ function closeDeleteModal() { document.getElementById('delete-modal').style.disp
 async function confirmDelete() {
     if (!postToDeleteId) return;
     try {
-        const res = await fetch(`${API_URL}/tweets/${postToDeleteId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } });
+        const res = await fetch(`${API_URL}/tweets/${postToDeleteId}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` }
+        });
         if (res.ok || res.status === 204) {
             showToast('Tweet deleted.');
             closeDeleteModal();
             const card = document.getElementById(`post-card-${postToDeleteId}`);
-            if (card) { card.style.transition = 'all 0.3s ease'; card.style.opacity = '0'; card.style.transform = 'scale(0.95)'; setTimeout(() => card.remove(), 300); }
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity    = '0';
+                card.style.transform  = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
+            }
         } else { showToast('Failed to delete.', 'error'); closeDeleteModal(); }
     } catch (e) { showToast('Error.', 'error'); closeDeleteModal(); }
 }
@@ -374,17 +239,16 @@ function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast     = document.createElement('div');
     toast.className = `toast ${type}`;
-    const icon = type === 'success' ? '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>' : '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
+    const icon = type === 'success'
+        ? '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>'
+        : '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
     toast.innerHTML = `${icon} <span>${message}</span>`;
     container.appendChild(toast);
-    setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // ── Scroll to top ─────────────────────────────────────────────────────────────
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-// ── Utils ─────────────────────────────────────────────────────────────────────
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}

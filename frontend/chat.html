@@ -37,29 +37,8 @@
 
         <div class="chat-container">
 
-            <!-- ══ AUTH PANEL ═══════════════════════════════════════════ -->
-            <div id="auth-panel" class="panel" style="display:none">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" data-tab="login"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>
-                    <button class="auth-tab" data-tab="register"><i class="fa-solid fa-user-plus"></i> Register</button>
-                </div>
-
-                <div id="login-form" class="auth-form" style="margin-top:28px">
-                    <h2 style="margin:0 0 24px 0;text-align:center">Join the Chat</h2>
-                    <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="your_username"></div>
-                    <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
-                    <div id="auth-error" class="error-msg"></div>
-                    <button class="btn btn-primary btn-block" onclick="login()">Enter <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-
-                <div id="register-form" class="auth-form" style="display:none;margin-top:28px">
-                    <h2 style="margin:0 0 24px 0;text-align:center">Create Account</h2>
-                    <div class="form-group"><label>Username <span style="color:var(--danger)">*</span></label><input type="text" id="reg-username" placeholder="unique_handle" maxlength="50"></div>
-                    <div class="form-group"><label>Display Name</label><input type="text" id="reg-displayname" placeholder="Your Name (optional)"></div>
-                    <div class="form-group"><label>Password <span style="color:var(--danger)">*</span></label><input type="password" id="reg-password" placeholder="••••••••"></div>
-                    <button class="btn btn-primary btn-block" onclick="register()">Create & Enter <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-            </div>
+            <!-- ══ AUTH PANEL (handled by auth.js global modal) ══ -->
+            <div id="auth-panel" class="panel" style="display:none"></div>
 
             <!-- ══ ROOMS PANEL ══════════════════════════════════════════ -->
             <div id="rooms-panel" class="panel" style="display:none">
@@ -110,6 +89,7 @@
     </div>
 </main>
 
+<script src="auth.js"></script>
 <script src="chat.js"></script>
 </body>
 </html>

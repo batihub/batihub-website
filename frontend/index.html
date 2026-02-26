@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <script src="auth.js"></script>
     <script>
         const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
         if (savedTheme === 'dark') {
@@ -248,6 +249,41 @@
             line-height: 1.6;
             margin: 0;
         }
+
+        /* ── Nav user pill (from auth.js) ── */
+        .nav-user-pill { display:flex; align-items:center; gap:7px; background:rgba(255,255,255,0.08); border:1px solid var(--nav-border); border-radius:24px; padding:4px 12px 4px 4px; cursor:pointer; transition:all 0.2s; user-select:none; }
+        .nav-user-pill:hover { border-color:var(--accent); }
+        .nav-avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+        .nav-username { font-size:0.85rem; font-weight:600; color:var(--text-main); }
+        .user-dropdown { position:absolute; top:calc(100% + 8px); right:0; min-width:180px; background:var(--card-bg); border:1px solid var(--nav-border); border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,0.15); padding:8px; z-index:2000; opacity:0; pointer-events:none; transform:translateY(-6px); transition:all 0.2s cubic-bezier(0.16,1,0.3,1); }
+        .user-dropdown.open { opacity:1; pointer-events:all; transform:translateY(0); }
+        .dropdown-info { padding:8px 10px 10px; }
+        .dropdown-display { display:block; font-weight:700; font-size:0.9rem; color:var(--text-main); }
+        .dropdown-handle { display:block; font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+        .dropdown-divider { height:1px; background:var(--nav-border); margin:4px 0; }
+        .dropdown-item { display:flex; align-items:center; gap:8px; width:100%; padding:9px 10px; background:none; border:none; border-radius:8px; font-family:inherit; font-size:0.88rem; font-weight:500; cursor:pointer; color:var(--text-muted); transition:all 0.15s; text-align:left; }
+        .dropdown-item:hover { background:var(--input-bg,#f8fafc); color:var(--text-main); }
+        .dropdown-item.danger:hover { background:rgba(239,68,68,0.08); color:#ef4444; }
+        .btn { padding:10px 20px; border:none; border-radius:12px; cursor:pointer; font-weight:600; font-family:inherit; font-size:0.9rem; color:white; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
+        .btn-primary { background-color:var(--accent); }
+        .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+        .nav-login-btn { padding:8px 16px; font-size:0.85rem; border-radius:20px; }
+        /* Modal (from auth.js) */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; }
+        .modal-content { background:var(--card-bg); border-radius:20px; padding:32px; width:90%; max-width:460px; box-shadow:0 24px 60px rgba(0,0,0,0.2); }
+        .auth-tabs { display:flex; gap:4px; background:var(--input-bg,#f8fafc); padding:4px; border-radius:12px; width:fit-content; }
+        .auth-tab { background:transparent; border:none; padding:8px 20px; border-radius:9px; font-family:inherit; font-size:0.9rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
+        .auth-tab.active { background:var(--card-bg); color:var(--text-main); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .auth-form .form-group { margin-bottom:20px; }
+        .auth-form label { display:block; margin-bottom:8px; font-size:0.9rem; font-weight:600; color:var(--text-main); }
+        .auth-form input[type=text], .auth-form input[type=password] { width:100%; padding:12px 14px; border:1px solid var(--input-border,#e2e8f0); border-radius:10px; box-sizing:border-box; background:var(--input-bg,#f8fafc); color:var(--text-main); font-size:0.95rem; font-family:inherit; }
+        .auth-form input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        .form-error { color:#ef4444; font-size:0.85rem; min-height:18px; margin-bottom:8px; }
+        .button-group { display:flex; gap:10px; }
+        .modal-actions { justify-content:flex-end; margin-top:8px; }
+        .btn-secondary { background:var(--input-border,#e2e8f0); color:var(--text-main); }
+        .input-group { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .text-danger { color:#ef4444; }
     </style>
 </head>
 <body>
@@ -266,6 +302,7 @@
                     <i class="fa-solid fa-moon"></i>
                 </button>
 
+                <div id="nav-user-slot" style="position:relative"></div>
                 <a href="https://github.com/batihub" target="_blank" class="github-link"><i class="fa-brands fa-github"></i> GitHub</a>
             </div>
         </div>
