@@ -438,159 +438,131 @@ input[type="checkbox"] {
     margin: 0 auto 20px auto;
     box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.05);
 }
-/* ── Auth Tabs ────────────────────────────────────────────────────────── */
+/* ── Auth Tabs ──────────────────────────────────────────────────────── */
 .auth-tabs {
-    display: flex;
-    gap: 4px;
-    background: var(--input-bg);
-    padding: 4px;
-    border-radius: 12px;
-    width: fit-content;
+    display: flex; gap: 4px; background: var(--input-bg);
+    padding: 4px; border-radius: 12px; width: fit-content;
 }
-
 .auth-tab {
-    background: transparent;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 9px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    background: transparent; border: none; padding: 8px 20px; border-radius: 9px;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
 }
+.auth-tab.active { background: var(--card-bg); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.auth-tab:hover:not(.active) { color: var(--text-main); }
 
-.auth-tab.active {
-    background: var(--card-bg);
-    color: var(--text-main);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.auth-tab:hover:not(.active) {
-    color: var(--text-main);
-}
-
-/* ── Tweet Card Extras ────────────────────────────────────────────────── */
-.author-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.avatar-circle {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.display-name {
-    font-weight: 700;
-    font-size: 0.95rem;
-    display: block;
-    color: var(--text-main);
-}
-
-.username-handle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.edited-badge {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    background: var(--input-bg);
-    padding: 2px 7px;
-    border-radius: 8px;
-    border: 1px solid var(--input-border);
-    margin-left: 4px;
-}
-
-/* Tweet action row */
-.tweet-stats {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-.stat-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: all 0.15s;
-    font-family: inherit;
-    font-weight: 500;
-}
-
-.stat-btn:hover:not(:disabled) {
-    background: var(--input-bg);
-    color: var(--danger);
-}
-
-.stat-btn.is-liked {
-    color: var(--danger);
-}
-
-.stat-btn.is-liked i {
-    animation: heartPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.stat-btn:disabled {
-    cursor: default;
-    opacity: 0.6;
-}
-
-.action-btns {
-    display: flex;
-    gap: 8px;
-}
-
-@keyframes heartPop {
-    0%  { transform: scale(1); }
-    50% { transform: scale(1.35); }
-    100%{ transform: scale(1); }
-}
-
-/* Override post-actions for tweet layout */
-.post-actions {
-    justify-content: space-between !important;
-    align-items: center;
-}
+.form-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 12px; min-height: 18px; }
 
 input[type="password"] {
-    width: 100%;
-    padding: 14px 16px;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
-    border: 1px solid var(--input-border);
-    border-radius: 12px;
-    box-sizing: border-box;
-    transition: all 0.2s;
-    background-color: var(--input-bg);
-    color: var(--text-main);
+    width: 100%; padding: 14px 16px; font-size: 1rem; font-family: 'Inter', sans-serif;
+    border: 1px solid var(--input-border); border-radius: 12px; box-sizing: border-box;
+    transition: all 0.2s; background-color: var(--input-bg); color: var(--text-main);
 }
-
 input[type="password"]:focus {
-    outline: none;
-    border-color: var(--accent);
-    background-color: var(--card-bg);
+    outline: none; border-color: var(--accent); background-color: var(--card-bg);
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
+
+/* ── Nav User Pill ──────────────────────────────────────────────────── */
+.nav-user-pill {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--input-bg); border: 1px solid var(--input-border);
+    border-radius: 24px; padding: 4px 12px 4px 4px;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.nav-user-pill:hover { border-color: var(--accent); }
+
+.nav-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+}
+.nav-username { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+.nav-login-btn { padding: 8px 16px !important; font-size: 0.85rem !important; }
+
+/* Dropdown */
+.user-dropdown {
+    position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
+    background: var(--card-bg); border: 1px solid var(--nav-border);
+    border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    padding: 8px; z-index: 2000; opacity: 0; pointer-events: none;
+    transform: translateY(-6px); transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.user-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+.dropdown-info { padding: 8px 10px 10px; }
+.dropdown-display { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+.dropdown-handle  { display: block; font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+.dropdown-divider { height: 1px; background: var(--nav-border); margin: 4px 0; }
+.dropdown-item {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px;
+    background: none; border: none; border-radius: 8px; font-family: inherit;
+    font-size: 0.88rem; font-weight: 500; cursor: pointer; color: var(--text-muted);
+    transition: all 0.15s; text-align: left;
+}
+.dropdown-item:hover { background: var(--input-bg); color: var(--text-main); }
+.dropdown-item.danger:hover { background: rgba(239,68,68,0.08); color: var(--danger); }
+
+/* ── Composer Card ──────────────────────────────────────────────────── */
+.composer-card { padding: 0 !important; overflow: hidden; }
+.composer-header {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px; background: none; border: none; cursor: pointer;
+    font-family: inherit; color: var(--text-main);
+    transition: background 0.15s;
+}
+.composer-header:hover { background: var(--input-bg); }
+.composer-header-left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem; }
+.char-pill {
+    background: var(--input-bg); border: 1px solid var(--input-border);
+    border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 500;
+    color: var(--text-muted); transition: all 0.2s;
+}
+.composer-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), padding 0.25s;
+    padding: 0 28px;
+}
+.composer-body.open { max-height: 300px; padding: 4px 28px 24px; }
+.composer-body textarea { resize: none; }
+
+/* ── Tweet Card Extras ──────────────────────────────────────────────── */
+.author-info { display: flex; align-items: center; gap: 10px; }
+.avatar-circle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.display-name  { font-weight: 700; font-size: 0.95rem; display: block; color: var(--text-main); }
+.username-handle { font-size: 0.8rem; color: var(--text-muted); }
+.edited-badge {
+    font-size: 0.72rem; color: var(--text-muted); background: var(--input-bg);
+    padding: 2px 7px; border-radius: 8px; border: 1px solid var(--input-border); margin-left: 4px;
+}
+.tweet-stats { display: flex; gap: 16px; align-items: center; }
+.stat-btn {
+    background: none; border: none; cursor: pointer; display: inline-flex; align-items: center;
+    gap: 5px; font-size: 0.9rem; color: var(--text-muted); padding: 4px 8px; border-radius: 8px;
+    transition: all 0.15s; font-family: inherit; font-weight: 500;
+}
+.stat-btn:hover:not(:disabled) { background: var(--input-bg); color: var(--danger); }
+.stat-btn.is-liked { color: var(--danger); }
+.stat-btn.is-liked i { animation: heartPop 0.3s cubic-bezier(0.16,1,0.3,1); }
+.stat-btn:disabled { cursor: default; opacity: 0.6; }
+.action-btns { display: flex; gap: 8px; }
+.post-actions { justify-content: space-between !important; align-items: center; }
+@keyframes heartPop { 0%{transform:scale(1)} 50%{transform:scale(1.4)} 100%{transform:scale(1)} }
+
+/* ── Scroll to top ──────────────────────────────────────────────────── */
+.scroll-top-btn {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--accent); color: #fff; font-size: 1rem;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transform: translateY(12px);
+    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.scroll-top-btn.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
+.scroll-top-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }

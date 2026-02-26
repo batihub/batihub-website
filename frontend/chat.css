@@ -208,59 +208,58 @@ input[type="text"]:focus {
 .input-area input { flex-grow: 1; }
 
 .error-msg { color: #ef4444; margin-top: 16px; font-size: 0.9rem; text-align: center; font-weight: 500; }
-/* ── Auth Tabs ────────────────────────────────────────────────────────── */
-.auth-tabs {
-    display: flex;
-    gap: 4px;
-    background: var(--input-bg);
-    padding: 4px;
-    border-radius: 12px;
-    width: fit-content;
-}
+/* ── Auth Tabs ──────────────────────────────────────────────────────── */
+.auth-tabs { display:flex; gap:4px; background:var(--input-bg); padding:4px; border-radius:12px; width:fit-content; }
+.auth-tab { background:transparent; border:none; padding:8px 20px; border-radius:9px; font-family:inherit; font-size:0.9rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
+.auth-tab.active { background:var(--card-bg); color:var(--text-main); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+.auth-tab:hover:not(.active) { color:var(--text-main); }
 
-.auth-tab {
-    background: transparent;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 9px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.auth-tab.active {
-    background: var(--card-bg);
-    color: var(--text-main);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.auth-tab:hover:not(.active) {
-    color: var(--text-main);
-}
-
-/* Password input inherits same style as text */
 input[type="password"] {
-    width: 100%;
-    padding: 14px 16px;
-    border: 1px solid var(--input-border);
-    border-radius: 12px;
-    box-sizing: border-box;
-    background-color: var(--input-bg);
-    color: var(--text-main);
-    transition: all 0.2s;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
+    width:100%; padding:14px 16px; border:1px solid var(--input-border); border-radius:12px;
+    box-sizing:border-box; background-color:var(--input-bg); color:var(--text-main);
+    transition:all 0.2s; font-size:1rem; font-family:'Inter',sans-serif;
 }
+input[type="password"]:focus { outline:none; border-color:var(--accent); background-color:var(--card-bg); box-shadow:0 0 0 4px rgba(99,102,241,0.15); }
 
-input[type="password"]:focus {
-    outline: none;
-    border-color: var(--accent);
-    background-color: var(--card-bg);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-}
+/* ── Nav User Pill ──────────────────────────────────────────────────── */
+.nav-user-pill { display:flex; align-items:center; gap:7px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:24px; padding:4px 12px 4px 4px; cursor:pointer; transition:all 0.2s; user-select:none; }
+.nav-user-pill:hover { border-color:var(--accent); }
+.nav-avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+.nav-username { font-size:0.85rem; font-weight:600; color:var(--text-main); }
+.user-dropdown { position:absolute; top:calc(100% + 8px); right:0; min-width:180px; background:var(--card-bg); border:1px solid var(--nav-border); border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,0.15); padding:8px; z-index:2000; opacity:0; pointer-events:none; transform:translateY(-6px); transition:all 0.2s cubic-bezier(0.16,1,0.3,1); }
+.user-dropdown.open { opacity:1; pointer-events:all; transform:translateY(0); }
+.dropdown-info { padding:8px 10px 10px; }
+.dropdown-display { display:block; font-weight:700; font-size:0.9rem; color:var(--text-main); }
+.dropdown-handle  { display:block; font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+.dropdown-divider { height:1px; background:var(--nav-border); margin:4px 0; }
+.dropdown-item { display:flex; align-items:center; gap:8px; width:100%; padding:9px 10px; background:none; border:none; border-radius:8px; font-family:inherit; font-size:0.88rem; font-weight:500; cursor:pointer; color:var(--text-muted); transition:all 0.15s; text-align:left; }
+.dropdown-item:hover { background:var(--input-bg); color:var(--text-main); }
+.dropdown-item.danger:hover { background:rgba(239,68,68,0.08); color:var(--danger); }
+
+/* ── Rooms Panel ────────────────────────────────────────────────────── */
+.rooms-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.rooms-header h2 { font-size:1.3rem; font-weight:800; letter-spacing:-0.5px; }
+
+.create-room-bar { display:flex; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+.create-room-bar input { padding:10px 14px; }
+.room-error { color:var(--danger); font-size:0.82rem; min-height:18px; margin-bottom:12px; }
+
+.rooms-list { display:flex; flex-direction:column; gap:10px; }
+.rooms-loading { text-align:center; color:var(--text-muted); font-size:0.9rem; padding:24px 0; }
+.error-text { color:var(--danger) !important; }
+
+.room-card { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border:1px solid var(--input-border); border-radius:14px; background:var(--card-bg); transition:all 0.2s; gap:12px; }
+.room-card:hover { border-color:var(--accent); box-shadow:0 4px 16px -4px rgba(99,102,241,0.12); }
+.room-card-main { display:flex; align-items:center; gap:14px; cursor:pointer; flex:1; min-width:0; }
+.room-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; flex-shrink:0; }
+.room-info { min-width:0; }
+.room-name { font-weight:700; font-size:0.95rem; color:var(--text-main); }
+.room-desc { font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:8px; margin-top:2px; }
+.room-actions { display:flex; gap:8px; flex-shrink:0; }
+.online-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(16,185,129,0.1); color:#10b981; padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:600; }
+.online-dot { width:6px; height:6px; background:#10b981; border-radius:50%; }
+
+/* ── Chat header extras ─────────────────────────────────────────────── */
+.online-count-badge { background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px; padding:2px 10px; font-size:0.75rem; font-weight:600; color:var(--text-muted); }
+.online-strip { display:flex; flex-wrap:wrap; gap:6px; padding:0 0 12px 0; min-height:0; }
+.online-user { background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); color:var(--accent); border-radius:20px; padding:2px 10px; font-size:0.75rem; font-weight:600; }

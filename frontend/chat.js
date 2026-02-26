@@ -1,244 +1,363 @@
 const API_URL = "http://127.0.0.1:8000";
-let ws = null;
-let currentUsername = "";
-let authToken = null;
+
+// Shared auth from localStorage — no re-login needed
+let authToken   = localStorage.getItem('baerhub-token') || null;
+let currentUser = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
+
+let ws              = null;
+let currentRoom     = null;
+let onlineUsers     = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Theme toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        const icon = themeToggle.querySelector('i');
-        if (document.documentElement.getAttribute('data-theme') === 'dark') {
-            icon.classList.replace('fa-moon', 'fa-sun');
-        }
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            if (isDark) {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('baerhub-theme', 'light');
-                icon.classList.replace('fa-sun', 'fa-moon');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('baerhub-theme', 'dark');
-                icon.classList.replace('fa-moon', 'fa-sun');
-            }
-        });
+    initTheme();
+    renderNavUser();
+
+    if (authToken && currentUser) {
+        showRoomsPanel();
+        loadRooms();
+    } else {
+        showAuthPanel();
     }
 
-    // Enter key on password / username
-    document.getElementById('password')?.addEventListener('keypress', e => {
-        if (e.key === 'Enter') connectWebSocket();
-    });
-    document.getElementById('username')?.addEventListener('keypress', e => {
-        if (e.key === 'Enter') connectWebSocket();
-    });
+    document.getElementById('login-password')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+    document.getElementById('reg-password')?.addEventListener('keypress',   e => { if (e.key === 'Enter') register(); });
+    document.getElementById('message-input')?.addEventListener('keypress',  e => { if (e.key === 'Enter') sendMessage(); });
+    document.getElementById('room-name-input')?.addEventListener('keypress',e => { if (e.key === 'Enter') createRoom(); });
 
-    // Auth tab switching
     document.querySelectorAll('.auth-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            const target = tab.dataset.tab;
             document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
-            document.getElementById(`${target}-form`).style.display = 'block';
-            document.getElementById('connection-error').textContent = '';
+            document.getElementById(`${tab.dataset.tab}-form`).style.display = 'block';
+            document.getElementById('auth-error').textContent = '';
         });
     });
 });
 
-// ── Register ──────────────────────────────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function initTheme() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const icon = btn.querySelector('i');
+    if (document.documentElement.getAttribute('data-theme') === 'dark') icon.classList.replace('fa-moon', 'fa-sun');
+    btn.addEventListener('click', () => {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (dark) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('baerhub-theme','light'); icon.classList.replace('fa-sun','fa-moon'); }
+        else      { document.documentElement.setAttribute('data-theme','dark'); localStorage.setItem('baerhub-theme','dark'); icon.classList.replace('fa-moon','fa-sun'); }
+    });
+}
 
-async function registerAndJoin() {
-    const username = document.getElementById('reg-username').value.trim();
-    const displayName = document.getElementById('reg-displayname').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const errorDiv = document.getElementById('connection-error');
-
-    if (!username || !password) {
-        errorDiv.textContent = 'Username and password are required.';
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, display_name: displayName }),
-        });
-
-        if (res.ok) {
-            // Auto-login after register
-            await _doLogin(username, password, errorDiv);
-        } else {
-            const err = await res.json().catch(() => ({}));
-            errorDiv.textContent = err.detail || 'Registration failed.';
-        }
-    } catch (e) {
-        errorDiv.textContent = 'Network error. Is the backend running?';
+// ── Nav user pill ─────────────────────────────────────────────────────────────
+function renderNavUser() {
+    const slot = document.getElementById('nav-user-slot');
+    if (!slot) return;
+    if (authToken && currentUser) {
+        const letter = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
+        slot.innerHTML = `
+            <div class="nav-user-pill" id="user-pill" onclick="toggleUserMenu(event)">
+                <span class="nav-avatar">${letter}</span>
+                <span class="nav-username">@${escapeHtml(currentUser.username)}</span>
+                <i class="fa-solid fa-chevron-down toggle-icon" style="font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s"></i>
+            </div>
+            <div class="user-dropdown" id="user-dropdown">
+                <div class="dropdown-info">
+                    <span class="dropdown-display">${escapeHtml(currentUser.display_name || currentUser.username)}</span>
+                    <span class="dropdown-handle">@${escapeHtml(currentUser.username)}</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item danger" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </div>`;
+    } else {
+        slot.innerHTML = '';
     }
 }
 
-// ── Login + Connect ───────────────────────────────────────────────────────────
-
-async function connectWebSocket() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('connection-error');
-
-    if (!username || !password) {
-        errorDiv.textContent = 'Please enter your username and password.';
-        return;
-    }
-
-    await _doLogin(username, password, errorDiv);
+function toggleUserMenu(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('user-dropdown');
+    const pill     = document.getElementById('user-pill');
+    if (!dropdown) return;
+    const open = dropdown.classList.toggle('open');
+    pill.querySelector('.toggle-icon').style.transform = open ? 'rotate(180deg)' : '';
+    if (open) setTimeout(() => { document.addEventListener('click', closeDropdown, { once: true }); }, 0);
+}
+function closeDropdown() {
+    const d = document.getElementById('user-dropdown');
+    const p = document.getElementById('user-pill');
+    if (d) d.classList.remove('open');
+    if (p) { const i = p.querySelector('.toggle-icon'); if (i) i.style.transform = ''; }
 }
 
-async function _doLogin(username, password, errorDiv) {
+// ── Panel visibility helpers ──────────────────────────────────────────────────
+function showAuthPanel()  { document.getElementById('auth-panel').style.display  = 'block'; document.getElementById('rooms-panel').style.display = 'none'; document.getElementById('chat-panel').style.display = 'none'; }
+function showRoomsPanel() { document.getElementById('auth-panel').style.display  = 'none';  document.getElementById('rooms-panel').style.display = 'block'; document.getElementById('chat-panel').style.display = 'none'; }
+function showChatPanel()  { document.getElementById('auth-panel').style.display  = 'none';  document.getElementById('rooms-panel').style.display = 'none'; document.getElementById('chat-panel').style.display = 'block'; }
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function login() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl    = document.getElementById('auth-error');
+    errEl.textContent = '';
+    if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
+
     const form = new URLSearchParams();
     form.append('username', username);
     form.append('password', password);
 
     try {
         const res = await fetch(`${API_URL}/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: form,
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form,
         });
+        if (res.ok) {
+            const data = await res.json();
+            authToken   = data.access_token;
+            currentUser = { username };
+            localStorage.setItem('baerhub-token', authToken);
+            localStorage.setItem('baerhub-user',  JSON.stringify(currentUser));
+            renderNavUser();
+            showRoomsPanel();
+            loadRooms();
+        } else { errEl.textContent = 'Incorrect username or password.'; }
+    } catch (e) { errEl.textContent = 'Network error. Is the backend running?'; }
+}
 
-        if (!res.ok) {
-            errorDiv.textContent = 'Incorrect username or password.';
-            return;
+async function register() {
+    const username    = document.getElementById('reg-username').value.trim();
+    const displayName = document.getElementById('reg-displayname').value.trim();
+    const password    = document.getElementById('reg-password').value;
+    const errEl       = document.getElementById('auth-error');
+    errEl.textContent = '';
+    if (!username || !password) { errEl.textContent = 'Username and password required.'; return; }
+    try {
+        const res = await fetch(`${API_URL}/user`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, display_name: displayName }),
+        });
+        if (res.ok) {
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = password;
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-tab="login"]').classList.add('active');
+            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
+            document.getElementById('login-form').style.display = 'block';
+            await login();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            errEl.textContent = err.detail || 'Registration failed.';
         }
+    } catch (e) { errEl.textContent = 'Network error.'; }
+}
 
-        const data = await res.json();
-        authToken = data.access_token;
-        currentUsername = username;
-        errorDiv.textContent = '';
+function logout() {
+    if (ws) { ws.close(); ws = null; }
+    authToken = null; currentUser = null;
+    localStorage.removeItem('baerhub-token');
+    localStorage.removeItem('baerhub-user');
+    renderNavUser();
+    showAuthPanel();
+}
 
-        _openWebSocket();
+// ── Rooms ─────────────────────────────────────────────────────────────────────
+async function loadRooms() {
+    const list = document.getElementById('rooms-list');
+    list.innerHTML = '<p class="rooms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading rooms…</p>';
+    try {
+        const res = await fetch(`${API_URL}/rooms`);
+        const rooms = await res.json();
+        list.innerHTML = '';
+        if (!rooms.length) { list.innerHTML = '<p class="rooms-loading">No rooms yet. Create one above!</p>'; return; }
+        rooms.forEach(room => list.appendChild(buildRoomCard(room)));
     } catch (e) {
-        errorDiv.textContent = 'Network error. Is the backend running?';
+        list.innerHTML = '<p class="rooms-loading error-text">Could not load rooms. Is the API running?</p>';
     }
 }
 
-function _openWebSocket() {
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat?token=${encodeURIComponent(authToken)}`;
+function buildRoomCard(room) {
+    const card = document.createElement('div');
+    card.className = 'room-card';
+    card.id = `room-card-${room.name}`;
+    const isOwner = currentUser && room.owner === currentUser.username;
+    const onlineHtml = room.online > 0
+        ? `<span class="online-badge"><span class="online-dot"></span>${room.online} online</span>` : '';
+    card.innerHTML = `
+        <div class="room-card-main" onclick="joinRoom('${escapeHtml(room.name)}')">
+            <div class="room-icon">#</div>
+            <div class="room-info">
+                <div class="room-name">${escapeHtml(room.name)}</div>
+                <div class="room-desc">${escapeHtml(room.description || 'No description')} ${onlineHtml}</div>
+            </div>
+        </div>
+        <div class="room-actions">
+            <button class="btn btn-primary btn-sm" onclick="joinRoom('${escapeHtml(room.name)}')">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Join
+            </button>
+            ${isOwner && room.name !== 'general' ? `
+            <button class="btn btn-danger" onclick="deleteRoom('${escapeHtml(room.name)}')">
+                <i class="fa-solid fa-trash"></i>
+            </button>` : ''}
+        </div>`;
+    return card;
+}
+
+async function createRoom() {
+    const nameInput = document.getElementById('room-name-input');
+    const descInput = document.getElementById('room-desc-input');
+    const errEl     = document.getElementById('room-create-error');
+    const name      = nameInput.value.trim();
+    const desc      = descInput?.value.trim() || '';
+    errEl.textContent = '';
+
+    if (!name) { errEl.textContent = 'Room name is required.'; return; }
+
+    try {
+        const res = await fetch(`${API_URL}/rooms`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ name, description: desc }),
+        });
+        if (res.ok || res.status === 201) {
+            const room = await res.json();
+            nameInput.value = '';
+            if (descInput) descInput.value = '';
+            const list = document.getElementById('rooms-list');
+            const placeholder = list.querySelector('.rooms-loading');
+            if (placeholder) placeholder.remove();
+            const card = buildRoomCard(room);
+            card.style.cssText = 'opacity:0;transform:translateY(-8px)';
+            list.prepend(card);
+            requestAnimationFrame(() => {
+                card.style.transition = 'opacity 0.3s ease,transform 0.3s ease';
+                card.style.opacity = '1'; card.style.transform = 'translateY(0)';
+            });
+        } else {
+            const err = await res.json().catch(() => ({}));
+            errEl.textContent = err.detail || 'Failed to create room.';
+        }
+    } catch (e) { errEl.textContent = 'Network error.'; }
+}
+
+async function deleteRoom(name) {
+    if (!confirm(`Delete room "${name}"? This cannot be undone.`)) return;
+    try {
+        const res = await fetch(`${API_URL}/rooms/${name}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        if (res.ok || res.status === 204) {
+            const card = document.getElementById(`room-card-${name}`);
+            if (card) { card.style.transition = 'all 0.3s ease'; card.style.opacity = '0'; card.style.transform = 'scale(0.95)'; setTimeout(() => card.remove(), 300); }
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Failed to delete room.');
+        }
+    } catch (e) { alert('Network error.'); }
+}
+
+// ── Chat / WebSocket ──────────────────────────────────────────────────────────
+function joinRoom(roomName) {
+    currentRoom = roomName;
+    document.getElementById('room-title').textContent = `# ${roomName}`;
+    document.getElementById('messages').innerHTML = '';
+    updateOnlineList([]);
+    showChatPanel();
+
+    const wsUrl = `ws://127.0.0.1:8000/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-        document.getElementById('join-panel').style.display = 'none';
-        document.getElementById('chat-panel').style.display = 'block';
-        document.getElementById('room-title').textContent = 'Room: general';
-        document.getElementById('messages').innerHTML = '';
-        // Load chat history
-        loadChatHistory();
+        loadRoomHistory(roomName);
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
         try {
             const data = JSON.parse(event.data);
             if (data.type === 'system') {
                 appendSystemMessage(data.text);
+                if (data.users) updateOnlineList(data.users);
             } else if (data.type === 'chat') {
-                // Don't double-render our own messages (we append optimistically on send)
-                if (data.username !== currentUsername) {
+                if (data.username !== currentUser?.username) {
                     appendMessage(data.username, data.text, data.timestamp);
                 }
             }
-        } catch (e) {
-            appendSystemMessage(event.data);
-        }
-
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } catch (e) { appendSystemMessage(event.data); }
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     };
 
-    ws.onclose = () => {
-        appendSystemMessage('Disconnected from the chat server.');
-        setTimeout(disconnectWebSocket, 2000);
-    };
-
-    ws.onerror = () => {
-        document.getElementById('connection-error').textContent =
-            'WebSocket connection failed. Is the server running?';
-    };
+    ws.onclose  = () => { appendSystemMessage('Disconnected.'); setTimeout(leaveRoom, 1500); };
+    ws.onerror  = () => { appendSystemMessage('Connection failed.'); };
 }
 
-// ── Load History ──────────────────────────────────────────────────────────────
-
-async function loadChatHistory() {
+async function loadRoomHistory(roomName) {
     try {
-        const res = await fetch(`${API_URL}/chat_logs`, {
+        const res = await fetch(`${API_URL}/chat_logs?room=${encodeURIComponent(roomName)}`, {
             headers: { 'Authorization': `Bearer ${authToken}` },
         });
+        if (res.status === 404) return; // no history yet
         if (!res.ok) return;
         const logs = await res.json();
-
-        // Show last 50 messages as history
         const recent = logs.slice(-50);
         if (recent.length > 0) {
-            appendSystemMessage(`── Chat history (last ${recent.length} messages) ──`);
+            appendSystemMessage(`─── last ${recent.length} messages ───`);
             recent.forEach(msg => appendMessage(msg.username, msg.text, msg.timestamp, true));
-            appendSystemMessage('── Live ──');
+            appendSystemMessage('─── live ───');
         }
-
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    } catch (e) { /* silent — history is nice-to-have */ }
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    } catch (e) { /* silent */ }
 }
 
-// ── Send ──────────────────────────────────────────────────────────────────────
-
 function sendMessage() {
-    const input = document.getElementById('message-input');
+    const input   = document.getElementById('message-input');
     const message = input.value.trim();
     if (message && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(message);
-        appendMessage(currentUsername, message); // optimistic
+        appendMessage(currentUser.username, message); // optimistic
         input.value = '';
     }
 }
 
-function handleKeyPress(event) {
-    if (event.key === 'Enter') sendMessage();
+function leaveRoom() {
+    if (ws) { ws.close(); ws = null; }
+    currentRoom = null;
+    showRoomsPanel();
+    loadRooms();
 }
 
-// ── Disconnect ────────────────────────────────────────────────────────────────
-
-function disconnectWebSocket() {
-    if (ws) {
-        ws.close();
-        ws = null;
+// ── Online users list ─────────────────────────────────────────────────────────
+function updateOnlineList(users) {
+    onlineUsers = users;
+    const el = document.getElementById('online-list');
+    const countEl = document.getElementById('online-count');
+    if (countEl) countEl.textContent = users.length;
+    if (el) {
+        el.innerHTML = users.map(u => `<span class="online-user">${escapeHtml(u)}</span>`).join('');
     }
-    authToken = null;
-    document.getElementById('chat-panel').style.display = 'none';
-    document.getElementById('join-panel').style.display = 'block';
 }
 
-// ── Render Messages ───────────────────────────────────────────────────────────
-
+// ── Message rendering ─────────────────────────────────────────────────────────
 function appendMessage(sender, text, isoTimestamp = null, isHistory = false) {
     const messagesDiv = document.getElementById('messages');
-    const wrapper = document.createElement('div');
+    const wrapper     = document.createElement('div');
     wrapper.classList.add('msg-wrapper');
 
-    const msgDiv = document.createElement('div');
+    const msgDiv      = document.createElement('div');
     msgDiv.classList.add('message');
 
-    const now = isoTimestamp ? new Date(isoTimestamp) : new Date();
+    const now        = isoTimestamp ? new Date(isoTimestamp) : new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const timeSpan = `<span class="msg-time">${timeString}</span>`;
+    const timeSpan   = `<span class="msg-time">${timeString}</span>`;
 
-    if (sender === currentUsername) {
+    if (sender === currentUser?.username) {
         msgDiv.classList.add('msg-me');
-        if (isHistory) msgDiv.style.opacity = '0.7';
+        if (isHistory) msgDiv.style.opacity = '0.65';
         msgDiv.innerHTML = `${escapeHtml(text)} ${timeSpan}`;
         wrapper.classList.add('wrapper-me');
     } else {
         msgDiv.classList.add('msg-other');
-        if (isHistory) msgDiv.style.opacity = '0.7';
-        msgDiv.innerHTML = `<div class="sender-name">${escapeHtml(sender)}</div>
-                            <div class="msg-content">${escapeHtml(text)} ${timeSpan}</div>`;
+        if (isHistory) msgDiv.style.opacity = '0.65';
+        msgDiv.innerHTML = `<div class="sender-name">${escapeHtml(sender)}</div><div class="msg-content">${escapeHtml(text)} ${timeSpan}</div>`;
         wrapper.classList.add('wrapper-other');
     }
 
@@ -249,16 +368,12 @@ function appendMessage(sender, text, isoTimestamp = null, isHistory = false) {
 
 function appendSystemMessage(text) {
     const messagesDiv = document.getElementById('messages');
-    const wrapper = document.createElement('div');
+    const wrapper     = document.createElement('div');
     wrapper.classList.add('msg-wrapper', 'wrapper-system');
-
-    const msgDiv = document.createElement('div');
+    const msgDiv      = document.createElement('div');
     msgDiv.classList.add('message', 'msg-system');
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    msgDiv.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${escapeHtml(text)}
-                        <span class="system-time">${timeString}</span>`;
-
+    const timeString  = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    msgDiv.innerHTML  = `${escapeHtml(text)} <span class="system-time">${timeString}</span>`;
     wrapper.appendChild(msgDiv);
     messagesDiv.appendChild(wrapper);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -266,6 +381,5 @@ function appendSystemMessage(text) {
 
 function escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
