@@ -2,18 +2,20 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import SQLModel
 from sqlalchemy.orm import sessionmaker
-
+import os
+from dotenv import load_dotenv
 # Single database for the whole app.
 # Swap this out for PostgreSQL in production:
-#   DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/dbname")
-DATABASE_URL = "sqlite+aiosqlite:///./app.db"
+#DATABASE_URL = "sqlite+aiosqlite:///./app.db"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,
     # SQLite-only: allows the async engine to share connections across threads.
     # Remove this line when switching to PostgreSQL.
-    connect_args={"check_same_thread": False},
+    #connect_args={"check_same_thread": False},
 )
 
 async_session = sessionmaker(

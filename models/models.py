@@ -34,7 +34,7 @@ class User(SQLModel, table=True):
     # Denormalised counters — cheaper than COUNT(*) on every feed load
     tweet_count: int = Field(default=0)
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
 
     # Relationships
     tweets: List["Tweet"] = Relationship(back_populates="author")
@@ -58,7 +58,7 @@ class Tweet(SQLModel, table=True):
     like_count: int = Field(default=0)
     comment_count: int = Field(default=0)
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow(), index=True)
 
     # Relationships
     author: Optional[User] = Relationship(back_populates="tweets")
@@ -77,7 +77,7 @@ class Like(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
     tweet_id: int = Field(foreign_key="tweet.id", index=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
 
     user: Optional[User] = Relationship(back_populates="likes")
     tweet: Optional[Tweet] = Relationship(back_populates="likes")
@@ -94,7 +94,7 @@ class Comment(SQLModel, table=True):
     tweet_id: int = Field(foreign_key="tweet.id", index=True)
     author_id: int = Field(foreign_key="user.id", index=True)
     is_deleted: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow(), index=True)
 
     tweet: Optional[Tweet] = Relationship(back_populates="comments")
     author: Optional[User] = Relationship(back_populates="comments")
@@ -108,6 +108,6 @@ class Message(SQLModel, table=True):
     sender_id: Optional[int] = Field(default=None, foreign_key="user.id")
     room_id: str = Field(index=True)
     is_read: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
 
     sender: Optional[User] = Relationship(back_populates="messages")
