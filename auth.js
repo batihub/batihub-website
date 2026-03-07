@@ -109,7 +109,7 @@
     document.head.appendChild(style);
 })();
 
-const API_URL = "https://batihanbabacan.onrender.com";
+const API_URL = "https://beelog-poes.onrender.com";
 
 let authToken   = localStorage.getItem('baerhub-token') || null;
 let currentUser = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
