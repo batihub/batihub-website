@@ -171,7 +171,7 @@ function joinRoom(roomName) {
     updateOnlineList([]);
     showChatPanel();
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
+    const wsUrl = `ws://batihanbabacan.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => { loadRoomHistory(roomName); };
