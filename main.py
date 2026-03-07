@@ -19,14 +19,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Kingo's Portfolio API", lifespan=lifespan)
 
-# TODO: replace with your actual frontend origin before going to production
 origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://localhost:63342",
+    "https://batihanbabacan.com"
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
