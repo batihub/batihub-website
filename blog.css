@@ -566,3 +566,38 @@ input[type="password"]:focus {
 }
 .scroll-top-btn.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
 .scroll-top-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE  (≤ 768px)
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    .main-content { padding: 24px 12px; }
+
+    h1.site-title { font-size: 1.8rem; }
+    .page-header p { font-size: 0.95rem; }
+    .page-header { margin-bottom: 20px; }
+
+    .container { width: 100%; box-sizing: border-box; }
+    .section-card { padding: 20px 16px; border-radius: 16px; }
+
+    /* Composer */
+    .composer-header { flex-wrap: wrap; gap: 8px; }
+    .button-group { flex-direction: column; gap: 8px; }
+    .button-group .btn { width: 100%; }
+
+    /* Tweet cards */
+    .post-card { padding: 16px; }
+    .post-actions { flex-wrap: wrap; gap: 10px; }
+    .action-btns { flex-wrap: wrap; gap: 6px; }
+    .action-btns .btn { font-size: 0.8rem; padding: 8px 12px; }
+
+    /* Modals */
+    .modal-content { padding: 24px 18px; margin: 12px; width: calc(100% - 24px); box-sizing: border-box; }
+    .input-group { grid-template-columns: 1fr; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .btn { width: 100%; }
+
+    /* Feed header */
+    div[style*="justify-content:space-between"] { flex-wrap: wrap; gap: 12px; }
+}

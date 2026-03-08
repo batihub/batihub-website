@@ -105,6 +105,60 @@
             background-color: var(--input-border, #334155);
             color: var(--text-main, #f8fafc);
         }
+
+        /* ── Mobile Nav ── */
+        .nav-hamburger {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .nav-hamburger:hover { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            .nav-hamburger { display: flex; }
+
+            .nav-container {
+                flex-wrap: wrap;
+                padding: 12px 16px !important;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column !important;
+                width: 100%;
+                gap: 4px !important;
+                padding: 12px 0 8px 0;
+                border-top: 1px solid var(--nav-border);
+                margin-top: 8px;
+            }
+            .nav-links.mobile-open { display: flex !important; }
+
+            .nav-links a,
+            .nav-links button,
+            .nav-links .github-link {
+                width: 100%;
+                text-align: left;
+                padding: 10px 12px;
+                border-radius: 10px;
+                font-size: 0.95rem !important;
+            }
+            .nav-links .github-link {
+                display: inline-flex;
+                width: auto;
+                align-self: flex-start;
+                border-radius: 20px !important;
+                padding: 10px 18px !important;
+            }
+            .nav-links a.active::after { display: none; }
+        }
     `;
     document.head.appendChild(style);
 })();
@@ -391,9 +445,39 @@ function escapeHtml(text) {
         .replace(/'/g, '&#039;');
 }
 
+// ── Mobile hamburger ──────────────────────────────────────────────────────────
+function _initHamburger() {
+    const navContainer = document.querySelector('.nav-container');
+    const navLinks     = document.querySelector('.nav-links');
+    if (!navContainer || !navLinks) return;
+    if (document.getElementById('nav-hamburger')) return;
+
+    const btn = document.createElement('button');
+    btn.id        = 'nav-hamburger';
+    btn.className = 'nav-hamburger';
+    btn.setAttribute('aria-label', 'Menu');
+    btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    navContainer.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+        const open = navLinks.classList.toggle('mobile-open');
+        btn.innerHTML = open
+            ? '<i class="fa-solid fa-xmark"></i>'
+            : '<i class="fa-solid fa-bars"></i>';
+    });
+
+    document.addEventListener('click', e => {
+        if (!navContainer.contains(e.target)) {
+            navLinks.classList.remove('mobile-open');
+            btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+        }
+    });
+}
+
 // Auto-init on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderNavUser();
     _injectLoginModal();
+    _initHamburger();
 });
