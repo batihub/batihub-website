@@ -567,60 +567,49 @@ input[type="password"]:focus {
 .scroll-top-btn.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
 .scroll-top-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }
 
-/* ── Textarea char counter inside box ── */
-.textarea-wrapper {
-    position: relative;
-}
-.textarea-wrapper textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding-bottom: 28px; /* room for counter */
-}
-.textarea-wrapper .char-pill {
+/* ── Char counter inside textarea ── */
+.textarea-wrapper { position: relative; }
+.textarea-wrapper textarea { width: 100%; box-sizing: border-box; padding-bottom: 26px; }
+.char-pill-inside {
     position: absolute;
     bottom: 10px;
     right: 12px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    background: transparent;
     pointer-events: none;
     font-weight: 500;
+    opacity: 0.7;
 }
 
-/* ── Tweet button tooltip (shows after 2s hover) ── */
-.tweet-btn-wrapper {
-    position: relative;
-    display: inline-flex;
-}
-.tweet-tooltip {
+/* ── Tweet button hover tooltip (appears after 2s) ── */
+.tweet-btn-wrapper { position: relative; display: inline-flex; }
+.tweet-hover-tip {
     position: absolute;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 7px);
     left: 50%;
     transform: translateX(-50%);
     background: var(--text-main);
     color: var(--card-bg);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 8px;
+    padding: 4px 9px;
+    border-radius: 7px;
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.2s;
+    letter-spacing: 0.2px;
 }
-.tweet-tooltip::after {
+.tweet-hover-tip::after {
     content: '';
     position: absolute;
-    top: 100%;
-    left: 50%;
+    top: 100%; left: 50%;
     transform: translateX(-50%);
-    border: 5px solid transparent;
+    border: 4px solid transparent;
     border-top-color: var(--text-main);
 }
-.tweet-btn-wrapper:hover .tweet-tooltip {
-    animation: tooltipDelay 0.2s ease 2s forwards;
+.tweet-btn-wrapper:hover .tweet-hover-tip {
+    animation: tipFadeIn 0.15s ease 2s forwards;
 }
-@keyframes tooltipDelay {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+@keyframes tipFadeIn {
+    to { opacity: 0.85; }
 }
