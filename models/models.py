@@ -13,13 +13,16 @@ class UserRole(str, Enum):
     ROOT = "root"
 
 
+class RoomType(str, Enum):
+    GROUP = "group"
+    PRIVATE = "private"
+
+
 # ── User ──────────────────────────────────────────────────────────────────────
 
 class User(SQLModel, table=True):
     """
     Unified user for the whole app (chat + twitter feed).
-    Added display_name, bio, avatar_url for the Twitter side.
-    username stays as the unique login handle.
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(unique=True, index=True, max_length=50)
@@ -41,6 +44,67 @@ class User(SQLModel, table=True):
     likes: List["Like"] = Relationship(back_populates="user")
     comments: List["Comment"] = Relationship(back_populates="author")
     messages: List["Message"] = Relationship(back_populates="sender")
+    room_memberships: List["RoomMember"] = Relationship(back_populates="user")
+
+
+# ── Room ──────────────────────────────────────────────────────────────────────
+
+class Room(SQLModel, table=True):
+    """
+    Represents both private (1-1) and group chat rooms.
+
+    Private rooms:
+      - type = RoomType.PRIVATE
+      - canonical_key = "private:alice:bob"  (sorted alphabetically, always unique)
+      - exactly 2 RoomMember rows
+
+    Group rooms:
+      - type = RoomType.GROUP
+      - canonical_key = None
+      - N RoomMember rows; owner_id is the creator
+      - can be locked (read-only for non-admins)
+    """
+    id: str = Field(primary_key=True)               # UUID string — never changes
+    type: RoomType
+
+    # Human-readable name; for private rooms this mirrors canonical_key
+    name: str = Field(index=True, max_length=64)
+
+    # Only set for private rooms; unique constraint prevents duplicate DM pairs
+    canonical_key: Optional[str] = Field(
+        default=None, unique=True, index=True, max_length=128
+    )
+
+    description: str = Field(default="", max_length=500)
+    owner_id: int = Field(foreign_key="user.id", index=True)
+    locked: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+
+    # Relationships
+    members: List["RoomMember"] = Relationship(back_populates="room")
+    messages: List["Message"] = Relationship(back_populates="room")
+
+
+# ── RoomMember ────────────────────────────────────────────────────────────────
+
+class RoomMember(SQLModel, table=True):
+    """
+    Junction table — who belongs to which room.
+    Works for both private (always 2 rows) and group (N rows) rooms.
+    """
+    __table_args__ = (
+        UniqueConstraint("room_id", "user_id", name="uq_room_member"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    room_id: str = Field(foreign_key="room.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    is_admin: bool = Field(default=False)       # group admins can kick/invite
+    joined_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+
+    # Relationships
+    room: Optional[Room] = Relationship(back_populates="members")
+    user: Optional[User] = Relationship(back_populates="room_memberships")
 
 
 # ── Tweet ─────────────────────────────────────────────────────────────────────
@@ -69,9 +133,7 @@ class Tweet(SQLModel, table=True):
 # ── Like ──────────────────────────────────────────────────────────────────────
 
 class Like(SQLModel, table=True):
-    """
-    A user can like a tweet exactly once — enforced by the unique constraint.
-    """
+    """A user can like a tweet exactly once — enforced by the unique constraint."""
     __table_args__ = (UniqueConstraint("user_id", "tweet_id", name="uq_like_user_tweet"),)
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -86,9 +148,7 @@ class Like(SQLModel, table=True):
 # ── Comment ───────────────────────────────────────────────────────────────────
 
 class Comment(SQLModel, table=True):
-    """
-    Flat comments on a tweet — no nested replies to keep things simple.
-    """
+    """Flat comments on a tweet — no nested replies to keep things simple."""
     id: Optional[int] = Field(default=None, primary_key=True)
     content: str = Field(max_length=280)
     tweet_id: int = Field(foreign_key="tweet.id", index=True)
@@ -100,14 +160,19 @@ class Comment(SQLModel, table=True):
     author: Optional[User] = Relationship(back_populates="comments")
 
 
-# ── Message (chat — unchanged) ────────────────────────────────────────────────
+# ── Message ───────────────────────────────────────────────────────────────────
 
 class Message(SQLModel, table=True):
+    """
+    A single chat message inside a Room.
+    room_id is now a real FK to Room.id — no more free-text strings.
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
-    message: str
+    message: str = Field(sa_column=Column(Text))    # no arbitrary length cap
     sender_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    room_id: str = Field(index=True)
+    room_id: str = Field(foreign_key="room.id", index=True)  # ← real FK
     is_read: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow(), index=True)
 
     sender: Optional[User] = Relationship(back_populates="messages")
+    room: Optional[Room] = Relationship(back_populates="messages")

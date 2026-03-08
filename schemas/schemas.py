@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel
-from models.models import UserRole
+from models.models import UserRole, RoomType
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -50,6 +50,60 @@ class TokenData(SQLModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Room
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GroupRoomCreate(SQLModel):
+    """Body for POST /rooms/group"""
+    name: str
+    description: str = ""
+
+
+class PrivateRoomCreate(SQLModel):
+    """Body for POST /rooms/private — replaces PrivateUserInvite"""
+    username: str
+
+
+# Keep old name as an alias so existing code doesn't break immediately
+PrivateUserInvite = PrivateRoomCreate
+
+
+class RoomMemberOut(SQLModel):
+    user_id: int
+    username: str
+    is_admin: bool
+    joined_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RoomOut(SQLModel):
+    """
+    Returned by room list and create endpoints.
+    member_count and online_count are populated by the route layer.
+    """
+    id: str
+    type: RoomType
+    name: str
+    description: str
+    owner_id: int
+    locked: bool
+    created_at: datetime
+    member_count: Optional[int] = None
+    online_count: Optional[int] = None
+    online_users: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RoomDetailOut(RoomOut):
+    """Extended room info — includes the full member list."""
+    members: List[RoomMemberOut] = []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Tweet
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -58,7 +112,7 @@ class TweetCreate(SQLModel):
 
 
 class TweetUpdate(SQLModel):
-    content: str   # only content is editable
+    content: str  # only content is editable
 
 
 class CommentOut(SQLModel):

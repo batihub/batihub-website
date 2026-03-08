@@ -1,39 +1,128 @@
+"""
+crud/chat_crud.py
+
+All database operations for the chat system.
+Every function is async and takes an AsyncSession as its first argument.
+"""
+from typing import Optional, List
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from models.models import Message, User
-
-
-async def create_user(session: AsyncSession, user_data: User) -> User:
-    session.add(user_data)
-    await session.commit()
-    await session.refresh(user_data)
-    return user_data
+from models.models import User, Room, RoomMember, RoomType, Message
 
 
-async def get_user_by_username(session: AsyncSession, username: str):
-    result = await session.execute(select(User).where(User.username == username))
-    return result.scalars().one_or_none()
+# ── User ──────────────────────────────────────────────────────────────────────
+
+async def get_user_by_username(session: AsyncSession, username: str) -> Optional[User]:
+    result = await session.exec(select(User).where(User.username == username))
+    return result.first()
 
 
-async def get_chat_logs(session: AsyncSession, room_id: str = None):
-    statement = (
-        select(Message, User.username)
-        .join(User, Message.sender_id == User.id)
-        .order_by(Message.created_at)
+async def create_user(session: AsyncSession, user_data: User) -> Optional[User]:
+    try:
+        session.add(user_data)
+        await session.commit()
+        await session.refresh(user_data)
+        return user_data
+    except Exception:
+        await session.rollback()
+        return None
+
+
+# ── Room ──────────────────────────────────────────────────────────────────────
+
+async def get_room_by_id(session: AsyncSession, room_id: str) -> Optional[Room]:
+    result = await session.exec(select(Room).where(Room.id == room_id))
+    return result.first()
+
+
+async def get_room_by_canonical_key(session: AsyncSession, key: str) -> Optional[Room]:
+    """Used to find or deduplicate private (1-1) rooms."""
+    result = await session.exec(select(Room).where(Room.canonical_key == key))
+    return result.first()
+
+
+async def get_group_room_by_name(session: AsyncSession, name: str) -> Optional[Room]:
+    """Check uniqueness of group room names."""
+    result = await session.exec(
+        select(Room).where(Room.name == name, Room.type == RoomType.GROUP)
     )
-    if room_id:
-        statement = statement.where(Message.room_id == room_id)
-    result = await session.execute(statement)
+    return result.first()
 
-    logs = []
-    for message, username in result.all():
-        logs.append({
-            "id": message.id,
-            "text": message.message,
-            "sender_id": message.sender_id,
-            "username": username,
-            "timestamp": message.created_at.isoformat(),
-            "type": "chat",
-        })
-    return logs
+
+async def get_rooms_for_user(session: AsyncSession, user_id: int) -> List[Room]:
+    """Return all rooms the user is a member of."""
+    result = await session.exec(
+        select(Room)
+        .join(RoomMember, Room.id == RoomMember.room_id)
+        .where(RoomMember.user_id == user_id)
+        .order_by(Room.created_at.desc())
+    )
+    return result.all()
+
+
+async def delete_room(session: AsyncSession, room: Room) -> None:
+    """
+    Delete a room and cascade-delete its members and messages.
+    SQLModel doesn't auto-cascade by default, so we handle it explicitly.
+    """
+    # Delete messages
+    messages = await session.exec(select(Message).where(Message.room_id == room.id))
+    for msg in messages.all():
+        await session.delete(msg)
+
+    # Delete memberships
+    members = await session.exec(select(RoomMember).where(RoomMember.room_id == room.id))
+    for m in members.all():
+        await session.delete(m)
+
+    await session.delete(room)
+    await session.commit()
+
+
+# ── RoomMember ────────────────────────────────────────────────────────────────
+
+async def get_room_member(
+        session: AsyncSession, room_id: str, user_id: int
+) -> Optional[RoomMember]:
+    result = await session.exec(
+        select(RoomMember).where(
+            RoomMember.room_id == room_id,
+            RoomMember.user_id == user_id,
+        )
+    )
+    return result.first()
+
+
+async def get_room_members_with_users(
+        session: AsyncSession, room_id: str
+) -> List[RoomMember]:
+    """Return RoomMember rows with their User relationship loaded."""
+    result = await session.exec(
+        select(RoomMember)
+        .where(RoomMember.room_id == room_id)
+        .options(selectinload(RoomMember.user))
+    )
+    return result.all()
+
+
+async def get_member_count(session: AsyncSession, room_id: str) -> int:
+    result = await session.exec(
+        select(RoomMember).where(RoomMember.room_id == room_id)
+    )
+    return len(result.all())
+
+
+# ── Message ───────────────────────────────────────────────────────────────────
+
+async def get_chat_logs(
+        session: AsyncSession,
+        room_id: Optional[str] = None,
+        limit: int = 100,
+) -> List[Message]:
+    query = select(Message).order_by(Message.created_at.desc()).limit(limit)
+    if room_id:
+        query = query.where(Message.room_id == room_id)
+    result = await session.exec(query)
+    return result.all()
