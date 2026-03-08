@@ -32,7 +32,6 @@
     <div class="chat-wrapper">
         <div class="page-header text-center">
             <h1 class="site-title">Live Rooms</h1>
-            <p>Real-time messaging powered by WebSockets</p>
         </div>
 
         <div class="chat-container">
@@ -44,16 +43,25 @@
             <div id="rooms-panel" class="panel" style="display:none">
                 <div class="rooms-header">
                     <h2 style="margin:0">Rooms</h2>
-                    <button class="btn btn-secondary btn-sm" onclick="loadRooms()"><i class="fa-solid fa-rotate-right"></i></button>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <button class="btn btn-secondary btn-sm" onclick="loadRooms()"><i class="fa-solid fa-rotate-right"></i></button>
+                        <div class="create-room-fab-wrapper">
+                            <button class="create-room-fab" onclick="toggleCreateForm()">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <div class="fab-tooltip">Create room</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Create room -->
-                <div class="create-room-bar">
-                    <div class="create-room-inputs">
-                        <input type="text" id="room-name-input" placeholder="Room name" maxlength="32">
-                        <input type="text" id="room-desc-input" placeholder="Description (optional)">
+                <!-- Create room (hidden by default) -->
+                <div id="create-room-form" class="create-room-form" style="display:none">
+                    <input type="text" id="room-name-input" placeholder="Room name" maxlength="32">
+                    <input type="text" id="room-desc-input" placeholder="Description (optional)">
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                        <button class="btn btn-secondary btn-sm" onclick="toggleCreateForm()">Cancel</button>
+                        <button class="btn btn-primary btn-sm" onclick="createRoom()"><i class="fa-solid fa-plus"></i> Create</button>
                     </div>
-                    <button class="btn btn-primary" onclick="createRoom()"><i class="fa-solid fa-plus"></i> Create</button>
                 </div>
                 <div id="room-create-error" class="room-error"></div>
 

@@ -33,7 +33,6 @@
     <div class="container">
         <div class="page-header">
             <h1 class="site-title">BeeLog Feed</h1>
-            <p>Share your thoughts — 280 characters at a time</p>
         </div>
 
         <!-- ── Composer (logged-in only) ──────────────────────────── -->
@@ -42,20 +41,15 @@
                 <div class="composer-header-left">
                     <i class="fa-solid fa-feather-pointed" style="color:var(--accent)"></i>
                     <span>New Tweet</span>
+                    <span id="char-count" class="char-pill">0/280</span>
                 </div>
                 <i class="fa-solid fa-chevron-down toggle-icon" style="color:var(--text-muted);transition:transform 0.25s"></i>
             </button>
             <div id="composer-body" class="composer-body">
-                <div class="textarea-wrapper">
-                    <textarea id="post-content" rows="3" maxlength="280"
-                              placeholder="What's on your mind?"></textarea>
-                    <span id="char-count" class="char-pill">0/280</span>
-                </div>
+                <textarea id="post-content" rows="3" maxlength="280"
+                          placeholder="What's on your mind? (Ctrl+Enter to post)"></textarea>
                 <div class="button-group" style="margin-top:12px">
-                    <div class="tweet-btn-wrapper">
-                        <button class="btn btn-primary" id="tweet-btn" onclick="createPost()"><i class="fa-solid fa-paper-plane"></i> Tweet</button>
-                        <div class="tweet-tooltip">Ctrl+Enter to post</div>
-                    </div>
+                    <button class="btn btn-primary" onclick="createPost()"><i class="fa-solid fa-paper-plane"></i> Tweet</button>
                     <button class="btn btn-secondary" onclick="fetchTweets()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
                 </div>
             </div>

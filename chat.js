@@ -61,6 +61,14 @@ function showChatPanel() {
     document.getElementById('chat-panel').style.display  = 'block';
 }
 
+function toggleCreateForm() {
+    const form = document.getElementById('create-room-form');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    document.getElementById('room-create-error').textContent = '';
+    if (!isOpen) setTimeout(() => document.getElementById('room-name-input')?.focus(), 50);
+}
+
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 async function loadRooms() {
     const list = document.getElementById('rooms-list');
@@ -124,6 +132,7 @@ async function createRoom() {
             const room = await res.json();
             nameInput.value = '';
             if (descInput) descInput.value = '';
+            toggleCreateForm();
             const list = document.getElementById('rooms-list');
             const placeholder = list.querySelector('.rooms-loading');
             if (placeholder) placeholder.remove();
@@ -171,7 +180,7 @@ function joinRoom(roomName) {
     updateOnlineList([]);
     showChatPanel();
 
-    const wsUrl = `wss://beelog-poes.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
+    const wsUrl = `ws://beelog-poes.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => { loadRoomHistory(roomName); };

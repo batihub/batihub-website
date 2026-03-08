@@ -114,11 +114,12 @@
             color: var(--text-main);
             font-size: 1.3rem;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 8px;
             align-items: center;
             justify-content: center;
             transition: color 0.2s;
+            margin-left: auto;
         }
         .nav-hamburger:hover { color: var(--accent); }
 
@@ -131,37 +132,70 @@
             }
 
             .nav-links {
-                display: none;
+                display: none !important;
                 flex-direction: column !important;
                 width: 100%;
-                gap: 4px !important;
-                padding: 12px 0 8px 0;
+                gap: 2px !important;
+                padding: 8px 0;
                 border-top: 1px solid var(--nav-border);
-                margin-top: 8px;
+                margin-top: 10px;
             }
             .nav-links.mobile-open { display: flex !important; }
 
-            .nav-links a,
-            .nav-links button,
-            .nav-links .github-link {
-                width: 100%;
-                text-align: left;
-                padding: 10px 12px;
+            .nav-links a {
+                padding: 10px 12px !important;
                 border-radius: 10px;
                 font-size: 0.95rem !important;
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
             }
+            .nav-links a.active::after { display: none; }
+
             .nav-links .github-link {
-                display: inline-flex;
-                width: auto;
+                display: inline-flex !important;
+                width: auto !important;
                 align-self: flex-start;
                 border-radius: 20px !important;
                 padding: 10px 18px !important;
+                margin: 4px 0;
             }
-            .nav-links a.active::after { display: none; }
+            .theme-toggle-btn { margin: 4px 0 4px 4px; }
+            #nav-user-slot { margin: 4px 0 4px 4px; }
         }
     `;
     document.head.appendChild(style);
 })();
+
+// ── Mobile hamburger ──────────────────────────────────────────────────────────
+function _initHamburger() {
+    const navContainer = document.querySelector('.nav-container');
+    const navLinks     = document.querySelector('.nav-links');
+    if (!navContainer || !navLinks || document.getElementById('nav-hamburger')) return;
+
+    const btn = document.createElement('button');
+    btn.id        = 'nav-hamburger';
+    btn.className = 'nav-hamburger';
+    btn.setAttribute('aria-label', 'Menu');
+    btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    // Insert hamburger right after the logo
+    const logo = navContainer.querySelector('.nav-logo');
+    if (logo) logo.insertAdjacentElement('afterend', btn);
+    else navContainer.appendChild(btn);
+
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = navLinks.classList.toggle('mobile-open');
+        btn.innerHTML = open ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+    });
+
+    document.addEventListener('click', e => {
+        if (!navContainer.contains(e.target) && navLinks.classList.contains('mobile-open')) {
+            navLinks.classList.remove('mobile-open');
+            btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+        }
+    });
+}
 
 const API_URL = "https://beelog-poes.onrender.com";
 
@@ -443,35 +477,6 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-}
-
-// ── Mobile hamburger ──────────────────────────────────────────────────────────
-function _initHamburger() {
-    const navContainer = document.querySelector('.nav-container');
-    const navLinks     = document.querySelector('.nav-links');
-    if (!navContainer || !navLinks) return;
-    if (document.getElementById('nav-hamburger')) return;
-
-    const btn = document.createElement('button');
-    btn.id        = 'nav-hamburger';
-    btn.className = 'nav-hamburger';
-    btn.setAttribute('aria-label', 'Menu');
-    btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
-    navContainer.appendChild(btn);
-
-    btn.addEventListener('click', () => {
-        const open = navLinks.classList.toggle('mobile-open');
-        btn.innerHTML = open
-            ? '<i class="fa-solid fa-xmark"></i>'
-            : '<i class="fa-solid fa-bars"></i>';
-    });
-
-    document.addEventListener('click', e => {
-        if (!navContainer.contains(e.target)) {
-            navLinks.classList.remove('mobile-open');
-            btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
-        }
-    });
 }
 
 // Auto-init on DOM ready
