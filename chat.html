@@ -49,8 +49,10 @@
 
                 <!-- Create room -->
                 <div class="create-room-bar">
-                    <input type="text" id="room-name-input" placeholder="new-room-name" maxlength="32" style="flex:1;min-width:0">
-                    <input type="text" id="room-desc-input" placeholder="Short description (optional)" style="flex:2;min-width:0">
+                    <div class="create-room-inputs">
+                        <input type="text" id="room-name-input" placeholder="Room name" maxlength="32">
+                        <input type="text" id="room-desc-input" placeholder="Description (optional)">
+                    </div>
                     <button class="btn btn-primary" onclick="createRoom()"><i class="fa-solid fa-plus"></i> Create</button>
                 </div>
                 <div id="room-create-error" class="room-error"></div>

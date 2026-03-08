@@ -567,37 +567,60 @@ input[type="password"]:focus {
 .scroll-top-btn.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
 .scroll-top-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }
 
-/* ═══════════════════════════════════════════════════════════
-   MOBILE RESPONSIVE  (≤ 768px)
-   ═══════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+/* ── Textarea char counter inside box ── */
+.textarea-wrapper {
+    position: relative;
+}
+.textarea-wrapper textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 28px; /* room for counter */
+}
+.textarea-wrapper .char-pill {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: transparent;
+    pointer-events: none;
+    font-weight: 500;
+}
 
-    .main-content { padding: 24px 12px; }
-
-    h1.site-title { font-size: 1.8rem; }
-    .page-header p { font-size: 0.95rem; }
-    .page-header { margin-bottom: 20px; }
-
-    .container { width: 100%; box-sizing: border-box; }
-    .section-card { padding: 20px 16px; border-radius: 16px; }
-
-    /* Composer */
-    .composer-header { flex-wrap: wrap; gap: 8px; }
-    .button-group { flex-direction: column; gap: 8px; }
-    .button-group .btn { width: 100%; }
-
-    /* Tweet cards */
-    .post-card { padding: 16px; }
-    .post-actions { flex-wrap: wrap; gap: 10px; }
-    .action-btns { flex-wrap: wrap; gap: 6px; }
-    .action-btns .btn { font-size: 0.8rem; padding: 8px 12px; }
-
-    /* Modals */
-    .modal-content { padding: 24px 18px; margin: 12px; width: calc(100% - 24px); box-sizing: border-box; }
-    .input-group { grid-template-columns: 1fr; }
-    .modal-actions { flex-direction: column; }
-    .modal-actions .btn { width: 100%; }
-
-    /* Feed header */
-    div[style*="justify-content:space-between"] { flex-wrap: wrap; gap: 12px; }
+/* ── Tweet button tooltip (shows after 2s hover) ── */
+.tweet-btn-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.tweet-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-main);
+    color: var(--card-bg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.tweet-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text-main);
+}
+.tweet-btn-wrapper:hover .tweet-tooltip {
+    animation: tooltipDelay 0.2s ease 2s forwards;
+}
+@keyframes tooltipDelay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
