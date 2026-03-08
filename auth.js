@@ -243,6 +243,11 @@ function renderNavUser() {
                     <span class="dropdown-handle">@${escapeHtml(currentUser.username)}</span>
                 </div>
                 <div class="dropdown-divider"></div>
+                ${(currentUser.role === 'admin' || currentUser.role === 'root') ? `
+                <a class="dropdown-item" href="admin.html" style="text-decoration:none">
+                    <i class="fa-solid fa-shield-halved"></i> Admin Panel
+                </a>
+                <div class="dropdown-divider"></div>` : ''}
                 <button class="dropdown-item danger" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket"></i> Log Out
                 </button>
@@ -396,7 +401,13 @@ async function login() {
         if (res.ok) {
             const data  = await res.json();
             authToken   = data.access_token;
-            currentUser = { username };
+            // Decode role from JWT payload (middle base64 chunk)
+            let role = 'intern';
+            try {
+                const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+                role = payload.role || 'intern';
+            } catch(e) {}
+            currentUser = { username, role };
             localStorage.setItem('baerhub-token', authToken);
             localStorage.setItem('baerhub-user',  JSON.stringify(currentUser));
             closeLoginModal();

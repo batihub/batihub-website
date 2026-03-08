@@ -106,6 +106,35 @@ async function fetchTweets() {
     }
 }
 
+// ── Tweet expand / collapse ───────────────────────────────────────────────────
+let _expandedCard = null;
+
+function collapseActiveTweet() {
+    if (!_expandedCard) return;
+    _expandedCard.classList.remove('is-expanded');
+    const toggle = _expandedCard.querySelector('.content-toggle');
+    if (toggle) toggle.innerHTML = _toggleHtml(false);
+    _expandedCard = null;
+    document.getElementById('tweet-backdrop')?.classList.remove('active');
+}
+
+function _toggleHtml(expanded) {
+    return expanded
+        ? `Show less <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+        : `Show more <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function _isTruncated(contentEl) {
+    // Temporarily remove clamp to measure real height
+    contentEl.style.webkitLineClamp = 'unset';
+    contentEl.style.overflow = 'visible';
+    const full = contentEl.scrollHeight;
+    contentEl.style.webkitLineClamp = '';
+    contentEl.style.overflow = '';
+    const clamped = contentEl.clientHeight;
+    return full > clamped + 4;
+}
+
 function prependTweet(tweet, container) {
     const card = buildTweetCard(tweet);
     card.style.cssText = 'opacity:0;transform:translateY(-12px)';
@@ -125,6 +154,7 @@ function buildTweetCard(tweet) {
     const editedBadge = tweet.is_edited ? '<span class="edited-badge"><i class="fa-solid fa-pencil"></i> edited</span>' : '';
     const letter      = tweet.author.username.charAt(0).toUpperCase();
     const displayName = tweet.author.display_name ? `<span class="display-name">${escapeHtml(tweet.author.display_name)}</span>` : '';
+
     card.innerHTML = `
         <div class="post-header">
             <div class="author-info">
@@ -153,6 +183,34 @@ function buildTweetCard(tweet) {
                         <i class="fa-solid fa-trash"></i> Delete</button>` : ''}
             </div>
         </div>`;
+
+    // After inserting into DOM, check if content overflows and add toggle
+    requestAnimationFrame(() => {
+        const contentEl = card.querySelector('.post-content');
+        if (!contentEl) return;
+        if (_isTruncated(contentEl)) {
+            const toggle = document.createElement('button');
+            toggle.className = 'content-toggle';
+            toggle.innerHTML = _toggleHtml(false);
+            contentEl.insertAdjacentElement('afterend', toggle);
+
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = card.classList.contains('is-expanded');
+                if (isExpanded) {
+                    collapseActiveTweet();
+                } else {
+                    // Collapse any previously expanded card first
+                    collapseActiveTweet();
+                    card.classList.add('is-expanded');
+                    toggle.innerHTML = _toggleHtml(true);
+                    _expandedCard = card;
+                    document.getElementById('tweet-backdrop')?.classList.add('active');
+                }
+            });
+        }
+    });
+
     return card;
 }
 

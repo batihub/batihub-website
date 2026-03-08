@@ -75,7 +75,9 @@ async function loadRooms() {
     if (!list) return;
     list.innerHTML = '<p class="rooms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading rooms…</p>';
     try {
-        const res   = await fetch(`${API_URL}/rooms`);
+        const res   = await fetch(`${API_URL}/rooms`, {
+            headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+        });
         const rooms = await res.json();
         list.innerHTML = '';
         if (!rooms.length) { list.innerHTML = '<p class="rooms-loading">No rooms yet. Create one above!</p>'; return; }
@@ -123,7 +125,7 @@ async function createRoom() {
     if (!name) { errEl.textContent = 'Room name is required.'; return; }
 
     try {
-        const res = await fetch(`${API_URL}/rooms`, {
+        const res = await fetch(`${API_URL}/rooms/group`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
             body: JSON.stringify({ name, description: desc }),

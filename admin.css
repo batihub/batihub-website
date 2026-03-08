@@ -1,0 +1,312 @@
+/* admin.css — styles for the admin dashboard */
+
+.admin-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.admin-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.admin-title i { color: var(--accent); }
+.admin-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.role-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.role-badge.root  { background: rgba(239,68,68,0.12);  color: #ef4444;  border: 1px solid rgba(239,68,68,0.25); }
+.role-badge.admin { background: rgba(99,102,241,0.12); color: var(--accent); border: 1px solid rgba(99,102,241,0.25); }
+
+/* ── Stats grid ─────────────────────────────────────────────────────────── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+@media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+.stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.admin-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--input-bg);
+    padding: 4px;
+    border-radius: 14px;
+    width: fit-content;
+    margin-bottom: 24px;
+    border: 1px solid var(--nav-border);
+}
+.admin-tab {
+    background: transparent;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+.admin-tab.active {
+    background: var(--card-bg);
+    color: var(--text-main);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.admin-tab:hover:not(.active) { color: var(--text-main); }
+
+/* ── Tab panels ─────────────────────────────────────────────────────────── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.panel-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.search-input {
+    padding: 9px 14px !important;
+    font-size: 0.875rem !important;
+    border-radius: 10px !important;
+    max-width: 260px;
+    width: 100%;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.table-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 16px;
+    overflow: hidden;
+    overflow-x: auto;
+}
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 600px;
+}
+.admin-table thead tr {
+    background: var(--input-bg);
+    border-bottom: 1px solid var(--nav-border);
+}
+.admin-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.admin-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--nav-border);
+    color: var(--text-main);
+    vertical-align: middle;
+}
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr {
+    transition: background 0.15s;
+}
+.admin-table tbody tr:hover { background: var(--input-bg); }
+
+.table-loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px !important;
+    font-size: 0.9rem;
+}
+
+/* user cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.user-cell .av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+.user-cell .uname { font-weight: 600; font-size: 0.875rem; }
+.user-cell .dname { font-size: 0.75rem; color: var(--text-muted); }
+
+/* role select */
+.role-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.role-select:focus { outline: none; border-color: var(--accent); }
+.role-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* role pills */
+.rp { padding: 3px 10px; border-radius: 20px; font-size: 0.73rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.rp-intern { background: rgba(100,116,139,0.12); color: #64748b; }
+.rp-admin  { background: rgba(99,102,241,0.12);  color: var(--accent); }
+.rp-root   { background: rgba(239,68,68,0.12);   color: #ef4444; }
+
+/* type pill */
+.type-pill { padding: 3px 10px; border-radius: 20px; font-size: 0.73rem; font-weight: 700; text-transform: uppercase; }
+.type-group   { background: rgba(16,185,129,0.12); color: #10b981; }
+.type-private { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+/* action buttons inside table */
+.tbl-btn {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+}
+.tbl-btn-danger {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+}
+.tbl-btn-danger:hover { background: rgba(239,68,68,0.2); }
+.tbl-btn-secondary {
+    background: var(--input-bg);
+    color: var(--text-muted);
+    border: 1px solid var(--nav-border);
+}
+.tbl-btn-secondary:hover { color: var(--text-main); border-color: var(--accent); }
+
+/* ── Messages feed ───────────────────────────────────────────────────────── */
+.messages-feed {
+    background: var(--card-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 560px;
+    overflow-y: auto;
+}
+.msg-row {
+    display: grid;
+    grid-template-columns: 36px 140px 1fr 90px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: background 0.15s;
+    font-size: 0.875rem;
+}
+.msg-row:hover { background: var(--input-bg); }
+.msg-row .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem; color: #fff; flex-shrink: 0;
+}
+.msg-row .sender { font-weight: 600; color: var(--text-main); font-size: 0.82rem; }
+.msg-row .room-tag { font-size: 0.72rem; color: var(--accent); }
+.msg-row .body { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-row .ts { font-size: 0.72rem; color: var(--text-muted); text-align: right; }
+
+/* ── Lock status ─────────────────────────────────────────────────────────── */
+.lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+.lock-badge.locked   { background: rgba(239,68,68,0.1); color: #ef4444; }
+.lock-badge.unlocked { background: rgba(16,185,129,0.1); color: #10b981; }

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel – baerhub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="blog.css">
+    <link rel="stylesheet" href="admin.css">
+    <script>
+        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="index.html" class="nav-logo"><span class="bold">baer</span><span class="light">hub</span></a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="blog.html">BeeLog</a>
+            <a href="chat.html">Live Chat</a>
+            <a href="admin.html" class="active">Admin</a>
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
+            <div id="nav-user-slot" style="position:relative"></div>
+            <a href="https://github.com/batihub" target="_blank" class="github-link"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<main class="main-content" style="padding: 40px 20px;">
+    <div class="admin-container">
+
+        <!-- Access denied overlay (shown until role verified) -->
+        <div id="access-denied" style="display:none; text-align:center; padding: 80px 40px;">
+            <div style="font-size:3.5rem; margin-bottom:20px;">🚫</div>
+            <h2 style="margin:0 0 12px">Access Denied</h2>
+            <p style="color:var(--text-muted)">You need admin or root privileges to view this page.</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top:24px; display:inline-flex;">
+                <i class="fa-solid fa-house"></i> Go Home
+            </a>
+        </div>
+
+        <!-- Main dashboard (shown only for admin/root) -->
+        <div id="admin-dashboard" style="display:none">
+
+            <!-- Header -->
+            <div class="admin-header">
+                <div>
+                    <h1 class="admin-title"><i class="fa-solid fa-shield-halved"></i> Admin Panel</h1>
+                    <p class="admin-subtitle">baerhub system dashboard</p>
+                </div>
+                <div id="admin-role-badge"></div>
+            </div>
+
+            <!-- ── Stats Row ─────────────────────────────────────────── -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:var(--accent)">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-users">—</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981">
+                        <i class="fa-solid fa-feather-pointed"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-tweets">—</div>
+                        <div class="stat-label">Total Tweets</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-rooms">—</div>
+                        <div class="stat-label">Active Rooms</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#ef4444">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-admins">—</div>
+                        <div class="stat-label">Admins</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tab Bar ───────────────────────────────────────────── -->
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="users" onclick="switchTab('users', this)">
+                    <i class="fa-solid fa-users"></i> Users
+                </button>
+                <button class="admin-tab" data-tab="rooms" onclick="switchTab('rooms', this)">
+                    <i class="fa-solid fa-comments"></i> Rooms
+                </button>
+                <button class="admin-tab" data-tab="messages" onclick="switchTab('messages', this)">
+                    <i class="fa-solid fa-message"></i> Recent Messages
+                </button>
+            </div>
+
+            <!-- ── Users Tab ─────────────────────────────────────────── -->
+            <div id="tab-users" class="tab-panel active">
+                <div class="panel-toolbar">
+                    <input type="text" id="user-search" placeholder="Search by username…" oninput="filterUsers()" class="search-input">
+                    <button class="btn btn-secondary btn-sm" onclick="loadUsers()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Tweets</th>
+                                <th>Joined</th>
+                                <th id="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="6" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Rooms Tab ─────────────────────────────────────────── -->
+            <div id="tab-rooms" class="tab-panel">
+                <div class="panel-toolbar">
+                    <span style="color:var(--text-muted);font-size:0.9rem">All group and private rooms</span>
+                    <button class="btn btn-secondary btn-sm" onclick="loadAdminRooms()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Owner</th>
+                                <th>Members</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rooms-tbody">
+                            <tr><td colspan="7" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Messages Tab ──────────────────────────────────────── -->
+            <div id="tab-messages" class="tab-panel">
+                <div class="panel-toolbar">
+                    <span style="color:var(--text-muted);font-size:0.9rem">Last 50 messages across all rooms</span>
+                    <button class="btn btn-secondary btn-sm" onclick="loadAdminMessages()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div id="messages-list" class="messages-feed">
+                    <p class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- ── Confirm delete modal ──────────────────────────────────────────────── -->
+<div id="confirm-modal" class="modal">
+    <div class="modal-content" style="max-width:400px;padding:32px;text-align:center">
+        <div class="warning-icon-circle"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h2 style="margin:0 0 8px;font-size:1.2rem" id="confirm-title">Are you sure?</h2>
+        <p style="margin:0 0 24px;color:var(--text-muted);font-size:0.9rem" id="confirm-body"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <button class="btn btn-secondary" style="width:100%;margin:0;padding:12px" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger"    style="width:100%;margin:0;padding:12px" id="confirm-ok-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="auth.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
