@@ -56,11 +56,33 @@
 
                 <!-- Create room (hidden by default) -->
                 <div id="create-room-form" class="create-room-form" style="display:none">
-                    <input type="text" id="room-name-input" placeholder="Room name" maxlength="32">
-                    <input type="text" id="room-desc-input" placeholder="Description (optional)">
-                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+
+                    <!-- Mode tabs -->
+                    <div class="create-room-tabs">
+                        <button class="create-tab active" id="tab-group-btn"   onclick="switchCreateTab('group')">
+                            <i class="fa-solid fa-users"></i> Group
+                        </button>
+                        <button class="create-tab"        id="tab-private-btn" onclick="switchCreateTab('private')">
+                            <i class="fa-solid fa-lock"></i> Private DM
+                        </button>
+                    </div>
+
+                    <!-- Group fields -->
+                    <div id="create-group-fields">
+                        <input type="text" id="room-name-input" placeholder="Room name (e.g. design-team)" maxlength="32" style="margin-bottom:8px">
+                        <input type="text" id="room-desc-input" placeholder="Description (optional)">
+                    </div>
+
+                    <!-- Private DM fields -->
+                    <div id="create-private-fields" style="display:none">
+                        <input type="text" id="dm-username-input" placeholder="Username to start a DM with…" maxlength="50">
+                    </div>
+
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
                         <button class="btn btn-secondary btn-sm" onclick="toggleCreateForm()">Cancel</button>
-                        <button class="btn btn-primary btn-sm" onclick="createRoom()"><i class="fa-solid fa-plus"></i> Create</button>
+                        <button class="btn btn-primary btn-sm" id="create-submit-btn" onclick="handleCreateRoom()">
+                            <i class="fa-solid fa-plus"></i> <span id="create-submit-label">Create Group</span>
+                        </button>
                     </div>
                 </div>
                 <div id="room-create-error" class="room-error"></div>

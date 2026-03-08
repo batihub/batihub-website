@@ -88,33 +88,102 @@ async function loadRooms() {
 }
 
 function buildRoomCard(room) {
-    const card    = document.createElement('div');
+    const card     = document.createElement('div');
     card.className = 'room-card';
-    card.id        = `room-card-${room.name}`;
-    const isOwner  = currentUser && room.owner === currentUser.username;
-    const onlineHtml = room.online > 0
-        ? `<span class="online-badge"><span class="online-dot"></span>${room.online} online</span>` : '';
+    card.id        = `room-card-${room.id}`;
+    const isOwner  = currentUser && room.owner_id === currentUser.id;
+
+    // Friendly display name for private rooms
+    let displayName = room.name;
+    if (room.type === 'private' && room.name.startsWith('private:')) {
+        const parts = room.name.replace('private:', '').split(':');
+        const other = parts.find(u => u !== currentUser?.username) || parts[0];
+        displayName = `DM: ${other}`;
+    }
+
+    const typeIcon   = room.type === 'private' ? 'fa-lock' : 'fa-hashtag';
+    const onlineHtml = room.online_count > 0
+        ? `<span class="online-badge"><span class="online-dot"></span>${room.online_count} online</span>` : '';
+
     card.innerHTML = `
-        <div class="room-card-main" onclick="joinRoom('${escapeHtml(room.name)}')">
-            <div class="room-icon">#</div>
+        <div class="room-card-main" onclick="joinRoom('${room.id}', '${escapeHtml(room.name)}')">
+            <div class="room-icon"><i class="fa-solid ${typeIcon}" style="font-size:0.85rem"></i></div>
             <div class="room-info">
-                <div class="room-name">${escapeHtml(room.name)}</div>
-                <div class="room-desc">${escapeHtml(room.description || 'No description')} ${onlineHtml}</div>
+                <div class="room-name">${escapeHtml(displayName)}</div>
+                <div class="room-desc">${escapeHtml(room.description || '')} ${onlineHtml}</div>
             </div>
         </div>
         <div class="room-actions">
-            <button class="btn btn-primary btn-sm" onclick="joinRoom('${escapeHtml(room.name)}')">
+            <button class="btn btn-primary btn-sm" onclick="joinRoom('${room.id}', '${escapeHtml(room.name)}')">
                 <i class="fa-solid fa-arrow-right-to-bracket"></i> Join
             </button>
             ${isOwner && room.name !== 'general' ? `
-            <button class="room-delete-btn" onclick="deleteRoom('${escapeHtml(room.name)}')" title="Delete room">
+            <button class="room-delete-btn" onclick="deleteRoom('${room.id}')" title="Delete room">
                 <i class="fa-solid fa-trash"></i>
             </button>` : ''}
         </div>`;
     return card;
 }
 
-async function createRoom() {
+// ── Create room — tab switching ───────────────────────────────────────────────
+let _createMode = 'group'; // 'group' | 'private'
+
+function switchCreateTab(mode) {
+    _createMode = mode;
+    document.getElementById('tab-group-btn').classList.toggle('active',   mode === 'group');
+    document.getElementById('tab-private-btn').classList.toggle('active', mode === 'private');
+    document.getElementById('create-group-fields').style.display   = mode === 'group'   ? 'block' : 'none';
+    document.getElementById('create-private-fields').style.display = mode === 'private' ? 'block' : 'none';
+    document.getElementById('create-submit-label').textContent     = mode === 'group' ? 'Create Group' : 'Start DM';
+    document.getElementById('room-create-error').textContent = '';
+
+    // Focus the relevant input
+    setTimeout(() => {
+        const el = mode === 'group'
+            ? document.getElementById('room-name-input')
+            : document.getElementById('dm-username-input');
+        el?.focus();
+    }, 50);
+}
+
+function handleCreateRoom() {
+    if (_createMode === 'private') createPrivateRoom();
+    else createRoom();
+}
+
+async function createPrivateRoom() {
+    const usernameInput = document.getElementById('dm-username-input');
+    const errEl         = document.getElementById('room-create-error');
+    const username      = usernameInput.value.trim();
+    errEl.textContent   = '';
+
+    if (!username) { errEl.textContent = 'Enter a username.'; return; }
+    if (username === currentUser?.username) { errEl.textContent = "You can't DM yourself."; return; }
+
+    const btn = document.getElementById('create-submit-btn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/rooms/private`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ username }),
+        });
+        if (res.ok || res.status === 201) {
+            const room = await res.json();
+            usernameInput.value = '';
+            toggleCreateForm();
+            // Join the room immediately
+            joinRoom(room.id, room.name);
+        } else {
+            const err = await res.json().catch(() => ({}));
+            errEl.textContent = err.detail || 'Failed to start DM.';
+        }
+    } catch(e) { errEl.textContent = 'Network error.'; }
+    finally { btn.disabled = false; }
+}
+
+
     const nameInput = document.getElementById('room-name-input');
     const descInput = document.getElementById('room-desc-input');
     const errEl     = document.getElementById('room-create-error');
@@ -153,14 +222,14 @@ async function createRoom() {
     } catch (e) { errEl.textContent = 'Network error.'; }
 }
 
-async function deleteRoom(name) {
-    if (!confirm(`Delete room "${name}"? This cannot be undone.`)) return;
+async function deleteRoom(roomId) {
+    if (!confirm(`Delete this room? This cannot be undone.`)) return;
     try {
-        const res = await fetch(`${API_URL}/rooms/${name}`, {
+        const res = await fetch(`${API_URL}/rooms/${roomId}`, {
             method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` },
         });
         if (res.ok || res.status === 204) {
-            const card = document.getElementById(`room-card-${name}`);
+            const card = document.getElementById(`room-card-${roomId}`);
             if (card) {
                 card.style.transition = 'all 0.3s ease';
                 card.style.opacity    = '0';
@@ -175,17 +244,24 @@ async function deleteRoom(name) {
 }
 
 // ── Chat / WebSocket ──────────────────────────────────────────────────────────
-function joinRoom(roomName) {
-    currentRoom = roomName;
-    document.getElementById('room-title').textContent = `# ${roomName}`;
+function joinRoom(roomId, roomDisplayName) {
+    currentRoom = roomId;
+    // For private rooms, show "DM: otheruser" instead of the canonical key
+    let title = roomDisplayName || roomId;
+    if (title.startsWith('private:')) {
+        const parts = title.replace('private:', '').split(':');
+        const other = parts.find(u => u !== currentUser?.username) || parts[0];
+        title = `DM: ${other}`;
+    }
+    document.getElementById('room-title').textContent = `# ${title}`;
     document.getElementById('messages').innerHTML = '';
     updateOnlineList([]);
     showChatPanel();
 
-    const wsUrl = `ws://beelog-poes.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomName)}`;
+    const wsUrl = `wss://beelog-poes.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomId)}`;
     ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => { loadRoomHistory(roomName); };
+    ws.onopen = () => { loadRoomHistory(currentRoom); };
 
     ws.onmessage = event => {
         try {
@@ -206,9 +282,9 @@ function joinRoom(roomName) {
     ws.onerror = () => { appendSystemMessage('Connection failed.'); };
 }
 
-async function loadRoomHistory(roomName) {
+async function loadRoomHistory(roomId) {
     try {
-        const res = await fetch(`${API_URL}/chat_logs?room=${encodeURIComponent(roomName)}`, {
+        const res = await fetch(`${API_URL}/chat_logs?room=${encodeURIComponent(roomId)}`, {
             headers: { 'Authorization': `Bearer ${authToken}` },
         });
         if (res.status === 404) return;
