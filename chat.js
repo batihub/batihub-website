@@ -183,7 +183,7 @@ async function createPrivateRoom() {
     finally { btn.disabled = false; }
 }
 
-
+async function createRoom() {
     const nameInput = document.getElementById('room-name-input');
     const descInput = document.getElementById('room-desc-input');
     const errEl     = document.getElementById('room-create-error');
@@ -191,7 +191,10 @@ async function createPrivateRoom() {
     const desc      = descInput?.value.trim() || '';
     errEl.textContent = '';
 
-    if (!name) { errEl.textContent = 'Room name is required.'; return; }
+    if (!name) {
+        errEl.textContent = 'Room name is required.';
+        return;
+    }
 
     try {
         const res = await fetch(`${API_URL}/rooms/group`, {
