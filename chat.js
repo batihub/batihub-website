@@ -4,22 +4,21 @@
 let ws          = null;
 let currentRoom = null;
 let onlineUsers = [];
-const userCache = {};
+const memberMap = {}; // sender_id (number) → username
 
-async function resolveUsername(senderId) {
-    if (userCache[senderId]) return userCache[senderId];
+async function loadMemberMap(roomId) {
     try {
-        const res = await fetch(`${API_URL}/users/${senderId}`, {
+        const res = await fetch(`${API_URL}/rooms/${roomId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        if (res.ok) {
-            const u = await res.json();
-            userCache[senderId] = u.username || u.name || `user_${senderId}`;
-        } else {
-            userCache[senderId] = `user_${senderId}`;
-        }
-    } catch { userCache[senderId] = `user_${senderId}`; }
-    return userCache[senderId];
+        if (!res.ok) return;
+        const data = await res.json();
+        (data.members || []).forEach(m => { memberMap[m.user_id] = m.username; });
+    } catch(e) {}
+}
+
+function resolveUsername(senderId) {
+    return memberMap[senderId] || memberMap[String(senderId)] || `user_${senderId}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -281,7 +280,7 @@ function joinRoom(roomId, roomDisplayName) {
     const wsUrl = `wss://beelog-poes.onrender.com/ws/chat?token=${encodeURIComponent(authToken)}&room=${encodeURIComponent(roomId)}`;
     ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => { loadRoomHistory(currentRoom); };
+    ws.onopen = async () => { await loadMemberMap(currentRoom); loadRoomHistory(currentRoom); };
 
     ws.onmessage = event => {
         try {
@@ -290,15 +289,12 @@ function joinRoom(roomId, roomDisplayName) {
                 appendSystemMessage(data.text);
                 if (data.users) updateOnlineList(data.users);
             } else if (data.type === 'chat') {
-                const isMe = data.sender_id === currentUser?.id || data.username === currentUser?.username;
+                const isMe = data.username === currentUser?.username;
                 if (!isMe) {
-                    const text      = data.message || data.text || '';
-                    const timestamp = data.created_at || data.timestamp || null;
-                    const getSender = async () => {
-                        const name = data.username ? data.username : await resolveUsername(data.sender_id);
-                        appendMessage(name, text, timestamp);
-                    };
-                    getSender();
+                    const sender    = data.username || resolveUsername(data.sender_id);
+                    const text      = data.text || data.message || '';
+                    const timestamp = data.timestamp || data.created_at || null;
+                    appendMessage(sender, text, timestamp);
                 }
             }
         } catch (e) { appendSystemMessage(event.data); }
@@ -320,14 +316,11 @@ async function loadRoomHistory(roomId) {
         const recent = logs.slice(-50);
         if (recent.length > 0) {
             appendSystemMessage(`─── last ${recent.length} messages ───`);
-            const renderHistory = async () => {
-                for (const msg of recent) {
-                    const isMe   = msg.sender_id === currentUser?.id;
-                    const sender = isMe ? currentUser.username : await resolveUsername(msg.sender_id);
-                    appendMessage(sender, msg.message || '', msg.created_at || null, true);
-                }
-            };
-            renderHistory();
+            recent.forEach(msg => {
+                const isMe   = msg.sender_id === currentUser?.id || msg.sender_id === String(currentUser?.id);
+                const sender = isMe ? currentUser.username : resolveUsername(msg.sender_id);
+                appendMessage(sender, msg.message || '', msg.created_at || null, true);
+            });
             appendSystemMessage('─── live ───');
         }
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;

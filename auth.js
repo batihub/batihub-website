@@ -200,7 +200,16 @@ function _initHamburger() {
 const API_URL = "https://beelog-poes.onrender.com";
 
 let authToken   = localStorage.getItem('baerhub-token') || null;
-let currentUser = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
+let _savedUser  = JSON.parse(localStorage.getItem('baerhub-user') || 'null');
+let _savedToken = localStorage.getItem('baerhub-token');
+// Backfill id from JWT if old session didn't store it
+if (_savedUser && !_savedUser.id && _savedToken) {
+    try {
+        const _p = JSON.parse(atob(_savedToken.split('.')[1]));
+        if (_p.id) { _savedUser.id = _p.id; localStorage.setItem('baerhub-user', JSON.stringify(_savedUser)); }
+    } catch(e) {}
+}
+let currentUser = _savedUser;
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 function initTheme() {
@@ -406,8 +415,9 @@ async function login() {
             try {
                 const payload = JSON.parse(atob(data.access_token.split('.')[1]));
                 role = payload.role || 'intern';
-            } catch(e) {}
-            currentUser = { username, role };
+                currentUser = { username, role, id: payload.id || null };
+            } catch(e) { currentUser = { username, role }; }
+            // (currentUser assigned inside try above)
             localStorage.setItem('baerhub-token', authToken);
             localStorage.setItem('baerhub-user',  JSON.stringify(currentUser));
             closeLoginModal();
