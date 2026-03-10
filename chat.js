@@ -273,8 +273,11 @@ function joinRoom(roomId, roomDisplayName) {
                 appendSystemMessage(data.text);
                 if (data.users) updateOnlineList(data.users);
             } else if (data.type === 'chat') {
-                if (data.username !== currentUser?.username) {
-                    appendMessage(data.username, data.text, data.timestamp);
+                const sender    = data.username  || data.user     || data.sender  || 'Unknown';
+                const text      = data.text      || data.message  || data.content || '';
+                const timestamp = data.timestamp || data.created_at|| data.time   || null;
+                if (sender !== currentUser?.username) {
+                    appendMessage(sender, text, timestamp);
                 }
             }
         } catch (e) { appendSystemMessage(event.data); }
@@ -293,10 +296,17 @@ async function loadRoomHistory(roomId) {
         if (res.status === 404) return;
         if (!res.ok) return;
         const logs   = await res.json();
+        // DEV: log first message so you can confirm exact field names, then remove this block
+        if (logs.length > 0) console.log('[chat debug] sample message fields:', logs[0]);
         const recent = logs.slice(-50);
         if (recent.length > 0) {
             appendSystemMessage(`─── last ${recent.length} messages ───`);
-            recent.forEach(msg => appendMessage(msg.username, msg.text, msg.timestamp, true));
+            recent.forEach(msg => {
+                const sender    = msg.username   || msg.user      || msg.sender   || 'Unknown';
+                const text      = msg.text       || msg.message   || msg.content  || '';
+                const timestamp = msg.timestamp  || msg.created_at|| msg.time     || null;
+                appendMessage(sender, text, timestamp, true);
+            });
             appendSystemMessage('─── live ───');
         }
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
