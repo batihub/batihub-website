@@ -126,7 +126,7 @@ async def get_chat_logs(
         query = query.where(Message.room_id == room_id)
     result = await session.exec(query)
     messages =  result.all()
-    return messages.reverse()
+    return messages[::-1]
 """
     result.all() → returns a list ✅
     reversed(messages) → returns a list_reverseiterator object, NOT a list ❌
@@ -134,6 +134,10 @@ async def get_chat_logs(
     return list(reversed(messages))
 
     or just go with messages[::-1] or messages.reverse() these two return lists 
+    
+    Found it. Classic Python gotcha — list.reverse() mutates in-place and returns None, so your endpoint is literally returning None to FastAPI.
+    messages = result.all()
+    return messages.reverse()  # ❌ returns None, not the list
     
     # Re-sort oldest → newest for correct chat display
     # ❌ This gives oldest 100, not latest 100
