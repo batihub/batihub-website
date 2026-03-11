@@ -125,4 +125,19 @@ async def get_chat_logs(
     if room_id:
         query = query.where(Message.room_id == room_id)
     result = await session.exec(query)
-    return result.all()
+    messages =  result.all()
+    return messages.reverse()
+"""
+    result.all() → returns a list ✅
+    reversed(messages) → returns a list_reverseiterator object, NOT a list ❌
+ 
+    return list(reversed(messages))
+
+    or just go with messages[::-1] or messages.reverse() these two return lists 
+    
+    # Re-sort oldest → newest for correct chat display
+    # ❌ This gives oldest 100, not latest 100
+    query = select(Message).order_by(Message.created_at.asc()).limit(limit)
+    You need .desc() + limit to grab the latest 100, then reversed() to display them oldest-first.
+    Switching to .asc() would give you the first 100 messages ever sent, not the most recent ones.
+"""
