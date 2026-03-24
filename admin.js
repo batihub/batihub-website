@@ -128,7 +128,7 @@ function renderUsers(users) {
             : `<span class="rp ${rpClass}">${u.role}</span>`;
 
         const actionsCell = (isRoot && !isRootUser && !isSelf)
-            ? `<button class="tbl-btn tbl-btn-danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}')">
+            ? `<button class="tbl-btn tbl-btn-danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}', this.closest('tr'))">
                    <i class="fa-solid fa-trash"></i> Delete
                </button>`
             : `<span style="color:var(--text-muted);font-size:0.78rem">—</span>`;
@@ -179,7 +179,7 @@ async function changeRole(userId, selectEl) {
     }
 }
 
-function deleteUser(userId, username) {
+function deleteUser(userId, username, rowEl) {
     openConfirm(
         `Delete @${username}?`,
         'This will permanently delete their account, tweets, and messages. This cannot be undone.',
@@ -199,7 +199,8 @@ function deleteUser(userId, username) {
                     showToast(err.detail || 'Failed to delete', 'error');
                 }
             } catch(e) { showToast('Network error', 'error'); }
-        }
+        },
+        rowEl
     );
 }
 
@@ -235,7 +236,7 @@ async function loadAdminRooms() {
                         <i class="fa-solid ${r.locked ? 'fa-lock-open' : 'fa-lock'}"></i>
                         ${r.locked ? 'Unlock' : 'Lock'}
                     </button>
-                    <button class="tbl-btn tbl-btn-danger" onclick="deleteAdminRoom('${r.id}', '${escapeHtml(r.name)}')">
+                    <button class="tbl-btn tbl-btn-danger" onclick="deleteAdminRoom('${r.id}', '${escapeHtml(r.name)}', this.closest('tr'))">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </td>
@@ -262,7 +263,7 @@ async function toggleRoomLock(roomId, currentlyLocked, btn) {
     finally { btn.disabled = false; }
 }
 
-function deleteAdminRoom(roomId, name) {
+function deleteAdminRoom(roomId, name, rowEl) {
     openConfirm(
         `Delete room "${name}"?`,
         'All messages and memberships in this room will be permanently deleted.',
@@ -281,17 +282,25 @@ function deleteAdminRoom(roomId, name) {
                     showToast(err.detail || 'Failed', 'error');
                 }
             } catch(e) { showToast('Network error', 'error'); }
-        }
+        },
+        rowEl
     );
 }
 
 // ── Confirm modal ─────────────────────────────────────────────────────────────
 let _confirmCallback = null;
+let _targetedRow     = null;
 
-function openConfirm(title, body, callback) {
+function openConfirm(title, body, callback, rowEl = null) {
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-body').textContent  = body;
     _confirmCallback = callback;
+
+    // Highlight the row being targeted
+    if (_targetedRow) _targetedRow.classList.remove('row-targeted');
+    _targetedRow = rowEl || null;
+    if (_targetedRow) _targetedRow.classList.add('row-targeted');
+
     document.getElementById('confirm-modal').style.display = 'flex';
     document.getElementById('confirm-ok-btn').onclick = () => {
         closeConfirm();
@@ -300,10 +309,16 @@ function openConfirm(title, body, callback) {
 }
 function closeConfirm() {
     document.getElementById('confirm-modal').style.display = 'none';
+    if (_targetedRow) { _targetedRow.classList.remove('row-targeted'); _targetedRow = null; }
     _confirmCallback = null;
 }
+// Close on backdrop click
 window.addEventListener('click', e => {
     if (e.target === document.getElementById('confirm-modal')) closeConfirm();
+});
+// Close on Escape key
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('confirm-modal').style.display === 'flex') closeConfirm();
 });
 
 // ── Toast (mirrors blog.js toast — works standalone too) ──────────────────────
