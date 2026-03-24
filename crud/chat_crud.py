@@ -4,6 +4,8 @@ crud/chat_crud.py
 All database operations for the chat system.
 Every function is async and takes an AsyncSession as its first argument.
 """
+from http.client import HTTPException
+from http.server import HTTPServer
 from typing import Optional, List
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -145,3 +147,14 @@ async def get_chat_logs(
     You need .desc() + limit to grab the latest 100, then reversed() to display them oldest-first.
     Switching to .asc() would give you the first 100 messages ever sent, not the most recent ones.
 """
+
+async def delete_chat_log(
+        session : AsyncSession,
+        message_to_del_no : int,
+):
+    message = await session.get(Message,message_to_del_no)
+    if message is None:
+        raise ValueError(f"Message {message_to_del_no} not found")
+
+    await session.delete(message)
+    await session.commit()

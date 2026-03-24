@@ -1,373 +1,355 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batıhan's Projects</title>
+    <title>ChatHub — Live Rooms</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="app.css">
     <link rel="icon" type="image/png" href="/favicon-32x32.png">
-    <script src="auth.js"></script>
     <script>
-        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
-        if (savedTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
+        // Apply saved theme before first paint
+        (function() {
+            var t = localStorage.getItem('baerhub-theme');
+            if (t === 'light') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', 'dark');
+        })();
     </script>
-
-    <style>
-        :root {
-            /* Default Theme: Bright/Light */
-            --bg-color: #f4f4f9;
-            --bg-gradient-center: #ffffff;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --accent: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.15);
-            --nav-border: rgba(0, 0, 0, 0.05);
-            --nav-bg: rgba(255, 255, 255, 0.8);
-            --input-border: #e2e8f0;
-        }
-
-        [data-theme="dark"] {
-            /* Elegant Dark Theme */
-            --bg-color: #0f172a;
-            --bg-gradient-center: #1e293b;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #818cf8;
-            --accent-glow: rgba(129, 140, 248, 0.15);
-            --nav-border: rgba(255, 255, 255, 0.1);
-            --nav-bg: rgba(30, 41, 59, 0.85);
-            --input-border: #334155;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(circle at top, var(--bg-gradient-center), var(--bg-color));
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        /* --- Stylish Navigation --- */
-        .top-nav {
-            background-color: var(--nav-bg);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--nav-border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
-        .nav-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            font-size: 1.25rem;
-            color: var(--text-main);
-            text-decoration: none;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-logo .bold { font-weight: 800; }
-        .nav-logo .light { font-weight: 400; color: var(--text-muted); }
-
-        .nav-links {
-            display: flex;
-            gap: 28px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--text-main);
-        }
-
-        .nav-links a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: var(--accent);
-            border-radius: 2px;
-        }
-
-        /* --- Theme Toggle Button --- */
-        .theme-toggle-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.3s ease, transform 0.2s;
-            border-radius: 50%;
-        }
-
-        .theme-toggle-btn:hover {
-            color: var(--accent);
-            transform: rotate(15deg);
-        }
-
-        .nav-links .github-link {
-            background-color: var(--text-main);
-            color: var(--card-bg);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            transition: transform 0.2s, background-color 0.3s, color 0.3s;
-        }
-
-        .nav-links .github-link:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        /* --- Main Layout --- */
-        .main-content {
-            min-height: calc(100vh - 70px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            box-sizing: border-box;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin: 0 0 12px 0;
-            font-weight: 800;
-            letter-spacing: -1.5px;
-            color: var(--text-main);
-        }
-
-        .header p {
-            color: var(--text-muted);
-            font-size: 1.15rem;
-            margin: 0;
-            font-weight: 400;
-        }
-
-        .project-grid {
-            display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 900px;
-        }
-
-        .project-card {
-            background-color: var(--card-bg);
-            border-radius: 24px;
-            padding: 40px 30px;
-            width: 280px;
-            text-align: center;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .project-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(180deg, var(--accent-glow) 0%, rgba(255,255,255,0) 100%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .project-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px -10px var(--accent-glow);
-            border-color: var(--nav-border);
-        }
-
-        .project-card:hover::before {
-            opacity: 1;
-        }
-
-        .icon-wrapper {
-            font-size: 2.5rem;
-            color: var(--accent);
-            margin-bottom: 24px;
-            position: relative;
-            display: inline-block;
-            transition: transform 0.3s ease;
-        }
-
-        .project-card:hover .icon-wrapper {
-            transform: scale(1.1);
-        }
-
-        .project-card h2 {
-            font-size: 1.5rem;
-            margin: 0 0 12px 0;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .project-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin: 0;
-        }
-
-        /* ── Nav user pill (from auth.js) ── */
-        .nav-user-pill { display:flex; align-items:center; gap:7px; background:rgba(255,255,255,0.08); border:1px solid var(--nav-border); border-radius:24px; padding:4px 12px 4px 4px; cursor:pointer; transition:all 0.2s; user-select:none; }
-        .nav-user-pill:hover { border-color:var(--accent); }
-        .nav-avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
-        .nav-username { font-size:0.85rem; font-weight:600; color:var(--text-main); }
-        .user-dropdown { position:absolute; top:calc(100% + 8px); right:0; min-width:180px; background:var(--card-bg); border:1px solid var(--nav-border); border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,0.15); padding:8px; z-index:2000; opacity:0; pointer-events:none; transform:translateY(-6px); transition:all 0.2s cubic-bezier(0.16,1,0.3,1); }
-        .user-dropdown.open { opacity:1; pointer-events:all; transform:translateY(0); }
-        .dropdown-info { padding:8px 10px 10px; }
-        .dropdown-display { display:block; font-weight:700; font-size:0.9rem; color:var(--text-main); }
-        .dropdown-handle { display:block; font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
-        .dropdown-divider { height:1px; background:var(--nav-border); margin:4px 0; }
-        .dropdown-item { display:flex; align-items:center; gap:8px; width:100%; padding:9px 10px; background:none; border:none; border-radius:8px; font-family:inherit; font-size:0.88rem; font-weight:500; cursor:pointer; color:var(--text-muted); transition:all 0.15s; text-align:left; }
-        .dropdown-item:hover { background:var(--input-bg,#f8fafc); color:var(--text-main); }
-        .dropdown-item.danger:hover { background:rgba(239,68,68,0.08); color:#ef4444; }
-        .btn { padding:10px 20px; border:none; border-radius:12px; cursor:pointer; font-weight:600; font-family:inherit; font-size:0.9rem; color:white; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
-        .btn-primary { background-color:var(--accent); }
-        .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
-        .nav-login-btn { padding:8px 16px; font-size:0.85rem; border-radius:20px; }
-        /* Modal (from auth.js) */
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; }
-        .modal-content { background:var(--card-bg); border-radius:20px; padding:32px; width:90%; max-width:460px; box-shadow:0 24px 60px rgba(0,0,0,0.2); }
-        .auth-tabs { display:flex; gap:4px; background:var(--input-bg,#f8fafc); padding:4px; border-radius:12px; width:fit-content; }
-        .auth-tab { background:transparent; border:none; padding:8px 20px; border-radius:9px; font-family:inherit; font-size:0.9rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
-        .auth-tab.active { background:var(--card-bg); color:var(--text-main); box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-        .auth-form .form-group { margin-bottom:20px; }
-        .auth-form label { display:block; margin-bottom:8px; font-size:0.9rem; font-weight:600; color:var(--text-main); }
-        .auth-form input[type=text], .auth-form input[type=password] { width:100%; padding:12px 14px; border:1px solid var(--input-border,#e2e8f0); border-radius:10px; box-sizing:border-box; background:var(--input-bg,#f8fafc); color:var(--text-main); font-size:0.95rem; font-family:inherit; }
-        .auth-form input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
-        .form-error { color:#ef4444; font-size:0.85rem; min-height:18px; margin-bottom:8px; }
-        .button-group { display:flex; gap:10px; }
-        .modal-actions { justify-content:flex-end; margin-top:8px; }
-        .btn-secondary { background:var(--input-border,#e2e8f0); color:var(--text-main); }
-        .input-group { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .text-danger { color:#ef4444; }
-
-        @media (max-width: 768px) {
-            .main-content { padding: 40px 16px; }
-            .header h1 { font-size: 2rem; letter-spacing: -1px; }
-            .header { margin-bottom: 36px; }
-            .project-grid { gap: 20px; }
-            .project-card { width: 100%; max-width: 340px; padding: 28px 20px; }
-            .input-group { grid-template-columns: 1fr; }
-        }
-    </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div class="nav-container">
-            <a href="index.html" class="nav-logo">
-                <span class="bold">baer</span><span class="light">hub</span>
+<div class="app-shell" id="app-shell">
+
+    <!-- ═══════════════════════════════════════════════════
+         1. ICON NAV — far-left vertical rail
+         ═══════════════════════════════════════════════════ -->
+    <nav class="icon-nav">
+        <div class="icon-nav__top">
+            <a href="index.html" class="brand-btn" title="ChatHub">
+                <i class="fa-solid fa-comments"></i>
             </a>
-            <div class="nav-links">
-                <a href="index.html" class="active">Home</a>
-                <a href="blog.html">BeeLog</a>
-                <a href="chat.html">Live Chat</a>
+            <div class="icon-nav__divider"></div>
 
-                <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+            <button class="icon-nav__btn active" title="Chat Rooms">
+                <i class="fa-solid fa-message"></i>
+                <span class="icon-nav__tooltip">Chat Rooms</span>
+            </button>
 
-                <div id="nav-user-slot" style="position:relative"></div>
-                <a href="https://github.com/batihub" target="_blank" class="github-link"><i class="fa-brands fa-github"></i> GitHub</a>
-            </div>
+            <a href="blog.html" class="icon-nav__btn" title="BeeLog Feed">
+                <i class="fa-solid fa-newspaper"></i>
+                <span class="icon-nav__tooltip">BeeLog Feed</span>
+            </a>
+        </div>
+
+        <div class="icon-nav__bottom">
+            <button class="icon-nav__btn" id="theme-toggle" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="icon-nav__tooltip">Toggle Theme</span>
+            </button>
+            <a href="https://github.com/batihub" target="_blank" class="icon-nav__btn" title="GitHub">
+                <i class="fa-brands fa-github"></i>
+                <span class="icon-nav__tooltip">GitHub</span>
+            </a>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="header">
-            <h1>Projects</h1>
-            <p>Select an application to launch</p>
+    <!-- ═══════════════════════════════════════════════════
+         2. SIDEBAR — rooms & DMs list
+         ═══════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar__header">
+            <span class="sidebar__title">ChatHub</span>
+            <button class="sidebar__header-btn" onclick="loadRooms()" title="Refresh">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
         </div>
 
-        <div class="project-grid">
-            <a href="blog.html" class="project-card">
-                <div class="icon-wrapper">
-                    <i class="fa-solid fa-book-open"></i>
-                </div>
-                <h2>BeeLog</h2>
-                <p>A full-stack CRUD blog platform built with FastAPI and PostgreSQL.</p>
-            </a>
+        <!-- Create Room / DM Panel (hidden by default) -->
+        <div id="create-room-form" class="create-panel" style="display:none">
+            <div class="create-panel__tabs">
+                <button class="create-tab active" id="tab-group-btn" onclick="switchCreateTab('group')">
+                    <i class="fa-solid fa-users"></i> Group
+                </button>
+                <button class="create-tab" id="tab-private-btn" onclick="switchCreateTab('private')">
+                    <i class="fa-solid fa-lock"></i> DM
+                </button>
+            </div>
 
-            <a href="chat.html" class="project-card">
-                <div class="icon-wrapper">
+            <div id="create-group-fields">
+                <input type="text" id="room-name-input" class="sidebar-input"
+                       placeholder="channel-name" maxlength="32" style="margin-bottom:6px">
+                <input type="text" id="room-desc-input" class="sidebar-input"
+                       placeholder="Description (optional)">
+            </div>
+
+            <div id="create-private-fields" style="display:none">
+                <input type="text" id="dm-username-input" class="sidebar-input"
+                       placeholder="Username to DM…" maxlength="50">
+            </div>
+
+            <div id="room-create-error" class="create-panel__error"></div>
+
+            <div class="create-panel__actions">
+                <button class="sidebar-btn sidebar-btn--ghost" onclick="toggleCreateForm()">
+                    Cancel
+                </button>
+                <button class="sidebar-btn sidebar-btn--primary" id="create-submit-btn" onclick="handleCreateRoom()">
+                    <span id="create-submit-label">Create Group</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Scrollable Content -->
+        <div class="sidebar__content" id="sidebar-content">
+
+            <!-- Channels Category -->
+            <div class="room-category">
+                <div class="room-category__header" onclick="toggleCategory('channels-list', 'channels-caret')">
+                    <i class="fa-solid fa-caret-down category-caret" id="channels-caret"></i>
+                    <span class="room-category__name">Channels</span>
+                    <button class="room-category__add"
+                            onclick="event.stopPropagation(); switchCreateTab('group'); toggleCreateForm();"
+                            title="New Channel">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <div class="room-category__list" id="channels-list">
+                    <div id="rooms-list" class="rooms-list-inner">
+                        <div class="sidebar-loading">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direct Messages Category -->
+            <div class="room-category">
+                <div class="room-category__header" onclick="toggleCategory('dms-list', 'dms-caret')">
+                    <i class="fa-solid fa-caret-down category-caret" id="dms-caret"></i>
+                    <span class="room-category__name">Direct Messages</span>
+                    <button class="room-category__add"
+                            onclick="event.stopPropagation(); switchCreateTab('private'); toggleCreateForm();"
+                            title="New DM">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <div class="room-category__list" id="dms-list">
+                    <!-- DM rooms rendered here by JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- User Panel (bottom of sidebar) -->
+        <div class="user-panel" id="user-panel">
+            <div class="user-panel__avatar" id="up-avatar-wrap">
+                <div class="user-avatar-circle" id="up-avatar-circle">?</div>
+                <div class="status-dot status-offline" id="up-status-dot"></div>
+            </div>
+            <div class="user-panel__info">
+                <span class="user-panel__name" id="up-name">Guest</span>
+                <span class="user-panel__sub" id="up-sub">Not logged in</span>
+            </div>
+            <div id="nav-user-slot" style="position:relative"></div>
+        </div>
+
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════
+         3. MAIN AREA
+         ═══════════════════════════════════════════════════ -->
+    <main class="main-area" id="main-area">
+
+        <!-- AUTH PANEL: shown when not logged in -->
+        <div id="auth-panel" class="welcome-screen" style="display:none">
+            <div class="welcome-content">
+                <div class="welcome-icon">
                     <i class="fa-solid fa-comments"></i>
                 </div>
-                <h2>Live Chat</h2>
-                <p>Real-time messaging rooms powered by WebSockets.</p>
-            </a>
+                <h1>Welcome to ChatHub</h1>
+                <p>Join real-time rooms, send messages, and connect with others — all in one place.</p>
+                <button class="welcome-btn welcome-btn--primary" onclick="openLoginModal()">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log In or Register
+                </button>
+                <a href="blog.html" class="welcome-btn welcome-btn--ghost">
+                    <i class="fa-solid fa-newspaper"></i> Browse the BeeLog Feed →
+                </a>
+            </div>
         </div>
+
+        <!-- ROOMS PANEL: shown when logged in, no room selected -->
+        <div id="rooms-panel" class="welcome-screen" style="display:none">
+            <div class="welcome-content">
+                <div class="welcome-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+                <h1>Pick a channel</h1>
+                <p>Select a room from the sidebar or create a new one to start chatting.</p>
+                <button class="welcome-btn welcome-btn--primary"
+                        onclick="switchCreateTab('group'); toggleCreateForm()">
+                    <i class="fa-solid fa-hashtag"></i> Create a Channel
+                </button>
+                <button class="welcome-btn welcome-btn--ghost"
+                        onclick="switchCreateTab('private'); toggleCreateForm()">
+                    <i class="fa-solid fa-lock"></i> Start a Direct Message
+                </button>
+            </div>
+        </div>
+
+        <!-- CHAT PANEL: shown when inside a room -->
+        <div id="chat-panel" class="chat-view" style="display:none">
+
+            <!-- Top Bar -->
+            <div class="chat-topbar">
+                <div class="chat-topbar__left">
+                    <button class="icon-btn mobile-back-btn" onclick="leaveRoom()" title="Back">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <span class="chat-topbar__icon" id="room-icon-badge">#</span>
+                    <div class="chat-topbar__info">
+                        <span class="chat-topbar__name" id="room-title">general</span>
+                        <span class="chat-topbar__desc" id="room-desc">Chat room</span>
+                    </div>
+                </div>
+
+                <div class="chat-topbar__right">
+                    <div class="chat-topbar__online">
+                        <span class="online-dot-sm"></span>
+                        <span id="online-count">0</span>&nbsp;online
+                    </div>
+                    <button class="icon-btn" title="Search messages (coming soon)">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <button class="icon-btn" title="Pinned messages (coming soon)">
+                        <i class="fa-solid fa-thumbtack"></i>
+                    </button>
+                    <button class="icon-btn" onclick="leaveRoom()" title="Leave room">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="chat-messages" id="messages"></div>
+
+            <!-- Typing indicator -->
+            <div class="chat-typing" id="chat-typing"></div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="chat-input-wrapper" style="flex:1; display:flex; align-items:center; gap:6px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px; padding:0 8px 0 4px;">
+                    <button class="chat-input-btn" title="Attach (coming soon)">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <input type="text" id="message-input" class="chat-input"
+                           placeholder="Message #general" autocomplete="off">
+                    <div class="chat-input-actions">
+                        <button class="chat-input-btn" title="Emoji (coming soon)">
+                            <i class="fa-regular fa-face-smile"></i>
+                        </button>
+                        <button class="chat-input-btn" title="GIF (coming soon)" style="font-size:0.65rem; font-weight:800; letter-spacing:-0.5px;">
+                            GIF
+                        </button>
+                        <button class="chat-send-btn" onclick="sendMessage()" id="send-btn" title="Send (Enter)">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end chat-panel -->
     </main>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) {
-                const icon = themeToggle.querySelector('i');
-                const currentTheme = document.documentElement.getAttribute('data-theme');
+    <!-- ═══════════════════════════════════════════════════
+         4. MEMBERS PANEL — right sidebar
+         ═══════════════════════════════════════════════════ -->
+    <aside class="members-panel" id="members-panel">
+        <div class="members-panel__header">Members</div>
+        <div class="members-panel__content">
+            <div class="members-panel__section">
+                <div class="members-panel__label">Online — <span id="online-count-members">0</span></div>
+                <div id="online-list" class="members-list"></div>
+            </div>
+            <div class="members-panel__section">
+                <div class="members-panel__label">Offline</div>
+                <p class="members-hint">Other members will appear here</p>
+            </div>
+        </div>
+    </aside>
 
-                // Set initial icon
-                if (currentTheme === 'dark') {
-                    icon.classList.replace('fa-moon', 'fa-sun');
-                }
+</div><!-- end app-shell -->
 
-                themeToggle.addEventListener('click', () => {
-                    let theme = document.documentElement.getAttribute('data-theme');
-                    if (theme === 'dark') {
-                        document.documentElement.removeAttribute('data-theme');
-                        localStorage.setItem('baerhub-theme', 'light');
-                        icon.classList.replace('fa-sun', 'fa-moon');
-                    } else {
-                        document.documentElement.setAttribute('data-theme', 'dark');
-                        localStorage.setItem('baerhub-theme', 'dark');
-                        icon.classList.replace('fa-moon', 'fa-sun');
-                    }
-                });
-            }
-        });
-    </script>
+<!-- Mobile sidebar backdrop -->
+<div class="mobile-overlay" id="mobile-overlay" onclick="closeMobileSidebar()"></div>
+
+<!-- Toast container -->
+<div id="toast-container" class="toast-container"></div>
+
+<script src="auth.js"></script>
+<script src="chat.js"></script>
+<script>
+// ── Mobile sidebar toggle ─────────────────────────────────────────
+function openMobileSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('mobile-overlay').classList.add('active');
+}
+function closeMobileSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mobile-overlay').classList.remove('active');
+}
+
+// ── Category collapse ─────────────────────────────────────────────
+function toggleCategory(listId, caretId) {
+    const list  = document.getElementById(listId);
+    const caret = document.getElementById(caretId);
+    if (!list) return;
+    const collapsed = list.style.display === 'none';
+    list.style.display = collapsed ? '' : 'none';
+    if (caret) caret.classList.toggle('collapsed', !collapsed);
+}
+
+// ── Theme toggle (overrides auth.js to handle dark-default logic) ─
+document.addEventListener('DOMContentLoaded', () => {
+    const btn  = document.getElementById('theme-toggle');
+    const icon = btn?.querySelector('i');
+    if (!btn || !icon) return;
+
+    // Sync icon with current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) icon.classList.replace('fa-moon', 'fa-sun');
+
+    btn.addEventListener('click', () => {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (dark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('baerhub-theme', 'light');
+            icon.classList.replace('fa-sun', 'fa-moon');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('baerhub-theme', 'dark');
+            icon.classList.replace('fa-moon', 'fa-sun');
+        }
+    });
+});
+
+// ── showToast helper (used by auth.js) ───────────────────────────
+function showToast(msg, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success'
+        ? '<i class="fa-solid fa-circle-check" style="color:var(--online-color)"></i>'
+        : '<i class="fa-solid fa-circle-xmark" style="color:var(--danger)"></i>';
+    toast.innerHTML = `${icon} ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+</script>
 </body>
 </html>

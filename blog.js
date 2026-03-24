@@ -53,7 +53,7 @@ document.addEventListener('auth:navRendered',() => { _updateComposerVisibility()
 
 function _updateComposerVisibility() {
     const postSection = document.getElementById('post-section');
-    if (postSection) postSection.style.display = (authToken && currentUser) ? 'block' : 'none';
+    if (postSection) postSection.style.display = (authToken && currentUser) ? 'flex' : 'none';
 }
 
 // ── Tweet CRUD ────────────────────────────────────────────────────────────────
@@ -62,8 +62,8 @@ async function createPost() {
     if (!content)             return showToast('Write something first.', 'error');
     if (content.length > 280) return showToast('Max 280 characters.', 'error');
 
-    const btn = document.querySelector('#composer-body .btn-primary');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+    const btn = document.querySelector('.tweet-post-btn') || document.querySelector('#composer-body .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
 
     try {
         const res = await fetch(`${API_URL}/tweets`, {
@@ -87,7 +87,7 @@ async function createPost() {
             showToast('Failed to post.', 'error');
         }
     } catch (e) { showToast('Network error.', 'error'); }
-    finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Tweet'; } }
+    finally { if (btn) { btn.disabled = false; btn.textContent = 'Tweet'; } }
 }
 
 async function fetchTweets() {
