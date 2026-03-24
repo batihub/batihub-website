@@ -40,10 +40,14 @@
                 <i class="fa-solid fa-newspaper"></i>
                 <span class="icon-nav__tooltip">BeeLog Feed</span>
             </a>
+            <a href="profile.html" class="icon-nav__btn" title="My Profile" id="nav-profile-btn">
+                <i class="fa-solid fa-user"></i>
+                <span class="icon-nav__tooltip">My Profile</span>
+            </a>
         </div>
 
         <div class="icon-nav__bottom">
-            <button class="icon-nav__btn" id="theme-toggle" title="Toggle Theme">
+            <button class="icon-nav__btn" id="app-theme-toggle" title="Toggle Theme">
                 <i class="fa-solid fa-moon"></i>
                 <span class="icon-nav__tooltip">Toggle Theme</span>
             </button>
@@ -144,10 +148,10 @@
 
         <!-- User Panel (bottom of sidebar) -->
         <div class="user-panel" id="user-panel">
-            <div class="user-panel__avatar" id="up-avatar-wrap">
+            <a href="profile.html" class="user-panel__avatar" id="up-avatar-wrap" title="View Profile" style="text-decoration:none">
                 <div class="user-avatar-circle" id="up-avatar-circle">?</div>
                 <div class="status-dot status-offline" id="up-status-dot"></div>
-            </div>
+            </a>
             <div class="user-panel__info">
                 <span class="user-panel__name" id="up-name">Guest</span>
                 <span class="user-panel__sub" id="up-sub">Not logged in</span>
@@ -310,15 +314,16 @@ function toggleCategory(listId, caretId) {
     if (caret) caret.classList.toggle('collapsed', !collapsed);
 }
 
-// ── Theme toggle (overrides auth.js to handle dark-default logic) ─
+// ── Theme toggle (uses id="app-theme-toggle" to avoid conflict with auth.js) ─
 document.addEventListener('DOMContentLoaded', () => {
-    const btn  = document.getElementById('theme-toggle');
+    const btn  = document.getElementById('app-theme-toggle');
     const icon = btn?.querySelector('i');
     if (!btn || !icon) return;
 
-    // Sync icon with current theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) icon.classList.replace('fa-moon', 'fa-sun');
+    // Sync icon with current theme on load
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        icon.classList.replace('fa-moon', 'fa-sun');
+    }
 
     btn.addEventListener('click', () => {
         const dark = document.documentElement.getAttribute('data-theme') === 'dark';

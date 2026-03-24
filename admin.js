@@ -48,8 +48,7 @@ function switchTab(tab, btn) {
     document.getElementById(`tab-${tab}`).classList.add('active');
     btn.classList.add('active');
 
-    if (tab === 'rooms')    loadAdminRooms();
-    if (tab === 'messages') loadAdminMessages();
+    if (tab === 'rooms') loadAdminRooms();
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -284,38 +283,6 @@ function deleteAdminRoom(roomId, name) {
             } catch(e) { showToast('Network error', 'error'); }
         }
     );
-}
-
-// ── Messages ──────────────────────────────────────────────────────────────────
-async function loadAdminMessages() {
-    const feed = document.getElementById('messages-list');
-    feed.innerHTML = '<p class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</p>';
-    try {
-        const res  = await fetch(`${API_URL}/admin/messages`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        if (!res.ok) throw new Error();
-        const msgs = await res.json();
-        if (!msgs.length) { feed.innerHTML = '<p class="table-loading">No messages yet.</p>'; return; }
-        feed.innerHTML = msgs.map(m => {
-            const letter = (m.sender_username || '?').charAt(0).toUpperCase();
-            const color  = `hsl(${((m.sender_username || '?').charCodeAt(0) * 47) % 360}deg 55% 45%)`;
-            const ts     = new Date(m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            return `<div class="msg-row">
-                <div class="av" style="background:${color}">${letter}</div>
-                <div>
-                    <div class="sender">${escapeHtml(m.sender_username || 'unknown')}</div>
-                    <div class="room-tag"># ${escapeHtml(m.room_name || m.room_id)}</div>
-                </div>
-                <div class="body" title="${escapeHtml(m.message)}">${escapeHtml(m.message)}</div>
-                <div class="ts">${ts}</div>
-            </div>`;
-        }).join('');
-    } catch(e) {
-        feed.innerHTML = `<p class="table-loading" style="color:var(--danger)">
-            <i class="fa-solid fa-triangle-exclamation"></i> Failed to load messages
-        </p>`;
-    }
 }
 
 // ── Confirm modal ─────────────────────────────────────────────────────────────

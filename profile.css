@@ -1,0 +1,301 @@
+/* ── Profile Page Styles ─────────────────────────────────────────────────────
+   blog.css is loaded first and provides:
+   - CSS variables (--card-bg, --accent, --text-main, etc.)
+   - .post-card, .post-header, .author-info, .avatar-circle, .post-content,
+     .post-actions, .stat-btn, .like-btn, .toast, #toast-container,
+     .loading-placeholder, .loading-spinner, .scroll-top-btn, .modal,
+     .modal-content, .btn, .btn-primary, .btn-secondary, .btn-danger,
+     .warning-icon-circle, .edited-badge, .display-name, .username-handle,
+     .tweet-stats, .action-btns, .form-group, label, input, textarea
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page Container ──────────────────────────────────────────────────────── */
+.profile-page {
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+/* ── Cover Banner ────────────────────────────────────────────────────────── */
+.profile-cover {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-cover-initial {
+    position: absolute;
+    right: 40px;
+    bottom: -20px;
+    font-size: 9rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.08);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    letter-spacing: -4px;
+}
+
+/* ── Avatar Wrap ─────────────────────────────────────────────────────────── */
+.profile-avatar-wrap {
+    transform: translateY(-50%);
+    margin-left: 20px;
+    display: inline-block;
+}
+
+/* ── Profile Avatar Circle ───────────────────────────────────────────────── */
+.profile-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-color);
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover, #4f46e5));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+/* ── Actions Row ─────────────────────────────────────────────────────────── */
+.profile-actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 20px 0 0;
+    /* avatar-wrap's negative translateY creates overlap; row sits immediately
+       after cover so the avatar peeks above. We need just enough top padding
+       to not clip the avatar button area. */
+    margin-top: -4px;
+}
+
+.profile-action-buttons {
+    padding-bottom: 8px;
+}
+
+/* ── Profile Buttons ─────────────────────────────────────────────────────── */
+.profile-btn {
+    border-radius: 50px;
+    height: 36px;
+    padding: 0 20px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.profile-btn--edit {
+    border: 2px solid var(--nav-border);
+    background: transparent;
+    color: var(--text-main);
+}
+.profile-btn--edit:hover {
+    border-color: var(--text-main);
+    background: var(--hover-bg, rgba(0,0,0,0.04));
+}
+
+.profile-btn--follow {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+}
+.profile-btn--follow:hover {
+    background: var(--accent-hover, #4f46e5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow, rgba(99,102,241,0.3));
+}
+
+/* ── Profile Info ────────────────────────────────────────────────────────── */
+.profile-info {
+    padding: 12px 20px 0;
+}
+
+.profile-display-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.3px;
+}
+
+.profile-username {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: block;
+    margin: 2px 0 10px;
+}
+
+.profile-bio {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    line-height: 1.6;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.profile-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.profile-meta i {
+    margin-right: 5px;
+}
+
+/* ── Stats Row ───────────────────────────────────────────────────────────── */
+.profile-stats {
+    display: flex;
+    gap: 24px;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    flex-wrap: wrap;
+}
+
+.profile-stat-val {
+    font-weight: 800;
+    color: var(--text-main);
+    margin-right: 4px;
+}
+
+.profile-stat-label {
+    color: var(--text-muted);
+}
+
+/* ── Profile Tabs ────────────────────────────────────────────────────────── */
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--nav-border);
+    margin: 8px 0 0;
+}
+
+.profile-tab {
+    flex: 1;
+    text-align: center;
+    padding: 14px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    position: relative;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    user-select: none;
+}
+
+.profile-tab:hover:not(.disabled):not(.active) {
+    color: var(--text-main);
+    background: var(--hover-bg, rgba(0,0,0,0.03));
+}
+
+.profile-tab.active {
+    color: var(--text-main);
+    border-bottom-color: var(--accent);
+}
+
+.profile-tab.disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────── */
+.profile-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.profile-empty i {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+.profile-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ── Tweet List in Profile ───────────────────────────────────────────────── */
+/* Override feed layout overrides so profile cards look card-style */
+.profile-page .post-list {
+    gap: 0 !important;
+}
+
+/* Show full content — no line clamping on profile page */
+.profile-page .post-content {
+    -webkit-line-clamp: unset !important;
+    overflow: visible !important;
+    display: block !important;
+}
+
+/* ── Edit Profile Modal ──────────────────────────────────────────────────── */
+.profile-edit-modal.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-edit-modal .modal-content {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 32px;
+    width: 90%;
+    max-width: 440px;
+    border: 1px solid var(--nav-border);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .profile-cover {
+        height: 150px;
+    }
+
+    .profile-avatar {
+        width: 68px;
+        height: 68px;
+        font-size: 1.7rem;
+        border-width: 3px;
+    }
+
+    .profile-display-name {
+        font-size: 1.1rem;
+    }
+
+    .profile-stats {
+        gap: 16px;
+        padding: 10px 16px;
+    }
+
+    .profile-info {
+        padding: 8px 16px 0;
+    }
+
+    .profile-cover-initial {
+        font-size: 6rem;
+        right: 16px;
+    }
+}

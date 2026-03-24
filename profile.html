@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeLog — Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="blog.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="icon" type="image/png" href="/favicon-32x32.png">
+    <script>
+        var t = localStorage.getItem('baerhub-theme');
+        if (t === 'light') {} else document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+</head>
+<body>
+
+<!-- ── Top Nav ─────────────────────────────────────────────────── -->
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="index.html" class="nav-logo">
+            <span class="bold">bee</span><span class="light">log</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">
+                <i class="fa-solid fa-comments" style="font-size:0.8rem"></i> ChatHub
+            </a>
+            <a href="blog.html">Feed</a>
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <div id="nav-user-slot" style="position:relative"></div>
+            <a href="https://github.com/batihub" target="_blank" class="github-link">
+                <i class="fa-brands fa-github"></i> GitHub
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Profile Page ─────────────────────────────────────────────── -->
+<div class="profile-page">
+
+    <!-- Cover Banner -->
+    <div class="profile-cover" id="profile-cover">
+        <span class="profile-cover-initial" id="profile-cover-initial"></span>
+    </div>
+
+    <!-- Avatar + Action Row -->
+    <div class="profile-actions-row">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profile-avatar"></div>
+        </div>
+        <div class="profile-action-buttons">
+            <button class="profile-btn profile-btn--edit" id="profile-edit-btn"
+                    onclick="editProfile()" style="display:none">
+                Edit Profile
+            </button>
+            <button class="profile-btn profile-btn--follow" id="profile-follow-btn"
+                    onclick="openLoginModal()" style="display:none">
+                Follow
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="profile-info">
+        <div class="profile-display-name" id="profile-display-name">Loading…</div>
+        <span class="profile-username" id="profile-username"></span>
+        <div class="profile-bio" id="profile-bio"></div>
+        <div class="profile-meta">
+            <span id="profile-join-date"></span>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="profile-stats">
+        <span>
+            <span class="profile-stat-val" id="profile-tweet-count">0</span>
+            <span class="profile-stat-label">Tweets</span>
+        </span>
+        <span>
+            <span class="profile-stat-val">0</span>
+            <span class="profile-stat-label">Following</span>
+        </span>
+        <span>
+            <span class="profile-stat-val">0</span>
+            <span class="profile-stat-label">Followers</span>
+        </span>
+    </div>
+
+    <!-- Profile Tabs -->
+    <div class="profile-tabs">
+        <div class="profile-tab active" id="tab-tweets">Tweets</div>
+        <div class="profile-tab disabled">Replies</div>
+        <div class="profile-tab disabled">Media</div>
+        <div class="profile-tab disabled">Likes</div>
+    </div>
+
+    <!-- Tweets List -->
+    <div id="profile-tweets" class="post-list">
+        <div class="loading-placeholder">
+            <div class="loading-spinner"></div>
+            <p>Loading tweets…</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Scroll to top ────────────────────────────────────────────── -->
+<button id="scroll-top-btn" class="scroll-top-btn" onclick="scrollToTop()" title="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+</button>
+
+<!-- ── Edit Tweet Modal ─────────────────────────────────────────── -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom:20px;font-size:1.1rem">
+            <i class="fa-solid fa-pen" style="color:var(--accent)"></i> Edit Tweet
+        </h2>
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <textarea id="edit-content" rows="4" maxlength="280"
+                      style="resize:none;width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;color:var(--text-main);font-family:inherit;font-size:0.95rem"></textarea>
+        </div>
+        <div class="button-group modal-actions">
+            <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitEdit()">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Delete Tweet Modal ───────────────────────────────────────── -->
+<div id="delete-modal" class="modal">
+    <div class="modal-content" style="max-width:380px;text-align:center">
+        <div class="warning-icon-circle">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+        <h2 style="margin:0 0 8px;font-size:1.15rem">Delete Tweet?</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin:0 0 24px">
+            This action cannot be undone.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <button class="btn btn-secondary" style="margin:0" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger"    style="margin:0" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit Profile Modal ───────────────────────────────────────── -->
+<div id="edit-profile-modal" class="profile-edit-modal modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom:24px;font-size:1.1rem">
+            <i class="fa-solid fa-user-pen" style="color:var(--accent)"></i> Edit Profile
+        </h2>
+        <div class="form-group">
+            <label for="edit-display-name">Display Name</label>
+            <input type="text" id="edit-display-name" maxlength="80" placeholder="Your display name">
+        </div>
+        <div class="form-group">
+            <label for="edit-bio">Bio</label>
+            <textarea id="edit-bio" rows="3" maxlength="160"
+                      style="resize:none;width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;color:var(--text-main);font-family:inherit;font-size:0.95rem;box-sizing:border-box"
+                      placeholder="Tell the world about yourself…"></textarea>
+        </div>
+        <div class="button-group modal-actions">
+            <button class="btn btn-secondary" onclick="closeEditProfile()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveProfile()">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="auth.js"></script>
+<script src="profile.js"></script>
+</body>
+</html>

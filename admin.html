@@ -1,65 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel – baerhub</title>
+    <title>Admin — ChatHub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="blog.css">
     <link rel="stylesheet" href="admin.css">
     <link rel="icon" type="image/png" href="/favicon-32x32.png">
     <script>
-        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
-        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        (function() {
+            var t = localStorage.getItem('baerhub-theme');
+            if (t === 'light') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', 'dark');
+        })();
     </script>
 </head>
 <body>
 
-<nav class="top-nav">
-    <div class="nav-container">
-        <a href="index.html" class="nav-logo"><span class="bold">baer</span><span class="light">hub</span></a>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="blog.html">BeeLog</a>
-            <a href="chat.html">Live Chat</a>
-            <a href="admin.html" class="active">Admin</a>
-            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
+<!-- ── Top Nav ─────────────────────────────────────────────────── -->
+<nav class="admin-nav">
+    <div class="admin-nav__inner">
+        <a href="index.html" class="admin-nav__logo">
+            <i class="fa-solid fa-comments"></i>
+            <span>ChatHub</span>
+        </a>
+
+        <div class="admin-nav__links">
+            <a href="index.html" class="admin-nav__link">
+                <i class="fa-solid fa-message"></i> Chat
+            </a>
+            <a href="blog.html" class="admin-nav__link">
+                <i class="fa-solid fa-newspaper"></i> BeeLog
+            </a>
+            <a href="admin.html" class="admin-nav__link active">
+                <i class="fa-solid fa-shield-halved"></i> Admin
+            </a>
+        </div>
+
+        <div class="admin-nav__actions">
+            <button id="theme-toggle" class="admin-nav__theme-btn" aria-label="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
             <div id="nav-user-slot" style="position:relative"></div>
-            <a href="https://github.com/batihub" target="_blank" class="github-link"><i class="fa-brands fa-github"></i> GitHub</a>
         </div>
     </div>
 </nav>
 
-<main class="main-content" style="padding: 40px 20px;">
-    <div class="admin-container">
+<!-- ── Main ───────────────────────────────────────────────────── -->
+<main class="admin-main">
+    <div class="admin-wrap">
 
-        <!-- Access denied overlay (shown until role verified) -->
-        <div id="access-denied" style="display:none; text-align:center; padding: 80px 40px;">
-            <div style="font-size:3.5rem; margin-bottom:20px;">🚫</div>
-            <h2 style="margin:0 0 12px">Access Denied</h2>
-            <p style="color:var(--text-muted)">You need admin or root privileges to view this page.</p>
-            <a href="index.html" class="btn btn-primary" style="margin-top:24px; display:inline-flex;">
-                <i class="fa-solid fa-house"></i> Go Home
+        <!-- Access Denied (shown until role verified) -->
+        <div id="access-denied" style="display:none" class="access-denied-screen">
+            <div class="access-denied-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2>Access Denied</h2>
+            <p>You need admin or root privileges to view this page.</p>
+            <a href="index.html" class="admin-action-btn admin-action-btn--primary">
+                <i class="fa-solid fa-comments"></i> Back to ChatHub
             </a>
         </div>
 
-        <!-- Main dashboard (shown only for admin/root) -->
+        <!-- Admin Dashboard -->
         <div id="admin-dashboard" style="display:none">
 
-            <!-- Header -->
-            <div class="admin-header">
-                <div>
-                    <h1 class="admin-title"><i class="fa-solid fa-shield-halved"></i> Admin Panel</h1>
-                    <p class="admin-subtitle">baerhub system dashboard</p>
+            <!-- Page Header -->
+            <div class="admin-page-header">
+                <div class="admin-page-header__left">
+                    <h1><i class="fa-solid fa-shield-halved"></i> Admin Panel</h1>
+                    <p>System management dashboard</p>
                 </div>
-                <div id="admin-role-badge"></div>
+                <div class="admin-page-header__right">
+                    <div id="admin-role-badge"></div>
+                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadStats(); loadUsers();">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
             </div>
 
-            <!-- ── Stats Row ─────────────────────────────────────────── -->
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:var(--accent)">
+                    <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#818cf8">
                         <i class="fa-solid fa-users"></i>
                     </div>
                     <div class="stat-body">
@@ -68,7 +92,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981">
+                    <div class="stat-icon" style="background:rgba(34,197,94,0.12);color:#22c55e">
                         <i class="fa-solid fa-feather-pointed"></i>
                     </div>
                     <div class="stat-body">
@@ -96,24 +120,25 @@
                 </div>
             </div>
 
-            <!-- ── Tab Bar ───────────────────────────────────────────── -->
+            <!-- Tab Bar -->
             <div class="admin-tabs">
-                <button class="admin-tab active" data-tab="users" onclick="switchTab('users', this)">
+                <button class="admin-tab active" onclick="switchTab('users', this)">
                     <i class="fa-solid fa-users"></i> Users
                 </button>
-                <button class="admin-tab" data-tab="rooms" onclick="switchTab('rooms', this)">
-                    <i class="fa-solid fa-comments"></i> Rooms
-                </button>
-                <button class="admin-tab" data-tab="messages" onclick="switchTab('messages', this)">
-                    <i class="fa-solid fa-message"></i> Recent Messages
+                <button class="admin-tab" onclick="switchTab('rooms', this)">
+                    <i class="fa-solid fa-hashtag"></i> Rooms
                 </button>
             </div>
 
-            <!-- ── Users Tab ─────────────────────────────────────────── -->
+            <!-- ── Users Tab ──────────────────────────────────────── -->
             <div id="tab-users" class="tab-panel active">
                 <div class="panel-toolbar">
-                    <input type="text" id="user-search" placeholder="Search by username…" oninput="filterUsers()" class="search-input">
-                    <button class="btn btn-secondary btn-sm" onclick="loadUsers()">
+                    <div class="search-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="user-search" class="search-input"
+                               placeholder="Search by username or name…" oninput="filterUsers()">
+                    </div>
+                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadUsers()">
                         <i class="fa-solid fa-rotate-right"></i> Refresh
                     </button>
                 </div>
@@ -130,17 +155,21 @@
                             </tr>
                         </thead>
                         <tbody id="users-tbody">
-                            <tr><td colspan="6" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+                            <tr>
+                                <td colspan="6" class="table-loading">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading users…
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ── Rooms Tab ─────────────────────────────────────────── -->
+            <!-- ── Rooms Tab ──────────────────────────────────────── -->
             <div id="tab-rooms" class="tab-panel">
                 <div class="panel-toolbar">
-                    <span style="color:var(--text-muted);font-size:0.9rem">All group and private rooms</span>
-                    <button class="btn btn-secondary btn-sm" onclick="loadAdminRooms()">
+                    <p class="panel-toolbar__desc">All group channels and private DMs</p>
+                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadAdminRooms()">
                         <i class="fa-solid fa-rotate-right"></i> Refresh
                     </button>
                 </div>
@@ -158,43 +187,41 @@
                             </tr>
                         </thead>
                         <tbody id="rooms-tbody">
-                            <tr><td colspan="7" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+                            <tr>
+                                <td colspan="7" class="table-loading">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading rooms…
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ── Messages Tab ──────────────────────────────────────── -->
-            <div id="tab-messages" class="tab-panel">
-                <div class="panel-toolbar">
-                    <span style="color:var(--text-muted);font-size:0.9rem">Last 50 messages across all rooms</span>
-                    <button class="btn btn-secondary btn-sm" onclick="loadAdminMessages()">
-                        <i class="fa-solid fa-rotate-right"></i> Refresh
-                    </button>
-                </div>
-                <div id="messages-list" class="messages-feed">
-                    <p class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</p>
-                </div>
-            </div>
-
-        </div>
-    </div>
+        </div><!-- end admin-dashboard -->
+    </div><!-- end admin-wrap -->
 </main>
 
-<!-- ── Confirm delete modal ──────────────────────────────────────────────── -->
-<div id="confirm-modal" class="modal">
-    <div class="modal-content" style="max-width:400px;padding:32px;text-align:center">
-        <div class="warning-icon-circle"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h2 style="margin:0 0 8px;font-size:1.2rem" id="confirm-title">Are you sure?</h2>
-        <p style="margin:0 0 24px;color:var(--text-muted);font-size:0.9rem" id="confirm-body"></p>
+<!-- ── Confirm delete modal ──────────────────────────────────────── -->
+<div id="confirm-modal" class="admin-modal">
+    <div class="admin-modal__content" style="max-width:400px;text-align:center">
+        <div class="warning-icon-circle">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h2 id="confirm-title" style="margin:0 0 8px;font-size:1.1rem">Are you sure?</h2>
+        <p id="confirm-body" style="margin:0 0 24px;font-size:0.88rem;color:var(--text-muted);line-height:1.6"></p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <button class="btn btn-secondary" style="width:100%;margin:0;padding:12px" onclick="closeConfirm()">Cancel</button>
-            <button class="btn btn-danger"    style="width:100%;margin:0;padding:12px" id="confirm-ok-btn">Confirm</button>
+            <button class="admin-action-btn admin-action-btn--ghost" style="width:100%;justify-content:center" onclick="closeConfirm()">
+                Cancel
+            </button>
+            <button class="admin-action-btn admin-action-btn--danger" style="width:100%;justify-content:center" id="confirm-ok-btn">
+                Confirm
+            </button>
         </div>
     </div>
 </div>
 
-<div id="toast-container"></div>
+<div id="toast-container" class="admin-toast-container"></div>
+
 <script src="auth.js"></script>
 <script src="admin.js"></script>
 </body>

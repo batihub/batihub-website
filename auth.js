@@ -252,11 +252,14 @@ function renderNavUser() {
                     <span class="dropdown-handle">@${escapeHtml(currentUser.username)}</span>
                 </div>
                 <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="profile.html" style="text-decoration:none">
+                    <i class="fa-solid fa-user"></i> My Profile
+                </a>
                 ${(currentUser.role === 'admin' || currentUser.role === 'root') ? `
                 <a class="dropdown-item" href="admin.html" style="text-decoration:none">
                     <i class="fa-solid fa-shield-halved"></i> Admin Panel
-                </a>
-                <div class="dropdown-divider"></div>` : ''}
+                </a>` : ''}
+                <div class="dropdown-divider"></div>
                 <button class="dropdown-item danger" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket"></i> Log Out
                 </button>

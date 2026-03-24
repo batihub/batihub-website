@@ -331,7 +331,6 @@ function joinRoom(roomId, roomRawName) {
 
     ws.onopen = async () => {
         await loadMemberMap(currentRoom);
-        loadRoomHistory(currentRoom);
     };
 
     ws.onmessage = event => {
@@ -359,28 +358,6 @@ function joinRoom(roomId, roomRawName) {
     ws.onerror = () => appendSystemMessage('Connection error.');
 }
 
-async function loadRoomHistory(roomId) {
-    try {
-        const res = await fetch(`${API_URL}/chat_logs?room=${encodeURIComponent(roomId)}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        if (!res.ok) return;
-        const logs   = await res.json();
-        const recent = logs.slice(-50);
-        if (!recent.length) return;
-
-        _appendDivider(`Last ${recent.length} messages`);
-        recent.forEach(msg => {
-            const isMe   = msg.sender_id === currentUser?.id || msg.sender_id === String(currentUser?.id);
-            const sender = isMe ? currentUser.username : resolveUsername(msg.sender_id);
-            appendMessage(sender, msg.message || '', msg.created_at || null, true);
-        });
-        _appendDivider('Live');
-
-        const msgDiv = document.getElementById('messages');
-        if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
-    } catch(e) { /* silent */ }
-}
 
 function sendMessage() {
     const input   = document.getElementById('message-input');
@@ -487,15 +464,6 @@ function appendSystemMessage(text) {
     row.appendChild(span);
     msgDiv.appendChild(row);
     msgDiv.scrollTop = msgDiv.scrollHeight;
-}
-
-function _appendDivider(label) {
-    const msgDiv = document.getElementById('messages');
-    if (!msgDiv) return;
-    const div = document.createElement('div');
-    div.className = 'msg-divider';
-    div.textContent = label;
-    msgDiv.appendChild(div);
 }
 
 // Generate a consistent color per username (for avatars)

@@ -158,8 +158,8 @@ function buildTweetCard(tweet) {
     card.innerHTML = `
         <div class="post-header">
             <div class="author-info">
-                <div class="avatar-circle">${letter}</div>
-                <div>${displayName}<div class="username-handle">@${escapeHtml(tweet.author.username)}</div></div>
+                <a href="profile.html?user=${encodeURIComponent(tweet.author.username)}" class="avatar-circle" style="text-decoration:none;color:inherit">${letter}</a>
+                <div><a href="profile.html?user=${encodeURIComponent(tweet.author.username)}" style="text-decoration:none;color:inherit">${displayName}<div class="username-handle">@${escapeHtml(tweet.author.username)}</div></a></div>
             </div>
             <span class="author-badge">#${tweet.id}</span>
         </div>
