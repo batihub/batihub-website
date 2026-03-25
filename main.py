@@ -65,9 +65,14 @@ async def lifespan(app: FastAPI):
 # ── App instance ──────────────────────────────────────────────────────────────
 app = FastAPI(title="baerhub API", lifespan=lifespan)
 
+# Set ALLOWED_ORIGINS in Render → Environment Variables (comma-separated).
+# Example: "https://beelog-poes.onrender.com,https://www.myblog.com"
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://beelog-poes.onrender.com")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # tighten this to your domain in production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

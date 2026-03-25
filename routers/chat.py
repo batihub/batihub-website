@@ -19,6 +19,7 @@ from schemas.schemas import (
     UserResponse, UserCreate, Token, UserSession,
     GroupRoomCreate, PrivateRoomCreate, PrivateUserInvite,
     RoomOut, RoomDetailOut,
+    PublicKeyUpdate, RoomKeyBundleIn,
 )
 import crud.chat_crud as crud
 
@@ -448,3 +449,89 @@ async def chat_history(
     if not logs:
         raise HTTPException(status_code=404, detail="No chat logs found")
     return logs
+
+
+# ── E2EE key management ───────────────────────────────────────────────────────
+
+@router.put("/users/me/public-key", status_code=200)
+async def set_my_public_key(
+        body: PublicKeyUpdate,
+        current_user: UserSession = Depends(get_current_user),
+        session: AsyncSession = Depends(get_session),
+):
+    """
+    Store the caller's ECDH P-256 public key (JWK JSON string).
+    Called once per device on login. Idempotent — safe to call again.
+    The server stores only the PUBLIC key; private keys never leave the browser.
+    """
+    await crud.set_user_public_key(
+        session=session, user_id=current_user.id, public_key=body.public_key
+    )
+    return {"detail": "ok"}
+
+
+@router.get("/users/{username}/public-key")
+async def get_user_public_key(
+        username: str,
+        current_user: UserSession = Depends(get_current_user),
+        session: AsyncSession = Depends(get_session),
+):
+    """
+    Fetch another user's ECDH public key. Authentication required —
+    prevents unauthenticated public-key harvesting.
+    Returns {"public_key": null} if the user has never set up E2EE.
+    """
+    user = await crud.get_user_by_username(session=session, username=username)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"public_key": user.public_key}
+
+
+@router.get("/rooms/{room_id}/my-key")
+async def get_my_room_key(
+        room_id: str,
+        current_user: UserSession = Depends(get_current_user),
+        session: AsyncSession = Depends(get_session),
+):
+    """
+    Fetch the caller's ECIES-wrapped group room key.
+    Returns {"encrypted_key": null} if no bundle has been distributed yet.
+    """
+    await _assert_member(session, room_id, current_user.id)
+    encrypted_key = await crud.get_room_key_bundle(
+        session=session, room_id=room_id, user_id=current_user.id
+    )
+    return {"encrypted_key": encrypted_key}
+
+
+@router.put("/rooms/{room_id}/key-bundles", status_code=200)
+async def set_room_key_bundles(
+        room_id: str,
+        body: RoomKeyBundleIn,
+        current_user: UserSession = Depends(get_current_user),
+        session: AsyncSession = Depends(get_session),
+):
+    """
+    Store ECIES-wrapped room keys for a set of members.
+    body.bundles = { username: { ephemeral_pub: JWK, iv: base64, ct: base64 } }
+
+    Only room members can call this (the room creator is expected to do so on
+    first entry). The server stores opaque ciphertext — it cannot read the key.
+    """
+    await _get_room_or_404(session, room_id)
+    await _assert_member(session, room_id, current_user.id)
+
+    for username, bundle_data in body.bundles.items():
+        user = await crud.get_user_by_username(session=session, username=username)
+        if user is None:
+            continue
+        # Verify the target user is actually a member of this room
+        if not await crud.get_room_member(session=session, room_id=room_id, user_id=user.id):
+            continue
+        await crud.upsert_room_key_bundle(
+            session=session,
+            room_id=room_id,
+            user_id=user.id,
+            encrypted_key=json.dumps(bundle_data),
+        )
+    return {"detail": "ok"}

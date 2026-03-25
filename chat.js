@@ -6,6 +6,11 @@ let currentRoom = null;
 let onlineUsers = [];
 const memberMap = {}; // sender_id → username
 
+// E2EE state for the currently open room
+let _currentRoomType  = null;   // 'private' | 'group'
+let _currentDMPartner = null;   // partner username (private rooms only)
+let _currentRoomOwner = null;   // owner_id of the current room (for group key distribution)
+
 // ── Member map (resolve sender IDs to usernames) ───────────────────
 async function loadMemberMap(roomId) {
     try {
@@ -14,6 +19,7 @@ async function loadMemberMap(roomId) {
         });
         if (!res.ok) return;
         const data = await res.json();
+        _currentRoomOwner = data.owner_id ?? null;
         (data.members || []).forEach(m => { memberMap[m.user_id] = m.username; });
     } catch(e) {}
 }
@@ -37,6 +43,10 @@ document.addEventListener('auth:login',  () => _updatePanel());
 document.addEventListener('auth:logout', () => {
     if (ws) { ws.close(); ws = null; }
     currentRoom = null;
+    _currentRoomType  = null;
+    _currentDMPartner = null;
+    _currentRoomOwner = null;
+    E2EE.reset();
     // Clear active room highlight
     document.querySelectorAll('.room-item.active').forEach(el => el.classList.remove('active'));
     _updatePanel();
@@ -48,6 +58,10 @@ function _updatePanel() {
     if (authToken && currentUser) {
         showRoomsPanel();
         loadRooms();
+        // Init E2EE key pair for this user (idempotent — safe to call on every panel update)
+        E2EE.init(currentUser.username, authToken, API_URL).catch(e =>
+            console.warn('[E2EE] init failed:', e)
+        );
     } else {
         _showGuestPanel();
     }
@@ -293,14 +307,21 @@ async function deleteRoom(roomId) {
 function joinRoom(roomId, roomRawName) {
     currentRoom = roomId;
 
-    // Compute display name
+    // Compute display name and DM partner
     let displayName = roomRawName || roomId;
-    let isPrivate = false;
+    let isPrivate   = false;
+    let dmPartner   = null;
     if (displayName.startsWith('private:')) {
         isPrivate = true;
         const parts = displayName.replace('private:', '').split(':');
-        displayName = parts.find(u => u !== currentUser?.username) || parts[0];
+        dmPartner   = parts.find(u => u !== currentUser?.username) || parts[0];
+        displayName = dmPartner;
     }
+
+    // Set E2EE room context
+    _currentRoomType  = isPrivate ? 'private' : 'group';
+    _currentDMPartner = dmPartner;
+    _currentRoomOwner = null;
 
     // Update top bar
     const titleEl = document.getElementById('room-title');
@@ -308,7 +329,7 @@ function joinRoom(roomId, roomRawName) {
     const iconEl  = document.getElementById('room-icon-badge');
     const inputEl = document.getElementById('message-input');
     if (titleEl) titleEl.textContent  = displayName;
-    if (descEl)  descEl.textContent   = isPrivate ? 'Private conversation' : 'Public channel';
+    if (descEl)  descEl.textContent   = isPrivate ? 'Private conversation (E2EE)' : 'Public channel';
     if (iconEl)  iconEl.innerHTML     = isPrivate
         ? '<i class="fa-solid fa-lock" style="font-size:0.85rem"></i>'
         : '#';
@@ -331,9 +352,24 @@ function joinRoom(roomId, roomRawName) {
 
     ws.onopen = async () => {
         await loadMemberMap(currentRoom);
+
+        // ── E2EE key setup ────────────────────────────────────────────────────
+        if (_currentRoomType === 'group') {
+            // Try to load existing group key
+            const hasKey = await E2EE.loadGroupKey(currentRoom).catch(() => null);
+            if (!hasKey && _currentRoomOwner === currentUser?.id) {
+                // Owner first-time setup: distribute key to all current members
+                const memberUsernames = Object.values(memberMap).filter(Boolean);
+                if (memberUsernames.length) {
+                    await E2EE.distributeGroupKey(currentRoom, memberUsernames)
+                        .catch(e => console.warn('[E2EE] Key distribution failed:', e));
+                }
+            }
+        }
+        // DM keys are derived on-demand in encryptDM/decryptDM — nothing to preload here
     };
 
-    ws.onmessage = event => {
+    ws.onmessage = async event => {
         try {
             const data = JSON.parse(event.data);
             if (data.type === 'system') {
@@ -343,8 +379,16 @@ function joinRoom(roomId, roomRawName) {
                 const isMe = data.username === currentUser?.username;
                 if (!isMe) {
                     const sender    = data.username || resolveUsername(data.sender_id);
-                    const text      = data.text || data.message || '';
+                    let   text      = data.text || data.message || '';
                     const timestamp = data.timestamp || data.created_at || null;
+
+                    // Decrypt if the payload carries the ENC: prefix
+                    if (_currentRoomType === 'private' && _currentDMPartner) {
+                        text = await E2EE.decryptDM(text, _currentDMPartner);
+                    } else if (_currentRoomType === 'group') {
+                        text = await E2EE.decryptGroup(text, currentRoom);
+                    }
+
                     appendMessage(sender, text, timestamp);
                 }
             }
@@ -359,14 +403,26 @@ function joinRoom(roomId, roomRawName) {
 }
 
 
-function sendMessage() {
+async function sendMessage() {
     const input   = document.getElementById('message-input');
     const message = input?.value.trim();
-    if (message && ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(message);
-        appendMessage(currentUser.username, message);
-        input.value = '';
+    if (!message || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+    // Encrypt before sending; fall back to plaintext if E2EE not available
+    let payload = message;
+    try {
+        if (_currentRoomType === 'private' && _currentDMPartner) {
+            payload = await E2EE.encryptDM(message, _currentDMPartner);
+        } else if (_currentRoomType === 'group') {
+            payload = await E2EE.encryptGroup(message, currentRoom);
+        }
+    } catch (e) {
+        console.warn('[E2EE] Encryption failed, sending plaintext:', e);
     }
+
+    ws.send(payload);
+    appendMessage(currentUser.username, message); // always render the original plaintext locally
+    input.value = '';
 }
 
 function leaveRoom() {

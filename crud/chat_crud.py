@@ -11,7 +11,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models.models import User, Room, RoomMember, RoomType, Message
+from models.models import User, Room, RoomMember, RoomType, Message, RoomKeyBundle
 
 
 # ── User ──────────────────────────────────────────────────────────────────────
@@ -147,6 +147,48 @@ async def get_chat_logs(
     You need .desc() + limit to grab the latest 100, then reversed() to display them oldest-first.
     Switching to .asc() would give you the first 100 messages ever sent, not the most recent ones.
 """
+
+# ── E2EE ──────────────────────────────────────────────────────────────────────
+
+async def set_user_public_key(session: AsyncSession, user_id: int, public_key: str) -> None:
+    result = await session.exec(select(User).where(User.id == user_id))
+    user = result.first()
+    if user:
+        user.public_key = public_key
+        session.add(user)
+        await session.commit()
+
+
+async def upsert_room_key_bundle(
+        session: AsyncSession, room_id: str, user_id: int, encrypted_key: str
+) -> None:
+    result = await session.exec(
+        select(RoomKeyBundle).where(
+            RoomKeyBundle.room_id == room_id,
+            RoomKeyBundle.user_id == user_id,
+        )
+    )
+    bundle = result.first()
+    if bundle:
+        bundle.encrypted_key = encrypted_key
+    else:
+        bundle = RoomKeyBundle(room_id=room_id, user_id=user_id, encrypted_key=encrypted_key)
+    session.add(bundle)
+    await session.commit()
+
+
+async def get_room_key_bundle(
+        session: AsyncSession, room_id: str, user_id: int
+) -> Optional[str]:
+    result = await session.exec(
+        select(RoomKeyBundle).where(
+            RoomKeyBundle.room_id == room_id,
+            RoomKeyBundle.user_id == user_id,
+        )
+    )
+    bundle = result.first()
+    return bundle.encrypted_key if bundle else None
+
 
 async def delete_chat_log(
         session : AsyncSession,

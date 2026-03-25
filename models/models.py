@@ -37,6 +37,10 @@ class User(SQLModel, table=True):
     # Denormalised counters — cheaper than COUNT(*) on every feed load
     tweet_count: int = Field(default=0)
 
+    # E2EE: client-generated ECDH P-256 public key stored as JWK JSON string.
+    # The server never sees private keys — it only relays this public key.
+    public_key: Optional[str] = Field(default=None, sa_column=Column(Text))
+
     created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
 
     # Relationships
@@ -176,3 +180,30 @@ class Message(SQLModel, table=True):
 
     sender: Optional[User] = Relationship(back_populates="messages")
     room: Optional[Room] = Relationship(back_populates="messages")
+
+
+# ── RoomKeyBundle ─────────────────────────────────────────────────────────────
+
+class RoomKeyBundle(SQLModel, table=True):
+    """
+    Stores one ECIES-wrapped room key per member per group room.
+
+    The server holds only opaque ciphertext — it can NEVER read the room key.
+    The bundle JSON layout (stored in encrypted_key):
+        { "ephemeral_pub": <JWK>, "iv": "<base64>", "ct": "<base64>" }
+
+    Flow:
+      • Room creator generates a random AES-256-GCM room key.
+      • For each member the creator: generates an ephemeral ECDH key pair,
+        derives a shared secret with the member's public key (ECDH P-256),
+        runs HKDF, then AES-GCM-wraps the room key.
+      • Member fetches their bundle, re-derives the same wrap key with their
+        own private key + the stored ephemeral public key, and unwraps.
+    """
+    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_key_bundle"),)
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    room_id: str = Field(foreign_key="room.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    encrypted_key: str = Field(sa_column=Column(Text))  # JSON bundle (see above)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())

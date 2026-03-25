@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlmodel import SQLModel
 from models.models import UserRole, RoomType
@@ -161,3 +161,21 @@ class TweetFeedOut(SQLModel):
 
 class CommentCreate(SQLModel):
     content: str
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# E2EE
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PublicKeyUpdate(SQLModel):
+    """Body for PUT /users/me/public-key — JWK JSON string of an ECDH P-256 public key."""
+    public_key: str
+
+
+class RoomKeyBundleIn(SQLModel):
+    """
+    Body for PUT /rooms/{room_id}/key-bundles.
+    bundles maps username → ECIES bundle dict:
+      { ephemeral_pub: JWK, iv: base64, ct: base64 }
+    """
+    bundles: Dict[str, Any]
