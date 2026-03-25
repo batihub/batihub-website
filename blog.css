@@ -816,10 +816,10 @@ body { overflow-x: hidden; }
 .composer-card {
     display: flex;
     gap: 14px;
-    padding: 16px 16px 8px;
+    padding: 22px 20px 10px;
     border-bottom: 1px solid var(--nav-border);
 }
-.composer-card__avatar { flex-shrink: 0; padding-top: 2px; }
+.composer-card__avatar { flex-shrink: 0; padding-top: 4px; }
 .composer-avatar {
     width: 40px; height: 40px;
     border-radius: 50%;
@@ -1111,3 +1111,45 @@ body { overflow-x: hidden; }
 
 /* ── idle-color var for blog (matches app.css) ────────────────── */
 :root { --idle-color: #f59e0b; }
+
+/* ── Emoji panel ──────────────────────────────────────────────── */
+.emoji-panel {
+    position: fixed;
+    background: var(--card-bg, #1e293b);
+    border: 1px solid var(--nav-border, #334155);
+    border-radius: 14px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    width: 272px;
+}
+.emoji-panel button {
+    font-size: 1.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 4px;
+    border-radius: 6px;
+    transition: background 0.1s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.emoji-panel button:hover { background: var(--hover-bg, rgba(0,0,0,0.08)); }
+
+/* ── Infinite scroll indicators ──────────────────────────────── */
+.feed-load-indicator,
+.feed-end-msg {
+    text-align: center;
+    padding: 20px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}

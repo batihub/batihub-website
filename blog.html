@@ -70,9 +70,6 @@
             <i class="fa-solid fa-user"></i>
             <span>Profile</span>
         </a>
-        <button class="feed-leftnav__compose" onclick="openComposer()" id="compose-fab" style="display:none">
-            <i class="fa-solid fa-feather-pointed"></i> Tweet
-        </button>
     </aside>
 
     <!-- Center: Feed -->
@@ -103,7 +100,7 @@
                         <button class="composer-media-btn" title="GIF (coming soon)">
                             <span style="font-size:0.65rem;font-weight:800">GIF</span>
                         </button>
-                        <button class="composer-media-btn" title="Emoji (coming soon)">
+                        <button class="composer-media-btn" title="Emoji" onclick="toggleBlogEmoji(this)">
                             <i class="fa-regular fa-face-smile"></i>
                         </button>
                     </div>
@@ -136,11 +133,13 @@
             </div>
         </div>
 
-        <!-- Load more -->
-        <div style="text-align:center; padding:20px 0">
-            <button class="load-more-btn" onclick="fetchTweets()">
-                Refresh feed
-            </button>
+        <!-- Infinite scroll sentinel -->
+        <div id="feed-sentinel" style="height:1px;margin-top:12px"></div>
+        <div id="feed-load-indicator" class="feed-load-indicator" style="display:none">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading more…
+        </div>
+        <div id="feed-end-msg" class="feed-end-msg" style="display:none">
+            <i class="fa-solid fa-check-circle"></i> You're all caught up
         </div>
     </main>
 
@@ -265,19 +264,11 @@ document.addEventListener('auth:login', () => {
     if (circle && currentUser) {
         circle.textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
     }
-    const fab = document.getElementById('compose-fab');
-    if (fab) fab.style.display = '';
-});
-document.addEventListener('auth:logout', () => {
-    const fab = document.getElementById('compose-fab');
-    if (fab) fab.style.display = 'none';
 });
 document.addEventListener('DOMContentLoaded', () => {
     if (currentUser) {
         const circle = document.getElementById('composer-avatar-circle');
         if (circle) circle.textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
-        const fab = document.getElementById('compose-fab');
-        if (fab) fab.style.display = '';
     }
     // Live char ring
     const ta = document.getElementById('post-content');

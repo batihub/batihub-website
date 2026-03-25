@@ -522,6 +522,63 @@ function appendSystemMessage(text) {
     msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 
+// ── Emoji picker (chat) ───────────────────────────────────────────────────────
+const _CHAT_EMOJIS = [
+    '😀','😂','😍','🥰','😎','🤔','😅','🤣','😊','😁',
+    '😭','😢','😤','😱','🤯','🥳','🎉','😴','🥱','😈',
+    '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🔥','✨',
+    '💫','⭐','💯','👍','👎','👏','🙌','🤝','✌️','🙏',
+    '💪','🫂','🤷','🤦','👀','💀','🚀','💡','🔒','🌍',
+    '🍕','🍔','🎮','🎵','🎶','📱','💻','🐾','🌈','⚡',
+];
+
+function _getOrCreateChatEmojiPanel() {
+    let panel = document.getElementById('emoji-panel-chat');
+    if (panel) return panel;
+    panel = document.createElement('div');
+    panel.id        = 'emoji-panel-chat';
+    panel.className = 'emoji-panel';
+    panel.style.display = 'none';
+    panel.innerHTML = _CHAT_EMOJIS.map(e =>
+        `<button type="button" onclick="insertEmojiChat('${e}')">${e}</button>`
+    ).join('');
+    document.body.appendChild(panel);
+    return panel;
+}
+
+function toggleChatEmoji(btn) {
+    const panel = _getOrCreateChatEmojiPanel();
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) { panel.style.display = 'none'; return; }
+
+    const rect = btn.getBoundingClientRect();
+    panel.style.display = 'grid';
+    panel.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+    panel.style.left   = `${Math.min(rect.left, window.innerWidth - 280)}px`;
+
+    setTimeout(() => {
+        document.addEventListener('click', function _close(e) {
+            if (!panel.contains(e.target) && e.target !== btn) {
+                panel.style.display = 'none';
+                document.removeEventListener('click', _close);
+            }
+        });
+    }, 0);
+}
+
+function insertEmojiChat(emoji) {
+    const input = document.getElementById('message-input');
+    if (input) {
+        const s = input.selectionStart ?? input.value.length;
+        const e = input.selectionEnd   ?? s;
+        input.value = input.value.slice(0, s) + emoji + input.value.slice(e);
+        input.selectionStart = input.selectionEnd = s + [...emoji].length;
+        input.focus();
+    }
+    const panel = document.getElementById('emoji-panel-chat');
+    if (panel) panel.style.display = 'none';
+}
+
 // Generate a consistent color per username (for avatars)
 function _colorForUsername(name) {
     const colors = [

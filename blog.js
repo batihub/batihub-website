@@ -1,8 +1,21 @@
 // blog.js — BeeLog page logic
 // Auth (login/logout/register/renderNavUser/initTheme) is handled by auth.js
 
+// ── Pagination state ──────────────────────────────────────────────────────────
+let _nextCursor  = null;   // next before_id to fetch, null = no more pages
+let _loadingMore = false;  // guard against concurrent fetches
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchTweets();
+
+    // Infinite scroll — watch the sentinel element at the bottom of the feed
+    const sentinel = document.getElementById('feed-sentinel');
+    if (sentinel && 'IntersectionObserver' in window) {
+        const obs = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) _loadMoreTweets();
+        }, { rootMargin: '400px' });
+        obs.observe(sentinel);
+    }
 
     // Char counter
     const contentInput = document.getElementById('post-content');
@@ -91,18 +104,63 @@ async function createPost() {
 }
 
 async function fetchTweets() {
+    // Reset pagination state for a fresh load
+    _nextCursor  = null;
+    _loadingMore = true;
+
     const container = document.getElementById('posts-container');
+    const endMsg    = document.getElementById('feed-end-msg');
+    const indicator = document.getElementById('feed-load-indicator');
     container.innerHTML = '<p class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</p>';
+    if (endMsg)    endMsg.style.display    = 'none';
+    if (indicator) indicator.style.display = 'none';
+
     try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
         const res     = await fetch(`${API_URL}/tweets`, { headers });
         if (!res.ok) throw new Error();
         const data = await res.json();
         container.innerHTML = '';
-        if (!data.tweets.length) { container.innerHTML = '<p class="loading-text">No tweets yet. Be the first!</p>'; return; }
-        data.tweets.forEach(t => container.appendChild(buildTweetCard(t)));
+        if (!data.tweets.length) {
+            container.innerHTML = '<p class="loading-text">No tweets yet. Be the first!</p>';
+        } else {
+            data.tweets.forEach(t => container.appendChild(buildTweetCard(t)));
+        }
+        _nextCursor = data.next_cursor ?? null;
+        if (_nextCursor === null && endMsg && data.tweets.length) endMsg.style.display = 'block';
     } catch (e) {
         container.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i> Could not load feed. Is the API running?</p>';
+    } finally {
+        _loadingMore = false;
+    }
+}
+
+async function _loadMoreTweets() {
+    if (_loadingMore || _nextCursor === null) return;
+    _loadingMore = true;
+
+    const indicator = document.getElementById('feed-load-indicator');
+    const endMsg    = document.getElementById('feed-end-msg');
+    if (indicator) indicator.style.display = 'block';
+
+    try {
+        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const res = await fetch(`${API_URL}/tweets?before_id=${_nextCursor}`, { headers });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const container = document.getElementById('posts-container');
+        data.tweets.forEach(t => container.appendChild(buildTweetCard(t)));
+        _nextCursor = data.next_cursor ?? null;
+        if (_nextCursor === null) {
+            if (indicator) indicator.style.display = 'none';
+            if (endMsg)    endMsg.style.display    = 'block';
+        }
+    } catch (e) {
+        // Silently fail — user can scroll up and back to retry
+    } finally {
+        _loadingMore = false;
+        const ind = document.getElementById('feed-load-indicator');
+        if (ind && _nextCursor !== null) ind.style.display = 'none';
     }
 }
 
@@ -310,3 +368,62 @@ function showToast(message, type = 'success') {
 
 // ── Scroll to top ─────────────────────────────────────────────────────────────
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+// ── Emoji picker ──────────────────────────────────────────────────────────────
+const _EMOJIS = [
+    '😀','😂','😍','🥰','😎','🤔','😅','🤣','😊','😁',
+    '😭','😢','😤','😱','🤯','🥳','🎉','😴','🥱','😈',
+    '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🔥','✨',
+    '💫','⭐','💯','👍','👎','👏','🙌','🤝','✌️','🙏',
+    '💪','🫂','🤷','🤦','👀','💀','🚀','💡','🔒','🌍',
+    '🍕','🍔','🎮','🎵','🎶','📱','💻','🐾','🌈','⚡',
+];
+
+function _getOrCreateBlogEmojiPanel() {
+    let panel = document.getElementById('emoji-panel-blog');
+    if (panel) return panel;
+    panel = document.createElement('div');
+    panel.id        = 'emoji-panel-blog';
+    panel.className = 'emoji-panel';
+    panel.style.display = 'none';
+    panel.innerHTML = _EMOJIS.map(e =>
+        `<button type="button" onclick="insertEmojiBlog('${e}')">${e}</button>`
+    ).join('');
+    document.body.appendChild(panel);
+    return panel;
+}
+
+function toggleBlogEmoji(btn) {
+    const panel = _getOrCreateBlogEmojiPanel();
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) { panel.style.display = 'none'; return; }
+
+    const rect = btn.getBoundingClientRect();
+    panel.style.display = 'grid';
+    // Position above the button, aligned to its left
+    panel.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+    panel.style.left   = `${Math.min(rect.left, window.innerWidth - 280)}px`;
+
+    setTimeout(() => {
+        document.addEventListener('click', function _close(e) {
+            if (!panel.contains(e.target) && e.target !== btn) {
+                panel.style.display = 'none';
+                document.removeEventListener('click', _close);
+            }
+        });
+    }, 0);
+}
+
+function insertEmojiBlog(emoji) {
+    const ta = document.getElementById('post-content');
+    if (ta) {
+        const s = ta.selectionStart ?? ta.value.length;
+        const e = ta.selectionEnd   ?? s;
+        ta.value = ta.value.slice(0, s) + emoji + ta.value.slice(e);
+        ta.selectionStart = ta.selectionEnd = s + [...emoji].length;
+        ta.focus();
+        ta.dispatchEvent(new Event('input'));
+    }
+    const panel = document.getElementById('emoji-panel-blog');
+    if (panel) panel.style.display = 'none';
+}
