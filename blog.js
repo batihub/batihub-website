@@ -1,6 +1,17 @@
 // blog.js — BeeLog page logic
 // Auth (login/logout/register/renderNavUser/initTheme) is handled by auth.js
 
+// ── UGC link helper ───────────────────────────────────────────────────────────
+// Escapes HTML then wraps bare http(s) URLs as <a rel="ugc"> links so Google
+// knows we don't vouch for user-posted external links.
+function _linkifyContent(text) {
+    const escaped = escapeHtml(text);
+    return escaped.replace(
+        /https?:\/\/[^\s<>"']+/g,
+        url => `<a href="${url}" rel="ugc noopener noreferrer" target="_blank">${url}</a>`
+    );
+}
+
 // ── Pagination state ──────────────────────────────────────────────────────────
 let _nextCursor  = null;   // next before_id to fetch, null = no more pages
 let _loadingMore = false;  // guard against concurrent fetches
@@ -221,7 +232,7 @@ function buildTweetCard(tweet) {
             <span class="author-badge">#${tweet.id}</span>
         </div>
         <div class="post-meta">${new Date(tweet.created_at).toLocaleString()} ${editedBadge}</div>
-        <div class="post-content">${escapeHtml(tweet.content)}</div>
+        <div class="post-content">${_linkifyContent(tweet.content)}</div>
         <div class="post-actions">
             <div class="tweet-stats">
                 <button class="stat-btn like-btn ${tweet.liked_by_me ? 'is-liked' : ''}"
@@ -240,6 +251,23 @@ function buildTweetCard(tweet) {
                         <i class="fa-solid fa-trash"></i> Delete</button>` : ''}
             </div>
         </div>`;
+
+    // JSON-LD: SocialMediaPosting schema for Google AI Overviews
+    const _schema = document.createElement('script');
+    _schema.type = 'application/ld+json';
+    _schema.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SocialMediaPosting',
+        'url': `${window.location.origin}/blog.html`,
+        'datePublished': new Date(tweet.created_at).toISOString(),
+        'author': {
+            '@type': 'Person',
+            'name': tweet.author.display_name || tweet.author.username,
+            'url': `${window.location.origin}/profile.html?user=${encodeURIComponent(tweet.author.username)}`,
+        },
+        'text': tweet.content.substring(0, 500),
+    });
+    card.appendChild(_schema);
 
     // After inserting into DOM, check if content overflows and add toggle
     requestAnimationFrame(() => {

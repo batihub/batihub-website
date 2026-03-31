@@ -74,6 +74,76 @@ document.addEventListener('auth:logout', () => {
     }
 });
 
+// ── SEO meta helpers ──────────────────────────────────────────────────────────
+
+function _setMeta(attrName, attrValue, content) {
+    let el = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+    if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attrName, attrValue);
+        document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+}
+
+function _setLink(rel, href) {
+    let el = document.querySelector(`link[rel="${rel}"]`);
+    if (!el) {
+        el = document.createElement('link');
+        el.setAttribute('rel', rel);
+        document.head.appendChild(el);
+    }
+    el.setAttribute('href', href);
+}
+
+function _updateProfileMeta(displayName, username, bio) {
+    const SITE = window.location.origin;
+    const url   = `${SITE}/profile.html?user=${encodeURIComponent(username)}`;
+    const title = `${displayName} (@${username}) — BeeLog`;
+    const desc  = bio
+        ? (bio.length > 150 ? bio.substring(0, 147) + '…' : bio)
+        : `${displayName} (@${username}) on BeeLog — a public blog and social feed.`;
+
+    document.title = title;
+    _setMeta('name',     'description',       desc);
+    _setMeta('name',     'robots',            'index, follow');
+    _setLink('canonical', url);
+    _setMeta('property', 'og:type',           'profile');
+    _setMeta('property', 'og:title',          title);
+    _setMeta('property', 'og:description',    desc);
+    _setMeta('property', 'og:url',            url);
+    _setMeta('property', 'og:image',          `${SITE}/favicon-32x32.png`);
+    _setMeta('name',     'twitter:card',      'summary');
+    _setMeta('name',     'twitter:title',     title);
+    _setMeta('name',     'twitter:description', desc);
+
+    // Person schema (JSON-LD)
+    const existing = document.getElementById('schema-person');
+    if (existing) existing.remove();
+    const schemaObj = {
+        '@context': 'https://schema.org',
+        '@type':    'Person',
+        'name':     displayName,
+        'alternateName': '@' + username,
+        'url':      url,
+    };
+    if (bio) schemaObj.description = bio;
+    const schemaEl = document.createElement('script');
+    schemaEl.type        = 'application/ld+json';
+    schemaEl.id          = 'schema-person';
+    schemaEl.textContent = JSON.stringify(schemaObj);
+    document.head.appendChild(schemaEl);
+}
+
+// ── UGC link helper (mirrors blog.js) ────────────────────────────────────────
+function _linkifyContent(text) {
+    const escaped = escapeHtml(text);
+    return escaped.replace(
+        /https?:\/\/[^\s<>"']+/g,
+        url => `<a href="${url}" rel="ugc noopener noreferrer" target="_blank">${url}</a>`
+    );
+}
+
 // ── Login Prompt ──────────────────────────────────────────────────────────────
 function _showLoginPrompt() {
     const tweetsEl = document.getElementById('profile-tweets');
@@ -133,8 +203,9 @@ function _renderProfileHeader(username, isOwnProfile) {
         }
     }
 
-    // Update document title
-    document.title = `BeeLog — @${username}`;
+    // Update SEO meta tags, Open Graph, and JSON-LD Person schema
+    const bio = (_isOwnProfile && currentUser && currentUser.bio) ? currentUser.bio : null;
+    _updateProfileMeta(displayName, username, bio);
 }
 
 // ── Load User Tweets ──────────────────────────────────────────────────────────
@@ -222,7 +293,7 @@ function _buildProfileTweetCard(tweet) {
         <div class="post-meta">
             ${new Date(tweet.created_at).toLocaleString()} ${editedBadge}
         </div>
-        <div class="post-content">${escapeHtml(tweet.content)}</div>
+        <div class="post-content">${_linkifyContent(tweet.content)}</div>
         <div class="post-actions">
             <div class="tweet-stats">
                 <button class="stat-btn like-btn ${likedClass}"
