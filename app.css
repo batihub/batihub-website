@@ -176,7 +176,11 @@ body {
     background: var(--active-bg);
     color: var(--accent);
     border-radius: 14px;
+    box-shadow: inset 3px 0 0 var(--accent);
 }
+
+/* Mobile-only hamburger button in icon-nav */
+.mobile-hamburger { display: none; }
 
 /* Tooltip */
 .icon-nav__tooltip {
@@ -224,6 +228,12 @@ body {
     flex-direction: column;
     overflow: hidden;
     z-index: 90;
+    transition: width 0.25s cubic-bezier(0.16,1,0.3,1), min-width 0.25s cubic-bezier(0.16,1,0.3,1), border-color 0.25s;
+}
+.sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    border-right-color: transparent;
 }
 
 .sidebar__header {
@@ -377,8 +387,8 @@ body {
     display: flex;
     align-items: center;
     border-radius: 6px;
-    padding: 2px 4px 2px 4px;
-    margin-bottom: 1px;
+    padding: 3px 4px;
+    margin-bottom: 2px;
     cursor: default;
     transition: background 0.1s;
     position: relative;
@@ -392,7 +402,7 @@ body {
     align-items: center;
     gap: 6px;
     flex: 1;
-    padding: 5px 4px;
+    padding: 7px 4px;
     border-radius: 4px;
     cursor: pointer;
     min-width: 0;
@@ -456,10 +466,11 @@ body {
     font-size: 0.8rem;
 }
 .sidebar-empty {
-    padding: 6px 16px;
-    font-size: 0.78rem;
+    padding: 16px 12px;
+    font-size: 0.8rem;
     color: var(--text-dim);
-    font-style: italic;
+    text-align: center;
+    line-height: 1.6;
 }
 .sidebar-error { color: var(--danger) !important; }
 
@@ -1156,15 +1167,30 @@ body {
         left: calc(var(--icon-nav-w) * -1 - var(--sidebar-w));
         top: 0; bottom: 0;
         z-index: 300;
+        /* Override collapse transition on mobile — use slide-in instead */
         transition: left 0.3s cubic-bezier(0.16,1,0.3,1);
+        width: var(--sidebar-w);
+        min-width: var(--sidebar-w);
+        border-right: 1px solid var(--border-color);
     }
     .sidebar.open {
         left: var(--icon-nav-w);
     }
+    /* Collapsed class has no effect on mobile; mobile uses open/closed drawer */
+    .sidebar.collapsed {
+        width: var(--sidebar-w);
+        min-width: var(--sidebar-w);
+        border-right: 1px solid var(--border-color);
+    }
     .mobile-overlay.active { display: block; }
     .mobile-back-btn { display: flex; }
+    .mobile-hamburger { display: flex; }
+    /* Hide collapse button on mobile — not needed */
+    .sidebar-collapse-btn { display: none; }
 
     .icon-nav { z-index: 400; }
+    /* Active indicator doesn't need inset box-shadow on mobile */
+    .icon-nav__btn.active { box-shadow: none; }
 
     .chat-topbar { padding: 0 12px; }
     .chat-input-area { padding: 8px 12px 12px; }

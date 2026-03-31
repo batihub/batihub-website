@@ -32,6 +32,11 @@
             </a>
             <div class="icon-nav__divider"></div>
 
+            <button class="icon-nav__btn mobile-hamburger" onclick="openMobileSidebar()" title="Menu">
+                <i class="fa-solid fa-bars"></i>
+                <span class="icon-nav__tooltip">Menu</span>
+            </button>
+
             <button class="icon-nav__btn active" title="Chat Rooms">
                 <i class="fa-solid fa-message"></i>
                 <span class="icon-nav__tooltip">Chat Rooms</span>
@@ -66,6 +71,9 @@
 
         <div class="sidebar__header">
             <span class="sidebar__title">ChatHub</span>
+            <button class="sidebar__header-btn sidebar-collapse-btn" id="sidebar-collapse-btn" onclick="toggleSidebar()" title="Collapse sidebar">
+                <i class="fa-solid fa-chevron-left" id="sidebar-collapse-icon"></i>
+            </button>
             <button class="sidebar__header-btn" onclick="loadRooms()" title="Refresh">
                 <i class="fa-solid fa-rotate-right"></i>
             </button>
@@ -304,6 +312,17 @@ function openMobileSidebar() {
 function closeMobileSidebar() {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('mobile-overlay').classList.remove('active');
+}
+
+// ── Desktop sidebar collapse ──────────────────────────────────────
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('sidebar-collapse-icon');
+    const collapsed = sidebar.classList.toggle('collapsed');
+    if (icon) {
+        icon.classList.toggle('fa-chevron-left', !collapsed);
+        icon.classList.toggle('fa-chevron-right', collapsed);
+    }
 }
 
 // ── Category collapse ─────────────────────────────────────────────

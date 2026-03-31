@@ -804,17 +804,20 @@ body { overflow-x: hidden; }
 }
 .feed-header__tab:hover { color: var(--text-main); background: var(--hover-bg, rgba(0,0,0,0.03)); }
 .feed-header__tab.active {
-    color: var(--text-main);
+    color: var(--accent);
     font-weight: 700;
+    background: var(--active-bg, rgba(99,102,241,0.08));
+    border-radius: 8px;
 }
 .feed-header__tab.active::after {
     content: '';
     position: absolute;
     bottom: 0; left: 50%;
     transform: translateX(-50%);
-    width: 56px; height: 3px;
+    width: 40px; height: 3px;
     border-radius: 3px;
     background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow, rgba(99,102,241,0.5));
 }
 
 /* ── New Composer Card ────────────────────────────────────────── */
@@ -1100,6 +1103,53 @@ body { overflow-x: hidden; }
     .feed-layout { padding: 0; }
     .feed-leftnav { display: none; }
     .feed-main { border: none; }
+    /* Space for fixed bottom nav */
+    .feed-layout { padding-bottom: 56px; }
+}
+
+/* ── Mobile Bottom Navigation Bar ───────────────────────────────── */
+.blog-mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--nav-border);
+    z-index: 500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.blog-mobile-nav__items {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    padding: 0 4px;
+}
+.blog-mobile-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-decoration: none;
+    font-family: inherit;
+    border-radius: 8px;
+    padding: 6px 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.blog-mobile-nav__item i { font-size: 1.15rem; margin-bottom: 1px; }
+.blog-mobile-nav__item.active { color: var(--accent); }
+.blog-mobile-nav__item:hover { color: var(--text-main); background: var(--hover-bg); }
+
+@media (max-width: 600px) {
+    .blog-mobile-nav { display: flex; }
 }
 
 /* ── Dark mode overrides for blog nav ─────────────────────────── */

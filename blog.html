@@ -268,6 +268,28 @@
 <!-- ── Tweet expand backdrop ────────────────────────────────────── -->
 <div id="tweet-backdrop" class="tweet-backdrop" onclick="collapseActiveTweet()"></div>
 
+<!-- ── Mobile Bottom Nav ─────────────────────────────────────────── -->
+<nav class="blog-mobile-nav" aria-label="Mobile navigation">
+    <div class="blog-mobile-nav__items">
+        <a href="blog.html" class="blog-mobile-nav__item active">
+            <i class="fa-solid fa-house"></i>
+            <span>Blog</span>
+        </a>
+        <button class="blog-mobile-nav__item" onclick="fetchTweets()">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Explore</span>
+        </button>
+        <button class="blog-mobile-nav__item" onclick="openLoginModal()">
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifs</span>
+        </button>
+        <a href="profile.html" class="blog-mobile-nav__item">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
 <div id="toast-container"></div>
 <script src="auth.js"></script>
 <script src="blog.js"></script>
