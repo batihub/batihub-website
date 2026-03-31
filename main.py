@@ -68,7 +68,7 @@ app = FastAPI(title="baerhub API", lifespan=lifespan)
 
 # Set ALLOWED_ORIGINS in Render → Environment Variables (comma-separated).
 # Example: "https://beelog-poes.onrender.com,https://www.myblog.com"
-_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://beelog-poes.onrender.com")
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://beelog-poes.onrender.com,https://batihanbabacan.com")
 ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(

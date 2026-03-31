@@ -8,5 +8,5 @@ Disallow: /ws/
 Disallow: /token
 Disallow: /user
 
-Sitemap: https://beelog-poes.onrender.com/sitemap-blog.xml
-Sitemap: https://beelog-poes.onrender.com/sitemap-feed.xml
+Sitemap: https://batihanbabacan.com/sitemap-blog.xml
+Sitemap: https://batihanbabacan.com/sitemap-feed.xml
