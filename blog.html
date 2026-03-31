@@ -6,13 +6,13 @@
     <title>BeeLog — Blog & Social Feed</title>
     <meta name="description" content="BeeLog is a public blog and social feed where you can share your thoughts, stories, and ideas with no character limits.">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://beelog-poes.onrender.com/blog.html">
+    <link rel="canonical" href="https://batihanbabacan.com/blog.html">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://beelog-poes.onrender.com/blog.html">
+    <meta property="og:url" content="https://batihanbabacan.com/blog.html">
     <meta property="og:title" content="BeeLog — Blog & Social Feed">
     <meta property="og:description" content="A public blog and social feed. Share your thoughts, stories, and ideas with no character limits.">
-    <meta property="og:image" content="https://beelog-poes.onrender.com/favicon-32x32.png">
+    <meta property="og:image" content="https://batihanbabacan.com/favicon-32x32.png">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="BeeLog — Blog & Social Feed">
@@ -90,6 +90,12 @@
             <div class="feed-header__tab" onclick="fetchTweets()">Following</div>
         </div>
 
+        <!-- Static intro for SEO — visible before JS loads and to crawlers -->
+        <p id="feed-intro" style="padding:0 16px 4px;font-size:0.85rem;color:var(--text-muted,#888);line-height:1.5">
+            A public blog and social feed — share your stories, thoughts, and ideas with no character limits.
+            Anyone can read; <a href="#" onclick="openLoginModal();return false">sign up</a> to post.
+        </p>
+
         <!-- Composer Card (logged-in only) -->
         <div id="post-section" class="composer-card" style="display:none">
             <div class="composer-card__avatar">
@@ -127,6 +133,11 @@
 
         <!-- Posts Container -->
         <div id="posts-container" class="post-list">
+            <noscript>
+                <p style="padding:24px;color:#666">
+                    BeeLog is a public blog and social feed. Enable JavaScript to read and post stories, thoughts, and ideas with no character limits.
+                </p>
+            </noscript>
             <div class="loading-placeholder">
                 <div class="loading-spinner"></div>
                 <p>Loading feed…</p>
