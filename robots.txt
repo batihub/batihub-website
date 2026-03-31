@@ -1,12 +1,2 @@
-User-agent: *
-Allow: /blog.html
-Allow: /profile.html
-Disallow: /index.html
-Disallow: /admin.html
-Disallow: /admin/
-Disallow: /ws/
-Disallow: /token
-Disallow: /user
-
 Sitemap: https://batihanbabacan.com/sitemap-blog.xml
 Sitemap: https://batihanbabacan.com/sitemap-feed.xml

@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends, status, Path, Query
+import requests as _requests
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, status, Path, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.database import get_session
@@ -11,6 +12,18 @@ from schemas.schemas import (
 import crud.tweet_crud as crud
 
 router = APIRouter(prefix="/tweets", tags=["Twitter Feed"])
+
+_SITEMAP_PING = (
+    "https://www.google.com/ping"
+    "?sitemap=https://batihanbabacan.com/sitemap-feed.xml"
+)
+
+def _ping_google():
+    """Fire-and-forget: tell Google the sitemap changed so it re-crawls quickly."""
+    try:
+        _requests.get(_SITEMAP_PING, timeout=5)
+    except Exception:
+        pass
 
 
 # ── Helper: build TweetOut and optionally annotate liked_by_me ───────────────
@@ -77,12 +90,14 @@ async def get_tweet(
 @router.post("", response_model=TweetOut, status_code=status.HTTP_201_CREATED)
 async def post_tweet(
         body: TweetCreate,
+        background_tasks: BackgroundTasks,
         session: AsyncSession = Depends(get_session),
         current_user: UserSession = Depends(get_current_user),
 ):
     tweet = await crud.create_tweet(session=session, author_id=current_user.id, content=body.content)
     if tweet is None:
         raise HTTPException(status_code=500, detail="Failed to create tweet")
+    background_tasks.add_task(_ping_google)
     return await _build_tweet_out(tweet, session, current_user.id)
 
 
