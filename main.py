@@ -5,7 +5,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -80,6 +80,11 @@ app.add_middleware(
 )
 
 # ── SEO endpoints ─────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    return RedirectResponse(url="/blog.html", status_code=301)
+
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
