@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /blog.html
+Allow: /profile.html
+Disallow: /index.html
+Disallow: /admin.html
+Disallow: /admin/
+Disallow: /ws/
+Disallow: /token
+Disallow: /user
+
+Sitemap: https://beelog-poes.onrender.com/sitemap-blog.xml
+Sitemap: https://beelog-poes.onrender.com/sitemap-feed.xml
