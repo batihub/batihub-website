@@ -1,3 +1,4 @@
+import sqlalchemy
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import SQLModel
@@ -31,6 +32,12 @@ async def init_db():
     modules are imported before calling this (main.py handles that)."""
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+        # Additive migrations for columns added after initial deployment
+        await conn.execute(
+            sqlalchemy.text(
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS public_key TEXT'
+            )
+        )
 
 
 async def get_session():
