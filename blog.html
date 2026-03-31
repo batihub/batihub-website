@@ -3,7 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeeLog — Feed</title>
+    <title>BeeLog — Blog & Social Feed</title>
+    <meta name="description" content="BeeLog is a public blog and social feed where you can share your thoughts, stories, and ideas with no character limits.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://beelog-poes.onrender.com/blog.html">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://beelog-poes.onrender.com/blog.html">
+    <meta property="og:title" content="BeeLog — Blog & Social Feed">
+    <meta property="og:description" content="A public blog and social feed. Share your thoughts, stories, and ideas with no character limits.">
+    <meta property="og:image" content="https://beelog-poes.onrender.com/favicon-32x32.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="BeeLog — Blog & Social Feed">
+    <meta name="twitter:description" content="A public blog and social feed. Share your thoughts, stories, and ideas with no character limits.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="blog.css">
@@ -22,10 +35,10 @@
             <span class="bold">bee</span><span class="light">log</span>
         </a>
         <div class="nav-links">
+            <a href="blog.html" class="active">Blog</a>
             <a href="index.html">
                 <i class="fa-solid fa-comments" style="font-size:0.8rem"></i> ChatHub
             </a>
-            <a href="blog.html" class="active">Feed</a>
             <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
                 <i class="fa-solid fa-moon"></i>
             </button>
@@ -40,15 +53,11 @@
 <!-- ── Main Layout (feed + sidebar) ───────────────────────────── -->
 <div class="feed-layout">
 
-    <!-- Left: sticky nav (Twitter-style) -->
+    <!-- Left: sticky nav -->
     <aside class="feed-leftnav">
-        <a href="index.html" class="feed-leftnav__item">
-            <i class="fa-solid fa-comments"></i>
-            <span>ChatHub</span>
-        </a>
         <a href="blog.html" class="feed-leftnav__item active">
             <i class="fa-solid fa-house"></i>
-            <span>Feed</span>
+            <span>Blog</span>
         </a>
         <button class="feed-leftnav__item" onclick="fetchTweets()">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -62,13 +71,13 @@
             <i class="fa-solid fa-bookmark"></i>
             <span>Bookmarks</span>
         </button>
-        <a href="index.html" class="feed-leftnav__item">
-            <i class="fa-solid fa-message"></i>
-            <span>Messages</span>
-        </a>
         <a href="profile.html" class="feed-leftnav__item" id="nav-profile-link">
             <i class="fa-solid fa-user"></i>
             <span>Profile</span>
+        </a>
+        <a href="index.html" class="feed-leftnav__item feed-leftnav__item--secondary">
+            <i class="fa-solid fa-comments"></i>
+            <span>ChatHub</span>
         </a>
     </aside>
 
@@ -77,7 +86,7 @@
 
         <!-- Feed Tab Header -->
         <div class="feed-header">
-            <div class="feed-header__tab active">For you</div>
+            <div class="feed-header__tab active">Latest Posts</div>
             <div class="feed-header__tab" onclick="fetchTweets()">Following</div>
         </div>
 
@@ -88,9 +97,9 @@
             </div>
             <div class="composer-card__body">
                 <div class="textarea-wrapper">
-                    <textarea id="post-content" rows="2" maxlength="280"
-                              placeholder="What's on your mind?"></textarea>
-                    <span id="char-count" class="char-pill-inside">0/280</span>
+                    <textarea id="post-content" rows="5"
+                              placeholder="Share your story, thoughts, or ideas…"></textarea>
+                    <span id="char-count" class="char-pill-inside">0 chars</span>
                 </div>
                 <div class="composer-card__actions">
                     <div class="composer-card__media-btns">
@@ -105,17 +114,8 @@
                         </button>
                     </div>
                     <div class="composer-card__submit-wrap">
-                        <div class="char-ring-wrap" id="char-ring-wrap">
-                            <svg class="char-ring" viewBox="0 0 32 32">
-                                <circle cx="16" cy="16" r="12" fill="none" stroke="var(--input-border)" stroke-width="3"/>
-                                <circle cx="16" cy="16" r="12" fill="none" stroke="var(--accent)" stroke-width="3"
-                                        stroke-dasharray="75.4" stroke-dashoffset="75.4"
-                                        stroke-linecap="round" id="char-ring-progress"
-                                        transform="rotate(-90 16 16)"/>
-                            </svg>
-                        </div>
                         <button class="tweet-post-btn" onclick="createPost()">
-                            Tweet
+                            Post
                         </button>
                     </div>
                 </div>
@@ -173,6 +173,11 @@
             <button class="rightnav-card__more">Show more</button>
         </div>
 
+        <!-- Google AdSense placeholder — replace with real ad unit script -->
+        <div class="rightnav-card ad-unit" id="ad-sidebar-1" aria-hidden="true">
+            <!-- Google AdSense -->
+        </div>
+
         <!-- Who to follow -->
         <div class="rightnav-card">
             <h3 class="rightnav-card__title">Who to follow</h3>
@@ -195,8 +200,13 @@
             <button class="rightnav-card__more">Show more</button>
         </div>
 
+        <!-- Google AdSense placeholder — replace with real ad unit script -->
+        <div class="ad-unit" id="ad-sidebar-2" aria-hidden="true">
+            <!-- Google AdSense -->
+        </div>
+
         <p class="rightnav-footer">
-            © 2025 ChatHub · <a href="index.html">Go to Chat</a>
+            © 2025 BeeLog · <a href="index.html">ChatHub</a>
         </p>
     </aside>
 
@@ -211,12 +221,12 @@
 <div id="edit-modal" class="modal">
     <div class="modal-content">
         <h2 style="margin-bottom:20px;font-size:1.1rem">
-            <i class="fa-solid fa-pen" style="color:var(--accent)"></i> Edit Tweet
+            <i class="fa-solid fa-pen" style="color:var(--accent)"></i> Edit Post
         </h2>
         <input type="hidden" id="edit-id">
         <div class="form-group">
-            <textarea id="edit-content" rows="4" maxlength="280"
-                      style="resize:none;width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;color:var(--text-main);font-family:inherit;font-size:0.95rem"></textarea>
+            <textarea id="edit-content" rows="6"
+                      style="resize:vertical;width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;color:var(--text-main);font-family:inherit;font-size:0.95rem"></textarea>
         </div>
         <div class="button-group modal-actions">
             <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -233,7 +243,7 @@
         <div class="warning-icon-circle">
             <i class="fa-solid fa-trash-can"></i>
         </div>
-        <h2 style="margin:0 0 8px;font-size:1.15rem">Delete Tweet?</h2>
+        <h2 style="margin:0 0 8px;font-size:1.15rem">Delete Post?</h2>
         <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin:0 0 24px">
             This action cannot be undone.
         </p>
@@ -270,21 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const circle = document.getElementById('composer-avatar-circle');
         if (circle) circle.textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
     }
-    // Live char ring
+    // Live char counter (no limit)
     const ta = document.getElementById('post-content');
-    const ring = document.getElementById('char-ring-progress');
     const pill = document.getElementById('char-count');
-    if (ta && ring) {
+    if (ta && pill) {
         ta.addEventListener('input', () => {
-            const len = ta.value.length;
-            const pct = len / 280;
-            const circumference = 75.4;
-            ring.style.strokeDashoffset = circumference - (pct * circumference);
-            if (pill) {
-                pill.textContent = `${len}/280`;
-                pill.style.color = len > 260 ? 'var(--danger)' : len > 230 ? 'var(--idle-color,#f59e0b)' : '';
-            }
-            ring.style.stroke = len > 260 ? 'var(--danger)' : len > 230 ? '#f59e0b' : 'var(--accent)';
+            pill.textContent = `${ta.value.length} chars`;
         });
     }
 });

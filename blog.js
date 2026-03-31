@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contentInput && charCountEl) {
         contentInput.addEventListener('input', () => {
             const len = contentInput.value.length;
-            charCountEl.textContent = `${len}/280`;
-            charCountEl.style.color = len > 260 ? (len >= 280 ? 'var(--danger)' : 'orange') : 'var(--text-muted)';
+            charCountEl.textContent = `${len} chars`;
+            charCountEl.style.color = '';
         });
     }
 
@@ -72,8 +72,7 @@ function _updateComposerVisibility() {
 // ── Tweet CRUD ────────────────────────────────────────────────────────────────
 async function createPost() {
     const content = document.getElementById('post-content').value.trim();
-    if (!content)             return showToast('Write something first.', 'error');
-    if (content.length > 280) return showToast('Max 280 characters.', 'error');
+    if (!content) return showToast('Write something first.', 'error');
 
     const btn = document.querySelector('.tweet-post-btn') || document.querySelector('#composer-body .btn-primary');
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -86,9 +85,9 @@ async function createPost() {
         });
         if (res.ok) {
             const tweet = await res.json();
-            showToast('Tweeted!');
+            showToast('Posted!');
             document.getElementById('post-content').value = '';
-            document.getElementById('char-count').textContent = '0/280';
+            document.getElementById('char-count').textContent = '0 chars';
             const container = document.getElementById('posts-container');
             const placeholder = container.querySelector('.loading-text');
             if (placeholder) placeholder.remove();
@@ -100,7 +99,7 @@ async function createPost() {
             showToast('Failed to post.', 'error');
         }
     } catch (e) { showToast('Network error.', 'error'); }
-    finally { if (btn) { btn.disabled = false; btn.textContent = 'Tweet'; } }
+    finally { if (btn) { btn.disabled = false; btn.textContent = 'Post'; } }
 }
 
 async function fetchTweets() {
@@ -315,7 +314,7 @@ async function confirmDelete() {
             method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (res.ok || res.status === 204) {
-            showToast('Tweet deleted.');
+            showToast('Post deleted.');
             closeDeleteModal();
             const card = document.getElementById(`post-card-${postToDeleteId}`);
             if (card) {
@@ -345,7 +344,7 @@ async function submitEdit() {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
             body: JSON.stringify({ content }),
         });
-        if (res.ok) { closeEditModal(); showToast('Tweet updated!'); fetchTweets(); }
+        if (res.ok) { closeEditModal(); showToast('Post updated!'); fetchTweets(); }
         else showToast('Failed to update.', 'error');
     } catch (e) { showToast('Network error.', 'error'); }
 }

@@ -744,6 +744,11 @@ body { overflow-x: hidden; }
 .feed-leftnav__item:hover { background: var(--hover-bg, rgba(0,0,0,0.06)); }
 .feed-leftnav__item.active { font-weight: 700; }
 .feed-leftnav__item i { font-size: 1.2rem; width: 24px; flex-shrink: 0; }
+.feed-leftnav__item--secondary { margin-top: auto; opacity: 0.6; font-size: 0.85rem; }
+.feed-leftnav__item--secondary:hover { opacity: 1; }
+
+/* Ad unit placeholders */
+.ad-unit { min-height: 100px; border-radius: 16px; border: 1px dashed var(--input-border); }
 
 .feed-leftnav__compose {
     margin-top: 16px;

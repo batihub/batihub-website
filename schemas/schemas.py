@@ -108,7 +108,7 @@ class RoomDetailOut(RoomOut):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TweetCreate(SQLModel):
-    content: str  # max_length enforced at the model level (280)
+    content: str  # no length limit — blog-style posts
 
 
 class TweetUpdate(SQLModel):

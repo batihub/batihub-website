@@ -115,7 +115,7 @@ class RoomMember(SQLModel, table=True):
 
 class Tweet(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    content: str = Field(max_length=280)
+    content: str = Field(sa_column=Column(Text))
     author_id: int = Field(foreign_key="user.id", index=True)
 
     # Soft delete — keeps like/comment counts consistent
@@ -152,9 +152,9 @@ class Like(SQLModel, table=True):
 # ── Comment ───────────────────────────────────────────────────────────────────
 
 class Comment(SQLModel, table=True):
-    """Flat comments on a tweet — no nested replies to keep things simple."""
+    """Flat comments on a post — no nested replies to keep things simple."""
     id: Optional[int] = Field(default=None, primary_key=True)
-    content: str = Field(max_length=280)
+    content: str = Field(sa_column=Column(Text))
     tweet_id: int = Field(foreign_key="tweet.id", index=True)
     author_id: int = Field(foreign_key="user.id", index=True)
     is_deleted: bool = Field(default=False)

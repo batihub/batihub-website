@@ -308,7 +308,7 @@ async function submitEdit() {
         });
         if (res.ok) {
             closeEditModal();
-            showToast('Tweet updated!');
+            showToast('Post updated!');
             _loadUserTweets(_profileUsername);
         } else {
             showToast('Failed to update.', 'error');
@@ -337,7 +337,7 @@ async function confirmDelete() {
             headers: { 'Authorization': `Bearer ${authToken}` },
         });
         if (res.ok || res.status === 204) {
-            showToast('Tweet deleted.');
+            showToast('Post deleted.');
             closeDeleteModal();
             const card = document.getElementById(`post-card-${_tweetToDeleteId}`);
             if (card) {
