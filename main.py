@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -67,15 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ── Static files ──────────────────────────────────────────────────────────────
-# Serves HTML/CSS/JS from the repo root for local dev and Render.
-# On Cloudflare Pages the static files are served directly by CF.
-try:
-    app.mount("/static", StaticFiles(directory="."), name="static_assets")
-except Exception:
-    pass  # directory may not exist in some deploy envs
 
 
 # ── SEO / Meta endpoints ──────────────────────────────────────────────────────
