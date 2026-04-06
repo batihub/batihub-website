@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading... — BeeLog</title>
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="">
+  <meta property="og:description" content="">
+  <meta property="og:image" content="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <!-- Code highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="blog.css">
+  <link rel="stylesheet" href="post.css">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+  <script>
+    const _t = localStorage.getItem('baerhub-theme') || 'light';
+    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+</head>
+<body>
+
+<div id="reading-bar"></div>
+
+<!-- ── Navigation ─────────────────────────────────────────────────────── -->
+<nav class="top-nav">
+  <div class="nav-container">
+    <a href="blog.html" class="nav-logo">bee<span class="accent">log</span></a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="blog.html">Blog</a>
+      <a href="profile.html">Profile</a>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <div id="nav-user-slot"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Post Cover ─────────────────────────────────────────────────────── -->
+<div id="post-cover" class="post-cover"></div>
+
+<!-- ── Article ────────────────────────────────────────────────────────── -->
+<div class="post-layout">
+  <!-- Main Article -->
+  <article id="article" class="article">
+    <div id="article-loading" class="article-loading">
+      <div class="skeleton" style="height:40px;width:60%;margin-bottom:12px;border-radius:8px"></div>
+      <div class="skeleton" style="height:20px;width:40%;margin-bottom:32px;border-radius:6px"></div>
+      <div class="skeleton" style="height:16px;margin-bottom:8px;border-radius:4px"></div>
+      <div class="skeleton" style="height:16px;width:90%;margin-bottom:8px;border-radius:4px"></div>
+      <div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;border-radius:4px"></div>
+    </div>
+
+    <div id="article-content" style="display:none">
+      <!-- Header -->
+      <header class="article-header">
+        <div id="art-meta" class="art-meta"></div>
+        <h1 id="art-title" class="art-title"></h1>
+        <p  id="art-subtitle" class="art-subtitle"></p>
+        <div id="art-byline" class="art-byline"></div>
+      </header>
+
+      <!-- Body -->
+      <div id="art-body" class="art-body ql-editor-output"></div>
+
+      <!-- Tags -->
+      <div id="art-tags" class="tag-chips" style="margin-top:32px"></div>
+
+      <!-- Like -->
+      <div class="art-like-row">
+        <button class="like-btn" id="like-btn" onclick="toggleLike()">
+          <i class="fa-regular fa-heart"></i>
+          <span id="like-count">0</span>
+        </button>
+        <button class="share-btn" onclick="sharePost()" title="Share">
+          <i class="fa-solid fa-share-nodes"></i>
+        </button>
+      </div>
+
+      <!-- Author Card -->
+      <div id="author-card" class="author-card"></div>
+
+      <!-- Related Posts -->
+      <div id="related-section" style="display:none">
+        <h3 class="related-title">More Posts</h3>
+        <div id="related-grid" class="related-grid"></div>
+      </div>
+
+      <!-- Comments -->
+      <section class="comments-section" id="comments-section">
+        <h3 class="comments-title">Comments <span id="comment-count-badge"></span></h3>
+
+        <!-- Comment form (logged-in only) -->
+        <div id="comment-form-wrap">
+          <div class="comment-input-row">
+            <div class="a-avatar" id="my-avatar" style="width:36px;height:36px;font-size:.9rem"></div>
+            <div class="comment-input-area">
+              <textarea id="comment-input" placeholder="Write a comment…" rows="2"></textarea>
+              <div class="comment-actions">
+                <button class="btn btn-primary btn-sm" onclick="submitComment()">Post</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="comment-login-prompt" style="display:none" class="comment-login-prompt">
+          <i class="fa-regular fa-comment"></i>
+          <span>Log in to leave a comment</span>
+          <button class="btn btn-primary btn-sm" onclick="openLoginModal()">Log In</button>
+        </div>
+
+        <div id="comments-list" class="comments-list"></div>
+      </section>
+    </div>
+  </article>
+
+  <!-- TOC Sidebar -->
+  <aside class="post-sidebar" id="post-sidebar">
+    <div class="toc-card" id="toc-wrap" style="display:none">
+      <div class="toc-label">Table of Contents</div>
+      <nav id="toc"></nav>
+    </div>
+  </aside>
+</div>
+
+<div id="toast-container"></div>
+<button id="scroll-top-btn" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="auth.js"></script>
+<script src="post.js"></script>
+</body>
+</html>

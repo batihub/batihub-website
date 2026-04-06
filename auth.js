@@ -255,9 +255,9 @@ function renderNavUser() {
                 <a class="dropdown-item" href="profile.html" style="text-decoration:none">
                     <i class="fa-solid fa-user"></i> My Profile
                 </a>
-                ${(currentUser.role === 'admin' || currentUser.role === 'root') ? `
+                ${(currentUser.role === 'admin' || currentUser.role === 'root' || currentUser.role === 'author') ? `
                 <a class="dropdown-item" href="admin.html" style="text-decoration:none">
-                    <i class="fa-solid fa-shield-halved"></i> Admin Panel
+                    <i class="fa-solid fa-pen-to-square"></i> Dashboard
                 </a>` : ''}
                 <div class="dropdown-divider"></div>
                 <button class="dropdown-item danger" onclick="logout()">
@@ -452,9 +452,12 @@ async function register() {
     if (!username || !password) { if (errEl) errEl.textContent = 'Username and password required.'; return; }
 
     try {
-        const res = await fetch(`${API_URL}/user`, {
+        const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authToken ? `Bearer ${authToken}` : '',
+            },
             body: JSON.stringify({ username, password, display_name: displayName }),
         });
         if (res.ok) {
@@ -502,6 +505,9 @@ function escapeHtml(text) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
+// Alias used by new pages
+const _initMobileNav = _initHamburger;
 
 // Auto-init on DOM ready
 document.addEventListener('DOMContentLoaded', () => {

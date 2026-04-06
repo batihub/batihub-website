@@ -11,16 +11,14 @@ from dotenv import load_dotenv
 from models.models import UserRole
 from schemas.schemas import UserSession
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY environment variable is not set. Add it to your .env file.")
+    raise RuntimeError("SECRET_KEY environment variable is not set.")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24h default
 
 # ── Password hashing ──────────────────────────────────────────────────────────
 
@@ -34,7 +32,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme          = OAuth2PasswordBearer(tokenUrl="token")
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -47,24 +45,20 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def _decode_token(token: str) -> Optional[dict]:
-    """Shared decode logic. Returns payload dict or None on any failure."""
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.PyJWTError:
+    except (jwt.ExpiredSignatureError, jwt.PyJWTError):
         return None
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserSession:
-    """Strict — raises 401 if token is missing or invalid. Use on protected routes."""
     payload = _decode_token(token)
     if payload is None:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     username: str = payload.get("sub")
     user_role: str = payload.get("role")
-    user_id: int = payload.get("id")
+    user_id: int   = payload.get("id")
 
     if not username or not user_role or user_id is None:
         raise HTTPException(status_code=401, detail="Invalid token payload")
@@ -75,7 +69,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserSession:
 async def get_optional_user(
     token: Optional[str] = Depends(oauth2_scheme_optional),
 ) -> Optional[UserSession]:
-    """Soft — returns None instead of raising for guests. Use on public routes."""
     if not token:
         return None
     payload = _decode_token(token)
@@ -84,7 +77,7 @@ async def get_optional_user(
 
     username: str = payload.get("sub")
     user_role: str = payload.get("role")
-    user_id: int = payload.get("id")
+    user_id: int   = payload.get("id")
 
     if not username or not user_role or user_id is None:
         return None
@@ -95,16 +88,25 @@ async def get_optional_user(
 # ── Role-based access control ─────────────────────────────────────────────────
 
 ROLE_HIERARCHY = {
-    UserRole.ROOT: 3,
-    UserRole.ADMIN: 2,
-    UserRole.INTERN: 1,
+    UserRole.ROOT:   4,
+    UserRole.ADMIN:  3,
+    UserRole.AUTHOR: 2,
+    UserRole.INTERN: 2,   # treated same as AUTHOR during migration
 }
+
 
 class RoleChecker:
     def __init__(self, required_role: UserRole):
         self.required_role = required_role
 
     def __call__(self, user: UserSession = Depends(get_current_user)) -> UserSession:
-        if ROLE_HIERARCHY[user.role] < ROLE_HIERARCHY[self.required_role]:
-            raise HTTPException(status_code=403, detail="Insufficient permissions for this action")
+        user_level     = ROLE_HIERARCHY.get(user.role, 0)
+        required_level = ROLE_HIERARCHY.get(self.required_role, 0)
+        if user_level < required_level:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
         return user
+
+
+require_author = RoleChecker(UserRole.AUTHOR)
+require_admin  = RoleChecker(UserRole.ADMIN)
+require_root   = RoleChecker(UserRole.ROOT)

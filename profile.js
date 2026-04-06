@@ -1,484 +1,279 @@
-// profile.js — BeeLog profile page logic
-// Depends on auth.js being loaded first (provides: authToken, currentUser, API_URL,
-//   escapeHtml, openLoginModal, logout, renderNavUser)
+// profile.js — BeeLog Author Profile Page
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let _profileUsername  = null;   // whose profile we're viewing
-let _isOwnProfile     = false;
-let _tweetToDeleteId  = null;
+const API = 'https://beelog-poes.onrender.com';
 
-// ── Bootstrap ─────────────────────────────────────────────────────────────────
+let _profileUsername = null;
+let _isOwnProfile    = false;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function avatarLetter(u) {
+  return ((u?.display_name || u?.username || '?')[0]).toUpperCase();
+}
+
+function showToast(msg, type = '') {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ── Render profile hero ────────────────────────────────────────────────────────
+
+function renderHero(user) {
+  const avatar = user.avatar_url
+    ? `<div class="profile-hero__avatar"><img src="${escapeHtml(user.avatar_url)}" alt="avatar"></div>`
+    : `<div class="profile-hero__avatar">${avatarLetter(user)}</div>`;
+
+  const verified = user.is_verified
+    ? `<span title="Verified" style="color:var(--accent)"><i class="fa-solid fa-circle-check"></i></span>`
+    : '';
+
+  const links = [];
+  if (user.website_url) links.push(`<a href="${escapeHtml(user.website_url)}" target="_blank" rel="noopener" title="Website"><i class="fa-solid fa-globe"></i></a>`);
+  if (user.twitter_handle) {
+    const handle = user.twitter_handle.replace(/^@/, '');
+    links.push(`<a href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener" title="Twitter/X"><i class="fa-brands fa-x-twitter"></i></a>`);
+  }
+
+  const heroEl = document.getElementById('profile-hero');
+  heroEl.innerHTML = `
+    <div class="profile-hero__content">
+      ${avatar}
+      <h1 class="profile-hero__name">${escapeHtml(user.display_name || user.username)}</h1>
+      <div class="profile-hero__handle">
+        <span>@${escapeHtml(user.username)}</span>
+        ${verified}
+        <span class="cat-badge" style="font-size:.7rem">${user.role}</span>
+      </div>
+      ${user.bio ? `<p class="profile-hero__bio">${escapeHtml(user.bio)}</p>` : ''}
+      <div class="profile-hero__stats">
+        <div class="stat"><span class="val">${user.post_count||0}</span><span class="lbl">Posts</span></div>
+      </div>
+      ${links.length ? `<div class="profile-hero__links">${links.join('')}</div>` : ''}
+    </div>`;
+}
+
+// ── Render profile info card ───────────────────────────────────────────────────
+
+function renderInfoCard(user) {
+  const card = document.getElementById('profile-info-card');
+  const rows = [];
+  if (user.bio) rows.push(`<div class="profile-info-item"><i class="fa-solid fa-align-left"></i><span>${escapeHtml(user.bio)}</span></div>`);
+  rows.push(`<div class="profile-info-item"><i class="fa-regular fa-calendar"></i><span>Joined ${fmtDate(user.created_at)}</span></div>`);
+  if (user.website_url) rows.push(`<div class="profile-info-item"><i class="fa-solid fa-globe"></i><a href="${escapeHtml(user.website_url)}" target="_blank" rel="noopener">${escapeHtml(user.website_url.replace(/^https?:\/\//, ''))}</a></div>`);
+  if (user.twitter_handle) rows.push(`<div class="profile-info-item"><i class="fa-brands fa-x-twitter"></i><a href="https://x.com/${encodeURIComponent(user.twitter_handle.replace(/^@/,''))}" target="_blank" rel="noopener">@${escapeHtml(user.twitter_handle.replace(/^@/,''))}</a></div>`);
+
+  card.innerHTML = rows.join('') || '<div style="color:var(--text-3);font-size:.875rem">No info provided.</div>';
+}
+
+// ── Render post card for feed ─────────────────────────────────────────────────
+
+function renderProfilePostCard(post) {
+  const img = post.cover_image_url
+    ? `<img class="post-card__img" src="${escapeHtml(post.cover_image_url)}" alt="${escapeHtml(post.title)}" loading="lazy">`
+    : `<div class="post-card__img-placeholder"><i class="fa-regular fa-image"></i></div>`;
+
+  const cat = post.category
+    ? `<span class="cat-badge">${escapeHtml(post.category.name)}</span>`
+    : '';
+
+  const draftBadge = post.status === 'draft'
+    ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700">DRAFT</span>'
+    : '';
+
+  return `
+    <article class="post-card" onclick="location.href='post.html?slug=${encodeURIComponent(post.slug)}'">
+      ${img}
+      <div class="post-card__body">
+        <div class="post-card__meta">
+          ${cat} ${draftBadge}
+          <span class="read-time"><i class="fa-regular fa-clock"></i> ${post.read_time} min</span>
+        </div>
+        <h2 class="post-card__title">${escapeHtml(post.title)}</h2>
+        ${post.subtitle ? `<p class="post-card__subtitle">${escapeHtml(post.subtitle)}</p>` : ''}
+        <div class="post-card__footer">
+          <span style="font-size:.78rem;color:var(--text-3)">${fmtDate(post.published_at || post.created_at)}</span>
+          <span class="post-stats">
+            <span><i class="fa-regular fa-eye"></i> ${post.view_count}</span>
+            <span><i class="fa-regular fa-heart"></i> ${post.like_count}</span>
+          </span>
+        </div>
+      </div>
+    </article>`;
+}
+
+// ── Load profile data ─────────────────────────────────────────────────────────
+
+async function loadProfile(username) {
+  try {
+    const res  = await fetch(`${API}/users/${encodeURIComponent(username)}`);
+    if (!res.ok) throw new Error('User not found');
+    const user = await res.json();
+
+    document.title = `${user.display_name || user.username} — BeeLog`;
+    document.querySelector('[rel=canonical]').href = location.href;
+    document.querySelector('[property="og:title"]').content = user.display_name || user.username;
+    document.querySelector('[property="og:description"]').content = user.bio || '';
+    document.querySelector('[property="og:image"]').content = user.avatar_url || '';
+
+    renderHero(user);
+    renderInfoCard(user);
+
+    // Show edit controls if own profile
+    _isOwnProfile = typeof currentUser !== 'undefined' && currentUser &&
+      (currentUser.username === username || currentUser.role === 'admin' || currentUser.role === 'root');
+
+    if (_isOwnProfile) {
+      document.getElementById('own-profile-actions').style.display = 'block';
+      prefillEditForm(user);
+    }
+
+  } catch (e) {
+    document.getElementById('profile-hero').innerHTML = `
+      <div class="feed-empty">
+        <i class="fa-solid fa-user-slash"></i>
+        <h3>User not found</h3>
+        <a href="blog.html" class="btn btn-primary" style="margin-top:16px">Back to Blog</a>
+      </div>`;
+  }
+}
+
+async function loadProfilePosts(username) {
+  const feed  = document.getElementById('profile-feed');
+  const empty = document.getElementById('profile-empty');
+
+  try {
+    const headers = {};
+    if (typeof authToken !== 'undefined' && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    let posts;
+    if (_isOwnProfile) {
+      // Show drafts too on own profile
+      const res = await fetch(`${API}/posts/me/posts`, { headers });
+      posts = await res.json();
+    } else {
+      const res = await fetch(`${API}/posts?author=${encodeURIComponent(username)}&limit=50`);
+      const data = await res.json();
+      posts = data.posts || [];
+    }
+
+    feed.innerHTML = '';
+    if (!posts.length) {
+      feed.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    posts.forEach(p => feed.insertAdjacentHTML('beforeend', renderProfilePostCard(p)));
+
+  } catch {
+    feed.innerHTML = '<div class="feed-empty"><h3>Could not load posts.</h3></div>';
+  }
+}
+
+// ── Edit profile ──────────────────────────────────────────────────────────────
+
+function prefillEditForm(user) {
+  document.getElementById('ep-displayname').value = user.display_name || '';
+  document.getElementById('ep-bio').value         = user.bio || '';
+  document.getElementById('ep-avatar').value      = user.avatar_url || '';
+  document.getElementById('ep-website').value     = user.website_url || '';
+  document.getElementById('ep-twitter').value     = user.twitter_handle || '';
+}
+
+function toggleEditProfile() {
+  const form = document.getElementById('edit-profile-form');
+  const btn  = document.querySelector('#own-profile-actions button');
+  const show = form.style.display === 'none';
+  form.style.display = show ? 'block' : 'none';
+  if (btn) btn.innerHTML = show
+    ? '<i class="fa-solid fa-xmark"></i> Cancel Edit'
+    : '<i class="fa-solid fa-pen"></i> Edit Profile';
+}
+
+async function saveProfile() {
+  const body = {
+    display_name:   document.getElementById('ep-displayname').value.trim() || null,
+    bio:            document.getElementById('ep-bio').value.trim() || null,
+    avatar_url:     document.getElementById('ep-avatar').value.trim() || null,
+    website_url:    document.getElementById('ep-website').value.trim() || null,
+    twitter_handle: document.getElementById('ep-twitter').value.trim() || null,
+  };
+
+  try {
+    const res = await fetch(`${API}/auth/me`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('Save failed');
+    const user = await res.json();
+
+    // Update localStorage
+    if (typeof currentUser !== 'undefined' && currentUser) {
+      currentUser.display_name = user.display_name;
+      localStorage.setItem('baerhub-user', JSON.stringify(currentUser));
+    }
+
+    toggleEditProfile();
+    renderHero(user);
+    renderInfoCard(user);
+    showToast('Profile updated!', 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-    const params   = new URLSearchParams(window.location.search);
-    const urlUser  = params.get('user');
+  document.getElementById('year').textContent = new Date().getFullYear();
 
-    if (urlUser) {
-        _profileUsername = urlUser;
-        _isOwnProfile    = !!(currentUser && currentUser.username === urlUser);
-    } else if (currentUser) {
-        _profileUsername = currentUser.username;
-        _isOwnProfile    = true;
-    } else {
-        // Not logged in and no ?user= param — prompt login
-        _showLoginPrompt();
-        return;
-    }
+  if (typeof initTheme      === 'function') initTheme();
+  if (typeof renderNavUser  === 'function') renderNavUser();
+  if (typeof _initMobileNav === 'function') _initMobileNav();
 
-    _renderProfileHeader(_profileUsername, _isOwnProfile);
-    _loadUserTweets(_profileUsername);
+  // Determine whose profile to show
+  const params = new URLSearchParams(location.search);
+  _profileUsername = params.get('user') || (typeof currentUser !== 'undefined' && currentUser?.username) || '';
 
-    // Scroll-to-top button
-    window.addEventListener('scroll', () => {
-        const btn = document.getElementById('scroll-top-btn');
-        if (btn) btn.classList.toggle('visible', window.scrollY > 400);
-    });
+  if (!_profileUsername) {
+    document.getElementById('profile-hero').innerHTML = `
+      <div class="feed-empty">
+        <i class="fa-solid fa-user"></i>
+        <h3>No user specified</h3>
+        <a href="blog.html" class="btn btn-primary" style="margin-top:16px">Go to Blog</a>
+      </div>`;
+    return;
+  }
 
-    // Modal backdrop close
-    window.addEventListener('click', e => {
-        if (e.target === document.getElementById('edit-modal'))         closeEditModal();
-        if (e.target === document.getElementById('delete-modal'))       closeDeleteModal();
-        if (e.target === document.getElementById('edit-profile-modal')) closeEditProfile();
-    });
+  // After auth state is ready
+  document.addEventListener('auth:navRendered', () => {
+    _isOwnProfile = typeof currentUser !== 'undefined' && currentUser &&
+      (currentUser.username === _profileUsername || currentUser.role === 'admin' || currentUser.role === 'root');
+
+    loadProfile(_profileUsername);
+    loadProfilePosts(_profileUsername);
+  });
+
+  // Scroll to top
+  window.addEventListener('scroll', () => {
+    document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
+  });
 });
-
-// Re-render when auth state changes
-document.addEventListener('auth:login', () => {
-    // If we were showing the login prompt, reload properly
-    const params  = new URLSearchParams(window.location.search);
-    const urlUser = params.get('user');
-    if (!urlUser && currentUser) {
-        _profileUsername = currentUser.username;
-        _isOwnProfile    = true;
-        _renderProfileHeader(_profileUsername, _isOwnProfile);
-        _loadUserTweets(_profileUsername);
-        // Hide the prompt if present
-        const prompt = document.getElementById('profile-login-prompt');
-        if (prompt) prompt.remove();
-    } else if (urlUser) {
-        _isOwnProfile = !!(currentUser && currentUser.username === urlUser);
-        _renderProfileHeader(_profileUsername, _isOwnProfile);
-        _loadUserTweets(_profileUsername);
-    }
-});
-
-document.addEventListener('auth:logout', () => {
-    const params  = new URLSearchParams(window.location.search);
-    const urlUser = params.get('user');
-    if (!urlUser) {
-        // Own profile page and now logged out — show prompt
-        _showLoginPrompt();
-    } else {
-        _isOwnProfile = false;
-        _renderProfileHeader(_profileUsername, false);
-        _loadUserTweets(_profileUsername);
-    }
-});
-
-// ── SEO meta helpers ──────────────────────────────────────────────────────────
-
-function _setMeta(attrName, attrValue, content) {
-    let el = document.querySelector(`meta[${attrName}="${attrValue}"]`);
-    if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute(attrName, attrValue);
-        document.head.appendChild(el);
-    }
-    el.setAttribute('content', content);
-}
-
-function _setLink(rel, href) {
-    let el = document.querySelector(`link[rel="${rel}"]`);
-    if (!el) {
-        el = document.createElement('link');
-        el.setAttribute('rel', rel);
-        document.head.appendChild(el);
-    }
-    el.setAttribute('href', href);
-}
-
-function _updateProfileMeta(displayName, username, bio) {
-    const SITE = window.location.origin;
-    const url   = `${SITE}/profile.html?user=${encodeURIComponent(username)}`;
-    const title = `${displayName} (@${username}) — BeeLog`;
-    const desc  = bio
-        ? (bio.length > 150 ? bio.substring(0, 147) + '…' : bio)
-        : `${displayName} (@${username}) on BeeLog — a public blog and social feed.`;
-
-    document.title = title;
-    _setMeta('name',     'description',       desc);
-    _setMeta('name',     'robots',            'index, follow');
-    _setLink('canonical', url);
-    _setMeta('property', 'og:type',           'profile');
-    _setMeta('property', 'og:title',          title);
-    _setMeta('property', 'og:description',    desc);
-    _setMeta('property', 'og:url',            url);
-    _setMeta('property', 'og:image',          `${SITE}/favicon-32x32.png`);
-    _setMeta('name',     'twitter:card',      'summary');
-    _setMeta('name',     'twitter:title',     title);
-    _setMeta('name',     'twitter:description', desc);
-
-    // Person schema (JSON-LD)
-    const existing = document.getElementById('schema-person');
-    if (existing) existing.remove();
-    const schemaObj = {
-        '@context': 'https://schema.org',
-        '@type':    'Person',
-        'name':     displayName,
-        'alternateName': '@' + username,
-        'url':      url,
-    };
-    if (bio) schemaObj.description = bio;
-    const schemaEl = document.createElement('script');
-    schemaEl.type        = 'application/ld+json';
-    schemaEl.id          = 'schema-person';
-    schemaEl.textContent = JSON.stringify(schemaObj);
-    document.head.appendChild(schemaEl);
-}
-
-// ── UGC link helper (mirrors blog.js) ────────────────────────────────────────
-function _linkifyContent(text) {
-    const escaped = escapeHtml(text);
-    return escaped.replace(
-        /https?:\/\/[^\s<>"']+/g,
-        url => `<a href="${url}" rel="ugc noopener noreferrer" target="_blank">${url}</a>`
-    );
-}
-
-// ── Login Prompt ──────────────────────────────────────────────────────────────
-function _showLoginPrompt() {
-    const tweetsEl = document.getElementById('profile-tweets');
-    if (tweetsEl) {
-        tweetsEl.innerHTML = `
-            <div class="profile-empty" id="profile-login-prompt">
-                <i class="fa-solid fa-user-slash"></i>
-                <p>Log in to view your profile.</p>
-                <button class="profile-btn profile-btn--follow" onclick="openLoginModal()" style="display:inline-flex">
-                    <i class="fa-solid fa-right-to-bracket"></i> Log In
-                </button>
-            </div>`;
-    }
-    const nameEl = document.getElementById('profile-display-name');
-    if (nameEl) nameEl.textContent = 'Your Profile';
-    const editBtn = document.getElementById('profile-edit-btn');
-    if (editBtn) editBtn.style.display = 'none';
-    const followBtn = document.getElementById('profile-follow-btn');
-    if (followBtn) followBtn.style.display = 'none';
-}
-
-// ── Render Profile Header ─────────────────────────────────────────────────────
-function _renderProfileHeader(username, isOwnProfile) {
-    // Display name
-    const displayName = (isOwnProfile && currentUser && currentUser.display_name)
-        ? currentUser.display_name
-        : username;
-    const nameEl = document.getElementById('profile-display-name');
-    if (nameEl) nameEl.textContent = displayName;
-
-    // @username
-    const usernameEl = document.getElementById('profile-username');
-    if (usernameEl) usernameEl.textContent = '@' + username;
-
-    // Avatar initial
-    const avatarEl = document.getElementById('profile-avatar');
-    if (avatarEl) avatarEl.textContent = username.charAt(0).toUpperCase();
-
-    // Cover faded initial
-    const coverInitialEl = document.getElementById('profile-cover-initial');
-    if (coverInitialEl) coverInitialEl.textContent = username.charAt(0).toUpperCase();
-
-    // Edit vs Follow button
-    const editBtn   = document.getElementById('profile-edit-btn');
-    const followBtn = document.getElementById('profile-follow-btn');
-    if (editBtn)   editBtn.style.display   = isOwnProfile ? '' : 'none';
-    if (followBtn) followBtn.style.display = isOwnProfile ? 'none' : '';
-
-    // Joined date
-    const joinEl = document.getElementById('profile-join-date');
-    if (joinEl) {
-        if (isOwnProfile && currentUser && currentUser.created_at) {
-            const d = new Date(currentUser.created_at);
-            joinEl.innerHTML = `<i class="fa-regular fa-calendar"></i> Joined ${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
-        } else {
-            joinEl.innerHTML = '';
-        }
-    }
-
-    // Update SEO meta tags, Open Graph, and JSON-LD Person schema
-    const bio = (_isOwnProfile && currentUser && currentUser.bio) ? currentUser.bio : null;
-    _updateProfileMeta(displayName, username, bio);
-}
-
-// ── Load User Tweets ──────────────────────────────────────────────────────────
-async function _loadUserTweets(username) {
-    const container = document.getElementById('profile-tweets');
-    container.innerHTML = `
-        <div class="loading-placeholder">
-            <div class="loading-spinner"></div>
-            <p>Loading tweets…</p>
-        </div>`;
-
-    try {
-        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-        const res     = await fetch(`${API_URL}/tweets`, { headers });
-        if (!res.ok) throw new Error('fetch_failed');
-
-        const data    = await res.json();
-        const tweets  = (data.tweets || []).filter(t => t.author && t.author.username === username);
-
-        // Update tweet count badge
-        const countEl = document.getElementById('profile-tweet-count');
-        if (countEl) countEl.textContent = tweets.length;
-
-        container.innerHTML = '';
-
-        if (!tweets.length) {
-            container.innerHTML = `
-                <div class="profile-empty">
-                    <i class="fa-regular fa-note-sticky"></i>
-                    <p>No tweets yet.</p>
-                </div>`;
-            return;
-        }
-
-        tweets.forEach(t => container.appendChild(_buildProfileTweetCard(t)));
-    } catch (e) {
-        container.innerHTML = `
-            <div class="profile-empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <p>Could not load tweets. Is the API running?</p>
-            </div>`;
-    }
-}
-
-// ── Build Profile Tweet Card ──────────────────────────────────────────────────
-function _buildProfileTweetCard(tweet) {
-    const card        = document.createElement('div');
-    card.className    = 'post-card';
-    card.id           = `post-card-${tweet.id}`;
-
-    const isOwner     = currentUser && tweet.author.username === currentUser.username;
-    const editedBadge = tweet.is_edited
-        ? '<span class="edited-badge"><i class="fa-solid fa-pencil"></i> edited</span>'
-        : '';
-    const letter      = tweet.author.username.charAt(0).toUpperCase();
-    const displayName = tweet.author.display_name
-        ? `<span class="display-name">${escapeHtml(tweet.author.display_name)}</span>`
-        : '';
-    const likeDisabledAttr = !authToken ? 'disabled title="Log in to like"' : '';
-    const likeIconClass    = tweet.liked_by_me ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-    const likedClass       = tweet.liked_by_me ? 'is-liked' : '';
-    const likedData        = tweet.liked_by_me ? 'true' : 'false';
-
-    const ownerButtons = isOwner ? `
-        <button class="btn btn-secondary btn-sm"
-                onclick='_openEditTweet(${JSON.stringify(tweet).replace(/'/g, "&#39;")})'>
-            <i class="fa-solid fa-pen"></i> Edit
-        </button>
-        <button class="btn btn-danger"
-                onclick="_deleteTweet(${tweet.id})">
-            <i class="fa-solid fa-trash"></i> Delete
-        </button>` : '';
-
-    card.innerHTML = `
-        <div class="post-header">
-            <div class="author-info">
-                <div class="avatar-circle">${letter}</div>
-                <div>
-                    ${displayName}
-                    <div class="username-handle">@${escapeHtml(tweet.author.username)}</div>
-                </div>
-            </div>
-            <span class="author-badge">#${tweet.id}</span>
-        </div>
-        <div class="post-meta">
-            ${new Date(tweet.created_at).toLocaleString()} ${editedBadge}
-        </div>
-        <div class="post-content">${_linkifyContent(tweet.content)}</div>
-        <div class="post-actions">
-            <div class="tweet-stats">
-                <button class="stat-btn like-btn ${likedClass}"
-                        data-tweet-id="${tweet.id}"
-                        data-liked="${likedData}"
-                        onclick="_toggleLike(this)"
-                        ${likeDisabledAttr}>
-                    <i class="${likeIconClass}"></i>
-                    <span class="like-count">${tweet.like_count}</span>
-                </button>
-                <span class="stat-btn">
-                    <i class="fa-regular fa-comment"></i> ${tweet.comment_count}
-                </span>
-            </div>
-            <div class="action-btns">
-                ${ownerButtons}
-            </div>
-        </div>`;
-
-    return card;
-}
-
-// ── Like ──────────────────────────────────────────────────────────────────────
-async function _toggleLike(btn) {
-    if (!authToken) return showToast('Log in to like tweets.', 'error');
-
-    const tweetId = parseInt(btn.dataset.tweetId);
-    const isLiked = btn.dataset.liked === 'true';
-    const icon    = btn.querySelector('i');
-    const countEl = btn.querySelector('.like-count');
-
-    btn.disabled = true;
-
-    const newLiked = !isLiked;
-    const newCount = parseInt(countEl.textContent) + (newLiked ? 1 : -1);
-    countEl.textContent = newCount;
-    icon.className      = `${newLiked ? 'fa-solid' : 'fa-regular'} fa-heart`;
-    btn.classList.toggle('is-liked', newLiked);
-    btn.dataset.liked   = String(newLiked);
-
-    try {
-        const res = await fetch(`${API_URL}/tweets/${tweetId}/like`, {
-            method:  newLiked ? 'POST' : 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        if (!res.ok && res.status !== 204) throw new Error();
-    } catch {
-        // Revert optimistic update
-        countEl.textContent = parseInt(countEl.textContent) + (newLiked ? -1 : 1);
-        icon.className      = `${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`;
-        btn.classList.toggle('is-liked', isLiked);
-        btn.dataset.liked   = String(isLiked);
-        showToast('Failed to update like.', 'error');
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-// ── Edit Tweet ────────────────────────────────────────────────────────────────
-function _openEditTweet(tweet) {
-    document.getElementById('edit-id').value      = tweet.id;
-    document.getElementById('edit-content').value = tweet.content;
-    document.getElementById('edit-modal').style.display = 'flex';
-}
-
-function closeEditModal() {
-    document.getElementById('edit-modal').style.display = 'none';
-}
-
-async function submitEdit() {
-    const id      = document.getElementById('edit-id').value;
-    const content = document.getElementById('edit-content').value.trim();
-    if (!content) return showToast('Content cannot be empty.', 'error');
-
-    try {
-        const res = await fetch(`${API_URL}/tweets/${id}`, {
-            method:  'PATCH',
-            headers: {
-                'Content-Type':  'application/json',
-                'Authorization': `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({ content }),
-        });
-        if (res.ok) {
-            closeEditModal();
-            showToast('Post updated!');
-            _loadUserTweets(_profileUsername);
-        } else {
-            showToast('Failed to update.', 'error');
-        }
-    } catch {
-        showToast('Network error.', 'error');
-    }
-}
-
-// ── Delete Tweet ──────────────────────────────────────────────────────────────
-function _deleteTweet(id) {
-    _tweetToDeleteId = id;
-    document.getElementById('delete-modal').style.display = 'flex';
-}
-
-function closeDeleteModal() {
-    document.getElementById('delete-modal').style.display = 'none';
-    _tweetToDeleteId = null;
-}
-
-async function confirmDelete() {
-    if (!_tweetToDeleteId) return;
-    try {
-        const res = await fetch(`${API_URL}/tweets/${_tweetToDeleteId}`, {
-            method:  'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        if (res.ok || res.status === 204) {
-            showToast('Post deleted.');
-            closeDeleteModal();
-            const card = document.getElementById(`post-card-${_tweetToDeleteId}`);
-            if (card) {
-                card.style.transition = 'all 0.3s ease';
-                card.style.opacity    = '0';
-                card.style.transform  = 'scale(0.95)';
-                setTimeout(() => {
-                    card.remove();
-                    // Update count after removal
-                    const countEl = document.getElementById('profile-tweet-count');
-                    if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
-                }, 300);
-            }
-        } else {
-            showToast('Failed to delete.', 'error');
-            closeDeleteModal();
-        }
-    } catch {
-        showToast('Error.', 'error');
-        closeDeleteModal();
-    }
-}
-
-// ── Edit Profile ──────────────────────────────────────────────────────────────
-function editProfile() {
-    const modal = document.getElementById('edit-profile-modal');
-    if (!modal) return;
-
-    // Pre-fill fields
-    const displayNameInput = document.getElementById('edit-display-name');
-    if (displayNameInput) {
-        displayNameInput.value = (currentUser && currentUser.display_name) ? currentUser.display_name : '';
-    }
-    const bioInput = document.getElementById('edit-bio');
-    if (bioInput) bioInput.value = '';
-
-    modal.style.display = 'flex';
-    if (displayNameInput) displayNameInput.focus();
-}
-
-function closeEditProfile() {
-    const modal = document.getElementById('edit-profile-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function saveProfile() {
-    showToast('Profile editing will be available in a future update!', 'error');
-    closeEditProfile();
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-
-    const toast     = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const icon = type === 'success'
-        ? '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>'
-        : '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
-    toast.innerHTML = `${icon} <span>${message}</span>`;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// ── Scroll to Top ─────────────────────────────────────────────────────────────
-function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}

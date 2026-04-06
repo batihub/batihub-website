@@ -1,301 +1,101 @@
-/* ── Profile Page Styles ─────────────────────────────────────────────────────
-   blog.css is loaded first and provides:
-   - CSS variables (--card-bg, --accent, --text-main, etc.)
-   - .post-card, .post-header, .author-info, .avatar-circle, .post-content,
-     .post-actions, .stat-btn, .like-btn, .toast, #toast-container,
-     .loading-placeholder, .loading-spinner, .scroll-top-btn, .modal,
-     .modal-content, .btn, .btn-primary, .btn-secondary, .btn-danger,
-     .warning-icon-circle, .edited-badge, .display-name, .username-handle,
-     .tweet-stats, .action-btns, .form-group, label, input, textarea
-   ─────────────────────────────────────────────────────────────────────────── */
+/* profile.css — Author profile page */
 
-/* ── Page Container ──────────────────────────────────────────────────────── */
-.profile-page {
-    max-width: 680px;
-    margin: 0 auto;
+/* ── Profile Hero ──────────────────────────────────────────────────────────── */
+.profile-hero {
+  background: linear-gradient(135deg, var(--accent-light), var(--bg));
+  border-bottom: 1px solid var(--border);
+  padding: 48px 24px 40px;
+  text-align: center;
+  min-height: 200px;
+  display: flex; align-items: center; justify-content: center;
 }
+.profile-hero__loading { display: flex; flex-direction: column; align-items: center; }
+.profile-hero__content { display: flex; flex-direction: column; align-items: center; gap: 0; }
 
-/* ── Cover Banner ────────────────────────────────────────────────────────── */
-.profile-cover {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
-    position: relative;
-    overflow: hidden;
+.profile-hero__avatar {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 2.2rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  border: 4px solid var(--surface);
+  box-shadow: 0 4px 16px rgba(99,102,241,.3);
+  overflow: hidden;
 }
+.profile-hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.profile-cover-initial {
-    position: absolute;
-    right: 40px;
-    bottom: -20px;
-    font-size: 9rem;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.08);
-    line-height: 1;
-    user-select: none;
-    pointer-events: none;
-    letter-spacing: -4px;
+.profile-hero__name {
+  font-family: var(--font-display);
+  font-size: 2rem; font-weight: 800;
+  letter-spacing: -.04em; margin-bottom: 4px;
 }
-
-/* ── Avatar Wrap ─────────────────────────────────────────────────────────── */
-.profile-avatar-wrap {
-    transform: translateY(-50%);
-    margin-left: 20px;
-    display: inline-block;
+.profile-hero__handle {
+  font-size: .9rem; color: var(--text-3); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
 }
-
-/* ── Profile Avatar Circle ───────────────────────────────────────────────── */
-.profile-avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    border: 4px solid var(--bg-color);
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover, #4f46e5));
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    font-weight: 800;
-    flex-shrink: 0;
-    user-select: none;
+.profile-hero__bio {
+  font-size: .95rem; color: var(--text-2);
+  max-width: 500px; line-height: 1.6; margin-bottom: 16px;
 }
-
-/* ── Actions Row ─────────────────────────────────────────────────────────── */
-.profile-actions-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 0 20px 0 0;
-    /* avatar-wrap's negative translateY creates overlap; row sits immediately
-       after cover so the avatar peeks above. We need just enough top padding
-       to not clip the avatar button area. */
-    margin-top: -4px;
+.profile-hero__stats {
+  display: flex; gap: 28px; justify-content: center; margin-bottom: 16px;
 }
-
-.profile-action-buttons {
-    padding-bottom: 8px;
+.profile-hero__stats .stat { text-align: center; }
+.profile-hero__stats .stat .val {
+  display: block; font-size: 1.4rem; font-weight: 700; color: var(--text);
 }
-
-/* ── Profile Buttons ─────────────────────────────────────────────────────── */
-.profile-btn {
-    border-radius: 50px;
-    height: 36px;
-    padding: 0 20px;
-    font-weight: 700;
-    font-size: 0.88rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+.profile-hero__stats .stat .lbl {
+  font-size: .75rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em;
 }
-
-.profile-btn--edit {
-    border: 2px solid var(--nav-border);
-    background: transparent;
-    color: var(--text-main);
+.profile-hero__links { display: flex; gap: 10px; justify-content: center; margin-top: 6px; }
+.profile-hero__links a {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); font-size: .9rem; transition: all .2s;
 }
-.profile-btn--edit:hover {
-    border-color: var(--text-main);
-    background: var(--hover-bg, rgba(0,0,0,0.04));
+.profile-hero__links a:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
+.profile-layout {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 40px;
+  align-items: start;
 }
+@media (max-width: 900px) { .profile-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .profile-layout { padding: 24px 16px; } }
 
-.profile-btn--follow {
-    border: none;
-    background: var(--accent);
-    color: #fff;
+/* ── Profile Info Card ───────────────────────────────────────────────────────── */
+.profile-sidebar { display: flex; flex-direction: column; gap: 14px; }
+.profile-info-card { display: flex; flex-direction: column; gap: 12px; }
+.profile-info-item {
+  display: flex; align-items: center; gap: 9px;
+  font-size: .875rem; color: var(--text-2);
 }
-.profile-btn--follow:hover {
-    background: var(--accent-hover, #4f46e5);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--accent-glow, rgba(99,102,241,0.3));
+.profile-info-item i { width: 16px; text-align: center; color: var(--text-3); }
+.profile-info-item a { color: var(--accent); }
+
+/* Edit Profile Form */
+.edit-profile-title {
+  font-size: .9rem; font-weight: 700; margin-bottom: 16px;
 }
-
-/* ── Profile Info ────────────────────────────────────────────────────────── */
-.profile-info {
-    padding: 12px 20px 0;
+.edit-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.edit-field label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
+.edit-field .settings-input {
+  width: 100%; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-xs);
+  background: var(--surface-2); color: var(--text);
+  font-size: .875rem; transition: border-color .2s; resize: vertical;
 }
+.edit-field .settings-input:focus { outline: none; border-color: var(--accent); }
+.edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
-.profile-display-name {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.3px;
-}
-
-.profile-username {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    display: block;
-    margin: 2px 0 10px;
-}
-
-.profile-bio {
-    font-size: 0.95rem;
-    color: var(--text-main);
-    line-height: 1.6;
-    margin-bottom: 10px;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-.profile-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    flex-wrap: wrap;
-    margin-bottom: 4px;
-}
-
-.profile-meta i {
-    margin-right: 5px;
-}
-
-/* ── Stats Row ───────────────────────────────────────────────────────────── */
-.profile-stats {
-    display: flex;
-    gap: 24px;
-    padding: 12px 20px;
-    font-size: 0.88rem;
-    flex-wrap: wrap;
-}
-
-.profile-stat-val {
-    font-weight: 800;
-    color: var(--text-main);
-    margin-right: 4px;
-}
-
-.profile-stat-label {
-    color: var(--text-muted);
-}
-
-/* ── Profile Tabs ────────────────────────────────────────────────────────── */
-.profile-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--nav-border);
-    margin: 8px 0 0;
-}
-
-.profile-tab {
-    flex: 1;
-    text-align: center;
-    padding: 14px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    position: relative;
-    border-bottom: 3px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-    user-select: none;
-}
-
-.profile-tab:hover:not(.disabled):not(.active) {
-    color: var(--text-main);
-    background: var(--hover-bg, rgba(0,0,0,0.03));
-}
-
-.profile-tab.active {
-    color: var(--text-main);
-    border-bottom-color: var(--accent);
-}
-
-.profile-tab.disabled {
-    opacity: 0.4;
-    cursor: default;
-    pointer-events: none;
-}
-
-/* ── Empty State ─────────────────────────────────────────────────────────── */
-.profile-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 60px 20px;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-.profile-empty i {
-    font-size: 2rem;
-    opacity: 0.5;
-}
-
-.profile-empty p {
-    margin: 0;
-    font-size: 0.95rem;
-}
-
-/* ── Tweet List in Profile ───────────────────────────────────────────────── */
-/* Override feed layout overrides so profile cards look card-style */
-.profile-page .post-list {
-    gap: 0 !important;
-}
-
-/* Show full content — no line clamping on profile page */
-.profile-page .post-content {
-    -webkit-line-clamp: unset !important;
-    overflow: visible !important;
-    display: block !important;
-}
-
-/* ── Edit Profile Modal ──────────────────────────────────────────────────── */
-.profile-edit-modal.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-}
-
-.profile-edit-modal .modal-content {
-    background: var(--card-bg);
-    border-radius: 20px;
-    padding: 32px;
-    width: 90%;
-    max-width: 440px;
-    border: 1px solid var(--nav-border);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-}
-
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-    .profile-cover {
-        height: 150px;
-    }
-
-    .profile-avatar {
-        width: 68px;
-        height: 68px;
-        font-size: 1.7rem;
-        border-width: 3px;
-    }
-
-    .profile-display-name {
-        font-size: 1.1rem;
-    }
-
-    .profile-stats {
-        gap: 16px;
-        padding: 10px 16px;
-    }
-
-    .profile-info {
-        padding: 8px 16px 0;
-    }
-
-    .profile-cover-initial {
-        font-size: 6rem;
-        right: 16px;
-    }
+/* ── Profile Posts ───────────────────────────────────────────────────────────── */
+.profile-posts__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
 }

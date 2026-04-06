@@ -1,158 +1,200 @@
-from typing import Optional, List, Dict, Any
+"""
+schemas.py — Pydantic / SQLModel schemas for the blog platform.
+"""
+
+from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel
-from models.models import UserRole, RoomType
+
+from models.models import UserRole, PostStatus
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Auth / User
+# Auth / Session
 # ─────────────────────────────────────────────────────────────────────────────
-
-class UserCreate(SQLModel):
-    username: str
-    password: str
-    display_name: str = ""
-    role: UserRole = UserRole.INTERN
-
-
-class UserResponse(SQLModel):
-    id: int
-    username: str
-    display_name: str
-    role: UserRole
-
-
-class UserPublic(SQLModel):
-    """Minimal author info embedded in tweet/comment responses."""
-    id: int
-    username: str
-    display_name: str
-    avatar_url: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class UserSession(SQLModel):
-    """Decoded JWT payload — passed around by get_current_user."""
-    id: int
-    username: str
-    role: UserRole
-
 
 class Token(SQLModel):
     access_token: str
     token_type: str
 
 
-class TokenData(SQLModel):
-    username: Optional[str] = None
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Room
-# ─────────────────────────────────────────────────────────────────────────────
-
-class GroupRoomCreate(SQLModel):
-    """Body for POST /rooms/group"""
-    name: str
-    description: str = ""
-
-
-class PrivateRoomCreate(SQLModel):
-    """Body for POST /rooms/private — replaces PrivateUserInvite"""
+class UserSession(SQLModel):
+    """Decoded JWT payload passed around by get_current_user."""
+    id:       int
     username: str
+    role:     UserRole
 
 
-# Keep old name as an alias so existing code doesn't break immediately
-PrivateUserInvite = PrivateRoomCreate
+# ─────────────────────────────────────────────────────────────────────────────
+# User
+# ─────────────────────────────────────────────────────────────────────────────
+
+class UserCreate(SQLModel):
+    username:     str
+    password:     str
+    display_name: str      = ""
+    role:         UserRole = UserRole.AUTHOR
 
 
-class RoomMemberOut(SQLModel):
-    user_id: int
-    username: str
-    is_admin: bool
-    joined_at: datetime
+class UserUpdate(SQLModel):
+    display_name:   Optional[str] = None
+    bio:            Optional[str] = None
+    avatar_url:     Optional[str] = None
+    website_url:    Optional[str] = None
+    twitter_handle: Optional[str] = None
+
+
+class UserPublic(SQLModel):
+    """Minimal author info embedded in post/comment responses."""
+    id:             int
+    username:       str
+    display_name:   str
+    avatar_url:     Optional[str]  = None
+    is_verified:    bool           = False
+    post_count:     int            = 0
 
     class Config:
         from_attributes = True
 
 
-class RoomOut(SQLModel):
-    """
-    Returned by room list and create endpoints.
-    member_count and online_count are populated by the route layer.
-    """
-    id: str
-    type: RoomType
+class UserProfile(SQLModel):
+    """Full profile for the profile page."""
+    id:             int
+    username:       str
+    display_name:   str
+    bio:            Optional[str]  = None
+    avatar_url:     Optional[str]  = None
+    website_url:    Optional[str]  = None
+    twitter_handle: Optional[str]  = None
+    is_verified:    bool           = False
+    post_count:     int            = 0
+    role:           UserRole
+    created_at:     datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserResponse(SQLModel):
+    id:           int
+    username:     str
+    display_name: str
+    role:         UserRole
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Category
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CategoryCreate(SQLModel):
+    name:        str
+    description: Optional[str] = None
+    color:       str           = "#6366f1"
+    icon:        Optional[str] = None
+
+
+class CategoryUpdate(SQLModel):
+    name:        Optional[str] = None
+    description: Optional[str] = None
+    color:       Optional[str] = None
+    icon:        Optional[str] = None
+
+
+class CategoryOut(SQLModel):
+    id:          int
+    name:        str
+    slug:        str
+    description: Optional[str] = None
+    color:       str
+    icon:        Optional[str] = None
+    post_count:  int           = 0
+
+    class Config:
+        from_attributes = True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tag
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TagOut(SQLModel):
+    id:   int
     name: str
-    description: str
-    owner_id: int
-    locked: bool
-    created_at: datetime
-    member_count: Optional[int] = None
-    online_count: Optional[int] = None
-    online_users: Optional[List[str]] = None
+    slug: str
 
     class Config:
         from_attributes = True
-
-
-class RoomDetailOut(RoomOut):
-    """Extended room info — includes the full member list."""
-    members: List[RoomMemberOut] = []
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tweet
+# Post
 # ─────────────────────────────────────────────────────────────────────────────
 
-class TweetCreate(SQLModel):
-    content: str  # no length limit — blog-style posts
+class PostCreate(SQLModel):
+    title:            str
+    subtitle:         Optional[str] = None
+    body_html:        str           = ""
+    body_delta:       Optional[str] = None
+    cover_image_url:  Optional[str] = None
+    category_id:      Optional[int] = None
+    tags:             List[str]     = []     # tag names (created on the fly)
+    status:           PostStatus    = PostStatus.DRAFT
+    meta_description: Optional[str] = None
+    featured:         bool          = False
 
 
-class TweetUpdate(SQLModel):
-    content: str  # only content is editable
+class PostUpdate(SQLModel):
+    title:            Optional[str]       = None
+    subtitle:         Optional[str]       = None
+    body_html:        Optional[str]       = None
+    body_delta:       Optional[str]       = None
+    cover_image_url:  Optional[str]       = None
+    category_id:      Optional[int]       = None
+    tags:             Optional[List[str]] = None
+    status:           Optional[PostStatus] = None
+    meta_description: Optional[str]       = None
+    featured:         Optional[bool]      = None
 
 
-class CommentOut(SQLModel):
-    id: int
-    content: str
-    author: UserPublic
-    created_at: datetime
+class PostCardOut(SQLModel):
+    """Compact post for feed cards — no body content."""
+    id:              int
+    slug:            str
+    title:           str
+    subtitle:        Optional[str]   = None
+    cover_image_url: Optional[str]   = None
+    author:          UserPublic
+    category:        Optional[CategoryOut] = None
+    tags:            List[TagOut]    = []
+    status:          PostStatus
+    view_count:      int
+    like_count:      int
+    comment_count:   int
+    read_time:       int
+    featured:        bool
+    published_at:    Optional[datetime] = None
+    created_at:      datetime
+    liked_by_me:     Optional[bool]  = None
 
     class Config:
         from_attributes = True
 
 
-class TweetOut(SQLModel):
-    """
-    Full tweet response — includes author info and counts.
-    'liked_by_me' is populated by the route layer (needs the current user),
-    so it defaults to None for unauthenticated/list views.
-    """
-    id: int
-    content: str
-    author: UserPublic
-    like_count: int
-    comment_count: int
-    is_edited: bool
-    created_at: datetime
-    liked_by_me: Optional[bool] = None
+class PostOut(PostCardOut):
+    """Full post — includes body_html and body_delta for editor."""
+    body_html:        str
+    body_delta:       Optional[str]  = None
+    meta_description: Optional[str]  = None
+    updated_at:       datetime
 
     class Config:
         from_attributes = True
 
 
-class TweetFeedOut(SQLModel):
-    """
-    Wrapper returned by the paginated feed endpoint.
-    'next_cursor' is the id of the oldest tweet in this batch —
-    pass it back as ?before_id= to get the next page.
-    Set to None when there are no more tweets.
-    """
-    tweets: list[TweetOut]
+class PostFeedOut(SQLModel):
+    posts:       List[PostCardOut]
     next_cursor: Optional[int]
+    total:       int
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -160,22 +202,57 @@ class TweetFeedOut(SQLModel):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class CommentCreate(SQLModel):
-    content: str
+    body:      str
+    parent_id: Optional[int] = None
+
+
+class CommentOut(SQLModel):
+    id:         int
+    body:       str
+    author:     UserPublic
+    parent_id:  Optional[int] = None
+    created_at: datetime
+    replies:    List["CommentOut"] = []
+
+    class Config:
+        from_attributes = True
+
+
+CommentOut.model_rebuild()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# E2EE
+# Media
 # ─────────────────────────────────────────────────────────────────────────────
 
-class PublicKeyUpdate(SQLModel):
-    """Body for PUT /users/me/public-key — JWK JSON string of an ECDH P-256 public key."""
-    public_key: str
+class MediaOut(SQLModel):
+    id:        int
+    url:       str
+    filename:  str
+    mime_type: str
+
+    class Config:
+        from_attributes = True
 
 
-class RoomKeyBundleIn(SQLModel):
-    """
-    Body for PUT /rooms/{room_id}/key-bundles.
-    bundles maps username → ECIES bundle dict:
-      { ephemeral_pub: JWK, iv: base64, ct: base64 }
-    """
-    bundles: Dict[str, Any]
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AdminStats(SQLModel):
+    total_users:     int
+    total_posts:     int
+    total_published: int
+    total_drafts:    int
+    total_categories: int
+    total_comments:  int
+
+
+class AdminUserOut(SQLModel):
+    id:           int
+    username:     str
+    display_name: str
+    role:         UserRole
+    post_count:   int
+    is_verified:  bool
+    created_at:   datetime

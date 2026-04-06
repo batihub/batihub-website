@@ -1,327 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeeLog — Blog & Social Feed</title>
-    <meta name="description" content="BeeLog is a public blog and social feed where you can share your thoughts, stories, and ideas with no character limits.">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://batihanbabacan.com/blog.html">
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://batihanbabacan.com/blog.html">
-    <meta property="og:title" content="BeeLog — Blog & Social Feed">
-    <meta property="og:description" content="A public blog and social feed. Share your thoughts, stories, and ideas with no character limits.">
-    <meta property="og:image" content="https://batihanbabacan.com/favicon-32x32.png">
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="BeeLog — Blog & Social Feed">
-    <meta name="twitter:description" content="A public blog and social feed. Share your thoughts, stories, and ideas with no character limits.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" href="blog.css">
-    <link rel="icon" type="image/png" href="/favicon-32x32.png">
-    <script>
-        const savedTheme = localStorage.getItem('baerhub-theme') || 'light';
-        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeeLog — Blog</title>
+  <meta name="description" content="A personal blog sharing thoughts, tutorials, and stories.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://batihanbabacan.com/blog.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://batihanbabacan.com/blog.html">
+  <meta property="og:title" content="BeeLog — Blog">
+  <meta property="og:image" content="https://batihanbabacan.com/favicon-32x32.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="blog.css">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+  <script>
+    const _t = localStorage.getItem('baerhub-theme') || 'light';
+    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
 </head>
 <body>
 
-<!-- ── Top Nav ─────────────────────────────────────────────────── -->
+<!-- ── Navigation ─────────────────────────────────────────────────────── -->
 <nav class="top-nav">
-    <div class="nav-container">
-        <a href="index.html" class="nav-logo">
-            <span class="bold">bee</span><span class="light">log</span>
-        </a>
-        <div class="nav-links">
-            <a href="blog.html" class="active">Blog</a>
-            <a href="index.html">
-                <i class="fa-solid fa-comments" style="font-size:0.8rem"></i> ChatHub
-            </a>
-            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-            <div id="nav-user-slot" style="position:relative"></div>
-            <a href="https://github.com/batihub" target="_blank" class="github-link">
-                <i class="fa-brands fa-github"></i> GitHub
-            </a>
-        </div>
+  <div class="nav-container">
+    <a href="blog.html" class="nav-logo">bee<span class="accent">log</span></a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="blog.html" class="active">Blog</a>
+      <a href="profile.html">Profile</a>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <div id="nav-user-slot"></div>
     </div>
+  </div>
 </nav>
 
-<!-- ── Main Layout (feed + sidebar) ───────────────────────────── -->
-<div class="feed-layout">
+<!-- ── Main Layout ────────────────────────────────────────────────────── -->
+<main>
+  <div class="layout">
+    <section>
+      <!-- Featured Post -->
+      <div id="featured-container"></div>
 
-    <!-- Left: sticky nav -->
-    <aside class="feed-leftnav">
-        <a href="blog.html" class="feed-leftnav__item active">
-            <i class="fa-solid fa-house"></i>
-            <span>Blog</span>
-        </a>
-        <button class="feed-leftnav__item" onclick="fetchTweets()">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>Explore</span>
-        </button>
-        <button class="feed-leftnav__item" onclick="openLoginModal()" id="nav-notif-btn">
-            <i class="fa-solid fa-bell"></i>
-            <span>Notifications</span>
-        </button>
-        <button class="feed-leftnav__item" onclick="openLoginModal()" id="nav-bookmark-btn">
-            <i class="fa-solid fa-bookmark"></i>
-            <span>Bookmarks</span>
-        </button>
-        <a href="profile.html" class="feed-leftnav__item" id="nav-profile-link">
-            <i class="fa-solid fa-user"></i>
-            <span>Profile</span>
-        </a>
-        <a href="index.html" class="feed-leftnav__item feed-leftnav__item--secondary">
-            <i class="fa-solid fa-comments"></i>
-            <span>ChatHub</span>
-        </a>
-    </aside>
+      <!-- Category Filter -->
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-pill active" data-slug="">All</button>
+      </div>
 
-    <!-- Center: Feed -->
-    <main class="feed-main">
+      <!-- Post Feed -->
+      <div class="feed" id="feed">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
 
-        <!-- Feed Tab Header -->
-        <div class="feed-header">
-            <div class="feed-header__tab active">Latest Posts</div>
-            <div class="feed-header__tab" onclick="fetchTweets()">Following</div>
-        </div>
+      <div id="feed-sentinel"></div>
+      <button class="btn btn-secondary" id="load-more-btn" style="display:none">
+        <i class="fa-solid fa-rotate"></i> Load More
+      </button>
+    </section>
 
-        <!-- Static intro for SEO — visible before JS loads and to crawlers -->
-        <p id="feed-intro" style="padding:0 16px 4px;font-size:0.85rem;color:var(--text-muted,#888);line-height:1.5">
-            A public blog and social feed — share your stories, thoughts, and ideas with no character limits.
-            Anyone can read; <a href="#" onclick="openLoginModal();return false">sign up</a> to post.
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h3>Categories</h3>
+        <ul class="sidebar-cats" id="sidebar-cats">
+          <li><a href="#"><span>&nbsp;</span></a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>About</h3>
+        <p style="font-size:.875rem;color:var(--text-2);line-height:1.6">
+          A space for thoughts, tutorials, and stories. Written with curiosity.
         </p>
-
-        <!-- Composer Card (logged-in only) -->
-        <div id="post-section" class="composer-card" style="display:none">
-            <div class="composer-card__avatar">
-                <div class="composer-avatar" id="composer-avatar-circle">?</div>
-            </div>
-            <div class="composer-card__body">
-                <div class="textarea-wrapper">
-                    <textarea id="post-content" rows="5"
-                              placeholder="Share your story, thoughts, or ideas…"></textarea>
-                    <span id="char-count" class="char-pill-inside">0 chars</span>
-                </div>
-                <div class="composer-card__actions">
-                    <div class="composer-card__media-btns">
-                        <button class="composer-media-btn" title="Image (coming soon)">
-                            <i class="fa-regular fa-image"></i>
-                        </button>
-                        <button class="composer-media-btn" title="GIF (coming soon)">
-                            <span style="font-size:0.65rem;font-weight:800">GIF</span>
-                        </button>
-                        <button class="composer-media-btn" title="Emoji" onclick="toggleBlogEmoji(this)">
-                            <i class="fa-regular fa-face-smile"></i>
-                        </button>
-                    </div>
-                    <div class="composer-card__submit-wrap">
-                        <button class="tweet-post-btn" onclick="createPost()">
-                            Post
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Feed divider -->
-        <div class="feed-divider"></div>
-
-        <!-- Posts Container -->
-        <div id="posts-container" class="post-list">
-            <noscript>
-                <p style="padding:24px;color:#666">
-                    BeeLog is a public blog and social feed. Enable JavaScript to read and post stories, thoughts, and ideas with no character limits.
-                </p>
-            </noscript>
-            <div class="loading-placeholder">
-                <div class="loading-spinner"></div>
-                <p>Loading feed…</p>
-            </div>
-        </div>
-
-        <!-- Infinite scroll sentinel -->
-        <div id="feed-sentinel" style="height:1px;margin-top:12px"></div>
-        <div id="feed-load-indicator" class="feed-load-indicator" style="display:none">
-            <i class="fa-solid fa-spinner fa-spin"></i> Loading more…
-        </div>
-        <div id="feed-end-msg" class="feed-end-msg" style="display:none">
-            <i class="fa-solid fa-check-circle"></i> You're all caught up
-        </div>
-    </main>
-
-    <!-- Right: Sidebar (trending, who to follow) -->
-    <aside class="feed-rightnav">
-
-        <!-- Search bar -->
-        <div class="rightnav-search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search BeeLog…" readonly onclick="showToast('Search coming soon!', 'error')">
-        </div>
-
-        <!-- Trending card -->
-        <div class="rightnav-card">
-            <h3 class="rightnav-card__title">Trending</h3>
-            <div class="trend-item">
-                <div class="trend-item__meta">Trending · Tech</div>
-                <div class="trend-item__tag">#FastAPI</div>
-                <div class="trend-item__count">247 posts</div>
-            </div>
-            <div class="trend-item">
-                <div class="trend-item__meta">Trending · Dev</div>
-                <div class="trend-item__tag">#WebSockets</div>
-                <div class="trend-item__count">134 posts</div>
-            </div>
-            <div class="trend-item">
-                <div class="trend-item__meta">Trending · Python</div>
-                <div class="trend-item__tag">#SQLModel</div>
-                <div class="trend-item__count">89 posts</div>
-            </div>
-            <button class="rightnav-card__more">Show more</button>
-        </div>
-
-        <!-- Google AdSense placeholder — replace with real ad unit script -->
-        <div class="rightnav-card ad-unit" id="ad-sidebar-1" aria-hidden="true">
-            <!-- Google AdSense -->
-        </div>
-
-        <!-- Who to follow -->
-        <div class="rightnav-card">
-            <h3 class="rightnav-card__title">Who to follow</h3>
-            <div class="follow-item">
-                <div class="follow-avatar">B</div>
-                <div class="follow-info">
-                    <span class="follow-name">Batıhan</span>
-                    <span class="follow-handle">@batihub</span>
-                </div>
-                <button class="follow-btn" onclick="openLoginModal()">Follow</button>
-            </div>
-            <div class="follow-item">
-                <div class="follow-avatar" style="background:linear-gradient(135deg,#ec4899,#db2777)">A</div>
-                <div class="follow-info">
-                    <span class="follow-name">Alice Dev</span>
-                    <span class="follow-handle">@alicedev</span>
-                </div>
-                <button class="follow-btn" onclick="openLoginModal()">Follow</button>
-            </div>
-            <button class="rightnav-card__more">Show more</button>
-        </div>
-
-        <!-- Google AdSense placeholder — replace with real ad unit script -->
-        <div class="ad-unit" id="ad-sidebar-2" aria-hidden="true">
-            <!-- Google AdSense -->
-        </div>
-
-        <p class="rightnav-footer">
-            © 2025 BeeLog · <a href="index.html">ChatHub</a>
-        </p>
+        <a href="profile.html" class="btn btn-secondary btn-sm" style="margin-top:14px;width:100%">
+          <i class="fa-solid fa-user"></i> Author Profile
+        </a>
+      </div>
     </aside>
+  </div>
+</main>
 
-</div>
-
-<!-- ── Scroll to top ────────────────────────────────────────────── -->
-<button id="scroll-top-btn" class="scroll-top-btn" onclick="scrollToTop()" title="Back to top">
-    <i class="fa-solid fa-arrow-up"></i>
+<button id="scroll-top-btn" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-arrow-up"></i>
 </button>
-
-<!-- ── Edit Modal ──────────────────────────────────────────────── -->
-<div id="edit-modal" class="modal">
-    <div class="modal-content">
-        <h2 style="margin-bottom:20px;font-size:1.1rem">
-            <i class="fa-solid fa-pen" style="color:var(--accent)"></i> Edit Post
-        </h2>
-        <input type="hidden" id="edit-id">
-        <div class="form-group">
-            <textarea id="edit-content" rows="6"
-                      style="resize:vertical;width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;color:var(--text-main);font-family:inherit;font-size:0.95rem"></textarea>
-        </div>
-        <div class="button-group modal-actions">
-            <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="submitEdit()">
-                <i class="fa-solid fa-check"></i> Save
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ── Delete Modal ────────────────────────────────────────────── -->
-<div id="delete-modal" class="modal">
-    <div class="modal-content" style="max-width:380px;text-align:center">
-        <div class="warning-icon-circle">
-            <i class="fa-solid fa-trash-can"></i>
-        </div>
-        <h2 style="margin:0 0 8px;font-size:1.15rem">Delete Post?</h2>
-        <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin:0 0 24px">
-            This action cannot be undone.
-        </p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <button class="btn btn-secondary" style="margin:0" onclick="closeDeleteModal()">Cancel</button>
-            <button class="btn btn-danger"    style="margin:0" onclick="confirmDelete()">Delete</button>
-        </div>
-    </div>
-</div>
-
-<!-- ── Tweet expand backdrop ────────────────────────────────────── -->
-<div id="tweet-backdrop" class="tweet-backdrop" onclick="collapseActiveTweet()"></div>
-
-<!-- ── Mobile Bottom Nav ─────────────────────────────────────────── -->
-<nav class="blog-mobile-nav" aria-label="Mobile navigation">
-    <div class="blog-mobile-nav__items">
-        <a href="blog.html" class="blog-mobile-nav__item active">
-            <i class="fa-solid fa-house"></i>
-            <span>Blog</span>
-        </a>
-        <button class="blog-mobile-nav__item" onclick="fetchTweets()">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>Explore</span>
-        </button>
-        <button class="blog-mobile-nav__item" onclick="openLoginModal()">
-            <i class="fa-solid fa-bell"></i>
-            <span>Notifs</span>
-        </button>
-        <a href="profile.html" class="blog-mobile-nav__item">
-            <i class="fa-solid fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </div>
-</nav>
-
 <div id="toast-container"></div>
+
+<footer class="site-footer">
+  &copy; <span id="year"></span> BeeLog &mdash;
+  <a href="https://github.com/batihub" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
 <script src="auth.js"></script>
 <script src="blog.js"></script>
-<script>
-// Open the composer section
-function openComposer() {
-    const section = document.getElementById('post-section');
-    if (section) section.scrollIntoView({ behavior: 'smooth' });
-    document.getElementById('post-content')?.focus();
-}
-
-// Update compose avatar when logged in
-document.addEventListener('auth:login', () => {
-    const circle = document.getElementById('composer-avatar-circle');
-    if (circle && currentUser) {
-        circle.textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
-    }
-});
-document.addEventListener('DOMContentLoaded', () => {
-    if (currentUser) {
-        const circle = document.getElementById('composer-avatar-circle');
-        if (circle) circle.textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
-    }
-    // Live char counter (no limit)
-    const ta = document.getElementById('post-content');
-    const pill = document.getElementById('char-count');
-    if (ta && pill) {
-        ta.addEventListener('input', () => {
-            pill.textContent = `${ta.value.length} chars`;
-        });
-    }
-});
-</script>
 </body>
 </html>

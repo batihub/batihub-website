@@ -1,228 +1,231 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin — ChatHub</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" href="admin.css">
-    <link rel="icon" type="image/png" href="/favicon-32x32.png">
-    <script>
-        (function() {
-            var t = localStorage.getItem('baerhub-theme');
-            if (t === 'light') document.documentElement.removeAttribute('data-theme');
-            else document.documentElement.setAttribute('data-theme', 'dark');
-        })();
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — BeeLog</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <!-- Quill Editor -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="blog.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+  <script>
+    const _t = localStorage.getItem('baerhub-theme') || 'light';
+    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
 </head>
-<body>
+<body class="admin-body">
 
-<!-- ── Top Nav ─────────────────────────────────────────────────── -->
-<nav class="admin-nav">
-    <div class="admin-nav__inner">
-        <a href="index.html" class="admin-nav__logo">
-            <i class="fa-solid fa-comments"></i>
-            <span>ChatHub</span>
-        </a>
-
-        <div class="admin-nav__links">
-            <a href="index.html" class="admin-nav__link">
-                <i class="fa-solid fa-message"></i> Chat
-            </a>
-            <a href="blog.html" class="admin-nav__link">
-                <i class="fa-solid fa-newspaper"></i> BeeLog
-            </a>
-            <a href="admin.html" class="admin-nav__link active">
-                <i class="fa-solid fa-shield-halved"></i> Admin
-            </a>
-        </div>
-
-        <div class="admin-nav__actions">
-            <button id="theme-toggle" class="admin-nav__theme-btn" aria-label="Toggle Theme">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-            <div id="nav-user-slot" style="position:relative"></div>
-        </div>
+<!-- ── Top Nav ────────────────────────────────────────────────────────── -->
+<nav class="admin-topnav">
+  <div class="admin-topnav__inner">
+    <a href="blog.html" class="admin-topnav__logo">
+      bee<span class="accent">log</span>
+    </a>
+    <span class="admin-topnav__title" id="nav-page-title">Dashboard</span>
+    <div class="admin-topnav__actions">
+      <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <div id="nav-user-slot"></div>
     </div>
+  </div>
 </nav>
 
-<!-- ── Main ───────────────────────────────────────────────────── -->
-<main class="admin-main">
-    <div class="admin-wrap">
+<!-- ── App Shell ──────────────────────────────────────────────────────── -->
+<div class="admin-shell">
 
-        <!-- Access Denied (shown until role verified) -->
-        <div id="access-denied" style="display:none" class="access-denied-screen">
-            <div class="access-denied-icon">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h2>Access Denied</h2>
-            <p>You need admin or root privileges to view this page.</p>
-            <a href="index.html" class="admin-action-btn admin-action-btn--primary">
-                <i class="fa-solid fa-comments"></i> Back to ChatHub
-            </a>
-        </div>
-
-        <!-- Admin Dashboard -->
-        <div id="admin-dashboard" style="display:none">
-
-            <!-- Page Header -->
-            <div class="admin-page-header">
-                <div class="admin-page-header__left">
-                    <h1><i class="fa-solid fa-shield-halved"></i> Admin Panel</h1>
-                    <p>System management dashboard</p>
-                </div>
-                <div class="admin-page-header__right">
-                    <div id="admin-role-badge"></div>
-                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadStats(); loadUsers();">
-                        <i class="fa-solid fa-rotate-right"></i> Refresh
-                    </button>
-                </div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#818cf8">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <div class="stat-body">
-                        <div class="stat-value" id="stat-users">—</div>
-                        <div class="stat-label">Total Users</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(34,197,94,0.12);color:#22c55e">
-                        <i class="fa-solid fa-feather-pointed"></i>
-                    </div>
-                    <div class="stat-body">
-                        <div class="stat-value" id="stat-tweets">—</div>
-                        <div class="stat-label">Total Tweets</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">
-                        <i class="fa-solid fa-comments"></i>
-                    </div>
-                    <div class="stat-body">
-                        <div class="stat-value" id="stat-rooms">—</div>
-                        <div class="stat-label">Active Rooms</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#ef4444">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <div class="stat-body">
-                        <div class="stat-value" id="stat-admins">—</div>
-                        <div class="stat-label">Admins</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Bar -->
-            <div class="admin-tabs">
-                <button class="admin-tab active" onclick="switchTab('users', this)">
-                    <i class="fa-solid fa-users"></i> Users
-                </button>
-                <button class="admin-tab" onclick="switchTab('rooms', this)">
-                    <i class="fa-solid fa-hashtag"></i> Rooms
-                </button>
-            </div>
-
-            <!-- ── Users Tab ──────────────────────────────────────── -->
-            <div id="tab-users" class="tab-panel active">
-                <div class="panel-toolbar">
-                    <div class="search-wrap">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="text" id="user-search" class="search-input"
-                               placeholder="Search by username or name…" oninput="filterUsers()">
-                    </div>
-                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadUsers()">
-                        <i class="fa-solid fa-rotate-right"></i> Refresh
-                    </button>
-                </div>
-                <div class="table-wrap">
-                    <table class="admin-table" id="users-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Role</th>
-                                <th>Tweets</th>
-                                <th>Joined</th>
-                                <th id="actions-col">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-tbody">
-                            <tr>
-                                <td colspan="6" class="table-loading">
-                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading users…
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ── Rooms Tab ──────────────────────────────────────── -->
-            <div id="tab-rooms" class="tab-panel">
-                <div class="panel-toolbar">
-                    <p class="panel-toolbar__desc">All group channels and private DMs</p>
-                    <button class="admin-action-btn admin-action-btn--ghost" onclick="loadAdminRooms()">
-                        <i class="fa-solid fa-rotate-right"></i> Refresh
-                    </button>
-                </div>
-                <div class="table-wrap">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Owner</th>
-                                <th>Members</th>
-                                <th>Created</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rooms-tbody">
-                            <tr>
-                                <td colspan="7" class="table-loading">
-                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading rooms…
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div><!-- end admin-dashboard -->
-    </div><!-- end admin-wrap -->
-</main>
-
-<!-- ── Confirm delete modal ──────────────────────────────────────── -->
-<div id="confirm-modal" class="admin-modal">
-    <div class="admin-modal__content" style="max-width:400px;text-align:center">
-        <div class="warning-icon-circle">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-        </div>
-        <h2 id="confirm-title" style="margin:0 0 8px;font-size:1.1rem">Are you sure?</h2>
-        <p id="confirm-body" style="margin:0 0 24px;font-size:0.88rem;color:var(--text-muted);line-height:1.6"></p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <button class="admin-action-btn admin-action-btn--ghost" style="width:100%;justify-content:center" onclick="closeConfirm()">
-                Cancel
-            </button>
-            <button class="admin-action-btn admin-action-btn--danger" style="width:100%;justify-content:center" id="confirm-ok-btn">
-                Confirm
-            </button>
-        </div>
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <nav class="admin-nav">
+      <button class="admin-nav__item active" data-view="posts" onclick="switchView('posts', this)">
+        <i class="fa-solid fa-file-lines"></i><span>Posts</span>
+      </button>
+      <button class="admin-nav__item" data-view="editor" onclick="switchView('editor', this)" id="new-post-btn">
+        <i class="fa-solid fa-plus"></i><span>New Post</span>
+      </button>
+      <button class="admin-nav__item" data-view="categories" onclick="switchView('categories', this)">
+        <i class="fa-solid fa-tags"></i><span>Categories</span>
+      </button>
+      <hr class="sidebar-divider" id="admin-divider" style="display:none">
+      <button class="admin-nav__item" data-view="users" onclick="switchView('users', this)" id="users-nav-btn" style="display:none">
+        <i class="fa-solid fa-users"></i><span>Users</span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="blog.html" class="admin-nav__item">
+        <i class="fa-solid fa-arrow-left"></i><span>Back to Blog</span>
+      </a>
     </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main" id="admin-main">
+
+    <!-- ── Posts List View ─────────────────────────────────────────── -->
+    <div class="admin-view" id="view-posts">
+      <div class="view-header">
+        <h2 class="view-title">My Posts</h2>
+        <div class="view-actions">
+          <div class="tab-group" id="posts-tabs">
+            <button class="tab active" data-status="">All</button>
+            <button class="tab" data-status="published">Published</button>
+            <button class="tab" data-status="draft">Drafts</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="newPost()">
+            <i class="fa-solid fa-plus"></i> New Post
+          </button>
+        </div>
+      </div>
+      <div id="stats-bar" class="stats-bar"></div>
+      <div id="posts-list" class="posts-list">
+        <div class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── Editor View ─────────────────────────────────────────────── -->
+    <div class="admin-view" id="view-editor" style="display:none">
+      <div class="editor-layout">
+        <!-- Editor column -->
+        <div class="editor-col">
+          <div class="editor-header">
+            <button class="btn btn-ghost btn-sm" onclick="switchView('posts', null)" style="margin-bottom:16px">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+            <div class="autosave-bar" id="autosave-bar">
+              <i class="fa-regular fa-clock"></i> <span id="autosave-status">Unsaved changes</span>
+            </div>
+          </div>
+
+          <input type="hidden" id="edit-slug">
+          <input type="text" id="post-title" class="editor-title-input" placeholder="Post Title…">
+          <input type="text" id="post-subtitle" class="editor-subtitle-input" placeholder="Subtitle or short description (optional)">
+
+          <div id="quill-editor"></div>
+        </div>
+
+        <!-- Settings panel -->
+        <aside class="editor-settings">
+          <div class="settings-section">
+            <label class="settings-label">Status</label>
+            <div class="status-toggle" id="status-toggle">
+              <button class="status-btn active" data-status="draft">Draft</button>
+              <button class="status-btn" data-status="published">Published</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-label">Cover Image URL</label>
+            <input type="url" id="post-cover-url" class="settings-input" placeholder="https://…">
+            <div id="cover-preview" class="cover-preview"></div>
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-label">Category</label>
+            <select id="post-category" class="settings-input">
+              <option value="">— None —</option>
+            </select>
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-label">Tags <span style="color:var(--text-3);font-weight:400">(comma-separated)</span></label>
+            <input type="text" id="post-tags" class="settings-input" placeholder="technology, tutorial, life">
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-label">Meta Description</label>
+            <textarea id="post-meta" class="settings-input" rows="3"
+              placeholder="Brief summary for search engines (≤160 chars)"></textarea>
+            <div class="char-hint" id="meta-chars">0 / 160</div>
+          </div>
+
+          <div class="settings-section">
+            <label class="settings-checkbox">
+              <input type="checkbox" id="post-featured">
+              <span>Mark as Featured</span>
+            </label>
+          </div>
+
+          <div class="editor-actions">
+            <button class="btn btn-secondary" id="save-draft-btn" onclick="savePost('draft')">
+              <i class="fa-regular fa-floppy-disk"></i> Save Draft
+            </button>
+            <button class="btn btn-primary" id="publish-btn" onclick="savePost('published')">
+              <i class="fa-solid fa-paper-plane"></i> Publish
+            </button>
+          </div>
+
+          <div id="save-feedback" class="save-feedback"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ── Categories View ─────────────────────────────────────────── -->
+    <div class="admin-view" id="view-categories" style="display:none">
+      <div class="view-header">
+        <h2 class="view-title">Categories</h2>
+      </div>
+      <div class="cat-form-card">
+        <h3 style="font-size:.9rem;font-weight:700;margin-bottom:14px">Add Category</h3>
+        <div class="form-row">
+          <input type="text" id="new-cat-name" class="settings-input" placeholder="Category name">
+          <input type="text" id="new-cat-desc" class="settings-input" placeholder="Description (optional)">
+          <button class="btn btn-primary btn-sm" onclick="createCategory()">
+            <i class="fa-solid fa-plus"></i> Add
+          </button>
+        </div>
+      </div>
+      <div id="cats-list" class="cats-list">
+        <div class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── Users View (admin only) ─────────────────────────────────── -->
+    <div class="admin-view" id="view-users" style="display:none">
+      <div class="view-header">
+        <h2 class="view-title">Users</h2>
+      </div>
+      <div class="cat-form-card">
+        <h3 style="font-size:.9rem;font-weight:700;margin-bottom:14px">Create Author Account</h3>
+        <div class="form-row">
+          <input type="text" id="new-user-username" class="settings-input" placeholder="Username">
+          <input type="text" id="new-user-display"  class="settings-input" placeholder="Display name">
+          <input type="password" id="new-user-password" class="settings-input" placeholder="Password">
+          <select id="new-user-role" class="settings-input">
+            <option value="author">Author</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="createUser()">
+            <i class="fa-solid fa-user-plus"></i> Create
+          </button>
+        </div>
+      </div>
+      <div id="users-list" class="users-list">
+        <div class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+      </div>
+    </div>
+
+  </main>
 </div>
 
-<div id="toast-container" class="admin-toast-container"></div>
+<div id="toast-container"></div>
 
+<!-- Confirm modal -->
+<div id="confirm-modal" class="modal-backdrop" style="display:none" onclick="closeConfirm()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-msg" style="color:var(--text-2);font-size:.9rem;margin:10px 0 20px"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok" onclick="doConfirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script src="auth.js"></script>
 <script src="admin.js"></script>
 </body>

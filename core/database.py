@@ -5,18 +5,17 @@ from sqlmodel import SQLModel
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
-# Single database for the whole app.
-# Swap this out for PostgreSQL in production:
-#DATABASE_URL = "sqlite+aiosqlite:///./app.db"
+
 load_dotenv()
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
-    # SQLite-only: allows the async engine to share connections across threads.
-    # Remove this line when switching to PostgreSQL.
-    #connect_args={"check_same_thread": False},
+    echo=False,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
 )
 
 async_session = sessionmaker(
@@ -27,17 +26,36 @@ async_session = sessionmaker(
 
 
 async def init_db():
-    """Creates all tables on startup. SQLModel.metadata covers every model
-    that has been imported by the time this runs, so make sure all model
-    modules are imported before calling this (main.py handles that)."""
+    """
+    Creates all new blog tables and applies additive column migrations.
+    Old chat/tweet tables are left untouched.
+    """
+    # Import all models so SQLModel.metadata knows about them
+    from models.models import (  # noqa: F401
+        User, BlogCategory, BlogPost, BlogTag, BlogPostTag,
+        BlogLike, BlogComment, BlogMedia,
+    )
+
     async with engine.begin() as conn:
+        # Create new blog tables (additive — never drops)
         await conn.run_sync(SQLModel.metadata.create_all)
-        # Additive migrations for columns added after initial deployment
-        await conn.execute(
-            sqlalchemy.text(
-                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS public_key TEXT'
-            )
-        )
+
+        # ── Additive column migrations on the existing 'user' table ──────────
+        migrations = [
+            # New columns
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS website_url VARCHAR(300)',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(50)',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS post_count INTEGER NOT NULL DEFAULT 0',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE',
+            # Migrate old 'intern' role → 'author'
+            "UPDATE \"user\" SET role = 'author' WHERE role = 'intern'",
+        ]
+        for sql in migrations:
+            try:
+                await conn.execute(sqlalchemy.text(sql))
+            except Exception as e:
+                # Non-fatal: column may already exist or table may not match
+                print(f"Migration note ({sql[:50]}…): {e}")
 
 
 async def get_session():
