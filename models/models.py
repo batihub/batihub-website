@@ -8,7 +8,7 @@ The 'user' table is shared and extended with new columns via init_db migrations.
 
 from sqlmodel import SQLModel, Field, Relationship, Column
 from sqlalchemy import Text, UniqueConstraint
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional, List
 from enum import Enum
 
@@ -54,7 +54,7 @@ class User(SQLModel, table=True):
     post_count:  int = Field(default=0)
     tweet_count: int = Field(default=0)   # kept so old column still maps
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships (blog only — old chat relationships removed from ORM)
     posts:    List["BlogPost"]    = Relationship(back_populates="author")
@@ -75,7 +75,7 @@ class BlogCategory(SQLModel, table=True):
     color:       str           = Field(default="#6366f1", max_length=20)
     icon:        Optional[str] = Field(default=None, max_length=50)
     post_count:  int           = Field(default=0)
-    created_at:  datetime      = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at:  datetime      = Field(default_factory=datetime.utcnow)
 
     posts: List["BlogPost"] = Relationship(back_populates="category")
 
@@ -108,8 +108,8 @@ class BlogPost(SQLModel, table=True):
     meta_description: Optional[str] = Field(default=None, max_length=300)
 
     published_at: Optional[datetime] = Field(default=None, index=True)
-    created_at:   datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
-    updated_at:   datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at:   datetime = Field(default_factory=datetime.utcnow, index=True)
+    updated_at:   datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
     author:   Optional[User]         = Relationship(back_populates="posts")
@@ -154,7 +154,7 @@ class BlogLike(SQLModel, table=True):
     id:         Optional[int] = Field(default=None, primary_key=True)
     user_id:    int           = Field(foreign_key="user.id", index=True)
     post_id:    int           = Field(foreign_key="blog_post.id", index=True)
-    created_at: datetime      = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime      = Field(default_factory=datetime.utcnow)
 
     user: Optional[User]     = Relationship(back_populates="likes")
     post: Optional[BlogPost] = Relationship(back_populates="likes")
@@ -171,7 +171,7 @@ class BlogComment(SQLModel, table=True):
     author_id:  int           = Field(foreign_key="user.id", index=True)
     parent_id:  Optional[int] = Field(default=None, foreign_key="blog_comment.id")
     is_deleted: bool          = Field(default=False)
-    created_at: datetime      = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    created_at: datetime      = Field(default_factory=datetime.utcnow, index=True)
 
     post:   Optional[BlogPost]    = Relationship(back_populates="comments")
     author: Optional[User]        = Relationship(back_populates="comments")
@@ -188,6 +188,6 @@ class BlogMedia(SQLModel, table=True):
     mime_type:  str           = Field(max_length=100)
     size_bytes: Optional[int] = None
     author_id:  int           = Field(foreign_key="user.id", index=True)
-    created_at: datetime      = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime      = Field(default_factory=datetime.utcnow)
 
     uploader: Optional[User] = Relationship(back_populates="media")

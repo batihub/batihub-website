@@ -7,7 +7,7 @@ import random
 import string
 import logging
 from typing import Optional, List, Tuple
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -223,7 +223,7 @@ async def create_post(
         data["slug"]      = make_slug(data["title"])
 
         if data.get("status") == PostStatus.PUBLISHED and not data.get("published_at"):
-            data["published_at"] = datetime.now(timezone.utc)
+            data["published_at"] = datetime.utcnow()
 
         post = BlogPost(author_id=author_id, **data)
         session.add(post)
@@ -276,12 +276,12 @@ async def update_post(
             and old_status != PostStatus.PUBLISHED
             and not post.published_at
         ):
-            data["published_at"] = datetime.now(timezone.utc)
+            data["published_at"] = datetime.utcnow()
 
         for k, v in data.items():
             if v is not None:
                 setattr(post, k, v)
-        post.updated_at = datetime.now(timezone.utc)
+        post.updated_at = datetime.utcnow()
 
         # Update tags if provided
         if tag_names is not None:
