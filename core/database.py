@@ -51,6 +51,8 @@ async def init_db():
         'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(50)',
         'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS post_count INTEGER NOT NULL DEFAULT 0',
         'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE',
+        # Ensure 'author' exists in the enum before we update rows to use it.
+        "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'author'",
         # Cast to text so we don't hit enum-type errors if 'intern' was never
         # a valid value in this DB's userrole enum.
         "UPDATE \"user\" SET role = 'author' WHERE role::text = 'intern'",
