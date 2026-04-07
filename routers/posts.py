@@ -200,6 +200,37 @@ async def get_related(
     return [await _build_post_card(p, session) for p in related]
 
 
+# ── Adjacent posts (prev/next) ───────────────────────────────────────────────
+
+@router.get("/{slug}/adjacent")
+async def get_adjacent_posts(
+    slug:    str          = Path(),
+    session: AsyncSession = Depends(get_session),
+):
+    from sqlmodel import select as _sel
+    post = await crud.get_post_by_slug(session, slug)
+    if not post or post.status != PostStatus.PUBLISHED:
+        return {"prev": None, "next": None}
+
+    prev_r = await session.exec(
+        _sel(BlogPost)
+        .where(BlogPost.status == PostStatus.PUBLISHED, BlogPost.id < post.id)
+        .order_by(BlogPost.id.desc()).limit(1)
+    )
+    next_r = await session.exec(
+        _sel(BlogPost)
+        .where(BlogPost.status == PostStatus.PUBLISHED, BlogPost.id > post.id)
+        .order_by(BlogPost.id.asc()).limit(1)
+    )
+    prev_post = prev_r.first()
+    next_post = next_r.first()
+
+    def mini(p):
+        return {"slug": p.slug, "title": p.title, "cover_image_url": p.cover_image_url} if p else None
+
+    return {"prev": mini(prev_post), "next": mini(next_post)}
+
+
 # ── Create post ───────────────────────────────────────────────────────────────
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)

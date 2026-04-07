@@ -169,6 +169,8 @@ function resetEditor() {
   document.getElementById('post-subtitle').value     = '';
   document.getElementById('post-cover-url').value    = '';
   document.getElementById('post-tags').value         = '';
+  const _w = document.getElementById('tag-chips-wrap');
+  if (_w?._setTags) _w._setTags([]);
   document.getElementById('post-meta').value         = '';
   document.getElementById('post-featured').checked   = false;
   document.getElementById('cover-preview').innerHTML = '';
@@ -195,6 +197,8 @@ async function editPost(slug) {
     document.getElementById('post-subtitle').value  = post.subtitle || '';
     document.getElementById('post-cover-url').value = post.cover_image_url || '';
     document.getElementById('post-tags').value      = post.tags?.map(t => t.name).join(', ') || '';
+    const _wrap = document.getElementById('tag-chips-wrap');
+    if (_wrap?._setTags) _wrap._setTags(post.tags?.map(t => t.name) || []);
     document.getElementById('post-meta').value      = post.meta_description || '';
     document.getElementById('post-featured').checked = !!post.featured;
     if (post.cover_image_url) updateCoverPreview(post.cover_image_url);
@@ -238,7 +242,8 @@ async function savePost(statusOverride) {
 
   const bodyHtml  = _quill ? _quill.root.innerHTML : '';
   const bodyDelta = _quill ? JSON.stringify(_quill.getContents()) : null;
-  const tags      = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const wrap      = document.getElementById('tag-chips-wrap');
+  const tags      = wrap?._getTags?.() || tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
 
   const payload = {
     title, subtitle: subtitle || null,
@@ -468,6 +473,91 @@ function closeConfirm() {
   _confirmCb = null;
 }
 
+// ── Quill image upload handler ────────────────────────────────────────────────
+
+function _quillImageHandler() {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Show uploading indicator
+    const range = _quill.getSelection(true);
+    _quill.insertText(range.index, '\n[Uploading image…]\n', 'user');
+    setAutosaveStatus('saving');
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const token = typeof authToken !== 'undefined' ? authToken : null;
+      const res = await fetch(`${API}/admin/media/upload`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: fd,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+
+      // Remove placeholder text and insert image
+      _quill.deleteText(range.index, '[Uploading image…]\n'.length + 1);
+      _quill.insertEmbed(range.index, 'image', data.url, 'user');
+      _quill.setSelection(range.index + 1);
+      setAutosaveStatus('');
+      showToast('Image uploaded!', 'success');
+    } catch (e) {
+      _quill.deleteText(range.index, '[Uploading image…]\n'.length + 1);
+      showToast('Image upload failed: ' + e.message, 'error');
+      setAutosaveStatus('');
+    }
+  };
+}
+
+// ── Tag chip input ────────────────────────────────────────────────────────────
+
+function _initTagChips() {
+  const wrap    = document.getElementById('tag-chips-wrap');
+  const hidden  = document.getElementById('post-tags');
+  if (!wrap || !hidden) return;
+
+  let _tags = [];
+
+  function renderChips() {
+    wrap.querySelectorAll('.tag-chip-item').forEach(el => el.remove());
+    _tags.forEach((tag, i) => {
+      const span = document.createElement('span');
+      span.className = 'tag-chip-item';
+      span.innerHTML = `${escapeHtml(tag)}<button type="button" aria-label="Remove" onclick="_removeTag(${i})">&times;</button>`;
+      wrap.insertBefore(span, wrap.querySelector('input'));
+    });
+    hidden.value = _tags.join(', ');
+  }
+
+  window._removeTag = (i) => { _tags.splice(i, 1); renderChips(); };
+
+  const input = wrap.querySelector('input');
+  if (!input) return;
+
+  input.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      const tag = input.value.trim().replace(/,/g, '');
+      if (tag && !_tags.includes(tag)) { _tags.push(tag); renderChips(); }
+      input.value = '';
+    }
+    if (e.key === 'Backspace' && !input.value && _tags.length) {
+      _tags.pop(); renderChips();
+    }
+  });
+
+  // Expose for external reads (editPost uses post-tags hidden input directly)
+  wrap._getTags = () => _tags;
+  wrap._setTags = (arr) => { _tags = arr.filter(Boolean); renderChips(); };
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -492,23 +582,29 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('admin-link-item')?.style && (document.getElementById('admin-link-item').style.display = '');
     }
 
-    // Init Quill
+    // Init Quill with custom image upload handler
     _quill = new Quill('#quill-editor', {
       theme: 'snow',
       placeholder: 'Write your post here…',
       modules: {
-        toolbar: [
-          [{ header: [1, 2, 3, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          ['blockquote', 'code-block'],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          ['link', 'image', 'video'],
-          [{ color: [] }, { background: [] }],
-          ['clean'],
-        ],
+        toolbar: {
+          container: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image', 'video'],
+            [{ color: [] }, { background: [] }],
+            ['clean'],
+          ],
+          handlers: { image: _quillImageHandler },
+        },
       },
     });
     _quill.on('text-change', () => setAutosaveStatus(''));
+
+    // Tag chip input
+    _initTagChips();
 
     // Cover URL live preview
     document.getElementById('post-cover-url')?.addEventListener('input', e => {

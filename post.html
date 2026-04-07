@@ -74,19 +74,26 @@
       <!-- Tags -->
       <div id="art-tags" class="tag-chips" style="margin-top:32px"></div>
 
-      <!-- Like -->
+      <!-- Like / Share / Views -->
       <div class="art-like-row">
         <button class="like-btn" id="like-btn" onclick="toggleLike()">
           <i class="fa-regular fa-heart"></i>
           <span id="like-count">0</span>
         </button>
-        <button class="share-btn" onclick="sharePost()" title="Share">
-          <i class="fa-solid fa-share-nodes"></i>
+        <span class="view-pill">
+          <i class="fa-regular fa-eye"></i>
+          <span id="view-count">0</span> views
+        </span>
+        <button class="share-btn" onclick="sharePost()" title="Share" style="margin-left:auto">
+          <i class="fa-solid fa-share-nodes"></i> Share
         </button>
       </div>
 
       <!-- Author Card -->
       <div id="author-card" class="author-card"></div>
+
+      <!-- Adjacent post navigation (prev/next) -->
+      <nav id="adjacent-nav" class="adjacent-nav" style="display:none"></nav>
 
       <!-- Related Posts -->
       <div id="related-section" style="display:none">

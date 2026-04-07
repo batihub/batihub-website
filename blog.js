@@ -64,7 +64,7 @@ function renderFeaturedPost(post) {
 
 function renderPostCard(post) {
   const img = post.cover_image_url
-    ? `<img class="post-card__img" src="${escapeHtml(post.cover_image_url)}" alt="${escapeHtml(post.title)}" loading="lazy">`
+    ? `<div class="post-card__img-wrap"><img class="post-card__img" src="${escapeHtml(post.cover_image_url)}" alt="${escapeHtml(post.title)}" loading="lazy"></div>`
     : `<div class="post-card__img-placeholder"><i class="fa-regular fa-image"></i></div>`;
 
   const cat = post.category
@@ -90,7 +90,7 @@ function renderPostCard(post) {
         <div class="post-card__footer">
           <a class="author-chip" href="profile.html?user=${encodeURIComponent(post.author?.username||'')}"
              onclick="event.stopPropagation()">
-            <span class="a-avatar">${avatarLetter(post.author)}</span>
+            <span class="a-avatar">${post.author?.avatar_url ? `<img src="${escapeHtml(post.author.avatar_url)}" alt="">` : avatarLetter(post.author)}</span>
             ${escapeHtml(post.author?.display_name || post.author?.username || '')}
           </a>
           <span style="font-size:.78rem;color:var(--text-3)">${fmtDate(post.published_at || post.created_at)}</span>
@@ -215,9 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check URL params for pre-applied filters
   const params = new URLSearchParams(location.search);
   if (params.get('category')) _activeSlug = params.get('category');
-  if (params.get('tag')) {
-    // tag filter handled server-side
-  }
 
   fetchFeatured();
   fetchCategories();
@@ -238,12 +235,27 @@ document.addEventListener('DOMContentLoaded', () => {
     filterByCategory('', this);
   });
 
-  // Scroll to top button
+  // Nav shadow on scroll
   window.addEventListener('scroll', () => {
+    document.querySelector('.top-nav')?.classList.toggle('scrolled', window.scrollY > 10);
     document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
-  });
+  }, { passive: true });
 
-  // Show/hide create-post FAB based on auth role (auth.js dispatches this after init)
+  // Card entrance animations via IntersectionObserver
+  const feed = document.getElementById('feed');
+  if (feed && 'IntersectionObserver' in window) {
+    feed.classList.add('feed-animate');
+    const cardObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); cardObserver.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    // Observe existing and future cards
+    const observeCards = () => feed.querySelectorAll('.post-card:not(.is-visible)').forEach(c => cardObserver.observe(c));
+    observeCards();
+    // Re-observe after new cards are added (infinite scroll)
+    new MutationObserver(observeCards).observe(feed, { childList: true });
+  }
+
+  // Show/hide create-post FAB based on auth role
   document.addEventListener('auth:navRendered', () => {
     const fab  = document.getElementById('create-post-fab');
     if (!fab) return;

@@ -131,8 +131,11 @@
           </div>
 
           <div class="settings-section">
-            <label class="settings-label">Tags <span style="color:var(--text-3);font-weight:400">(comma-separated)</span></label>
-            <input type="text" id="post-tags" class="settings-input" placeholder="technology, tutorial, life">
+            <label class="settings-label">Tags <span style="color:var(--text-3);font-weight:400">(Enter to add)</span></label>
+            <div class="tag-chips-input" id="tag-chips-wrap">
+              <input type="text" placeholder="Add tag…" autocomplete="off">
+            </div>
+            <input type="hidden" id="post-tags">
           </div>
 
           <div class="settings-section">

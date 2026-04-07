@@ -121,14 +121,18 @@ function renderPost(post) {
   if (!post.subtitle) document.getElementById('art-subtitle').style.display = 'none';
 
   const author = post.author || {};
+  const avatarHtml = author.avatar_url
+    ? `<img src="${escapeHtml(author.avatar_url)}" alt="${escapeHtml(author.display_name||author.username||'')}">`
+    : avatarLetter(author);
   document.getElementById('art-byline').innerHTML = `
     <div class="byline-author">
-      <span class="byline-avatar">${avatarLetter(author)}</span>
+      <span class="byline-avatar">${avatarHtml}</span>
       <div>
         <strong>${escapeHtml(author.display_name || author.username || '')}</strong>
         <div class="byline-meta">
           <span><i class="fa-regular fa-calendar"></i> ${fmtDate(post.published_at || post.created_at)}</span>
-          <span><i class="fa-regular fa-eye"></i> ${post.view_count} views</span>
+          <span><i class="fa-regular fa-eye"></i> ${post.view_count.toLocaleString()} views</span>
+          <span><i class="fa-regular fa-heart"></i> ${post.like_count} likes</span>
         </div>
       </div>
     </div>
@@ -154,14 +158,21 @@ function renderPost(post) {
   _liked     = post.liked_by_me === true;
   updateLikeBtn();
 
+  // View count pill
+  const viewEl = document.getElementById('view-count');
+  if (viewEl) viewEl.textContent = (post.view_count || 0).toLocaleString();
+
   // Author card
+  const cardAvatarHtml = author.avatar_url
+    ? `<img src="${escapeHtml(author.avatar_url)}" alt="${escapeHtml(author.display_name||author.username||'')}">`
+    : avatarLetter(author);
   document.getElementById('author-card').innerHTML = `
-    <div class="author-card-avatar">${avatarLetter(author)}</div>
+    <div class="author-card-avatar">${cardAvatarHtml}</div>
     <div class="author-card-info">
       <h4>${escapeHtml(author.display_name || author.username || '')}</h4>
       ${author.bio ? `<p>${escapeHtml(author.bio)}</p>` : ''}
-      <a href="profile.html?user=${encodeURIComponent(author.username||'')}" class="btn btn-secondary btn-sm" style="margin-top:10px">
-        View Profile
+      <a href="profile.html?user=${encodeURIComponent(author.username||'')}" class="btn btn-secondary btn-sm" style="margin-top:12px">
+        <i class="fa-solid fa-user"></i> View Profile
       </a>
     </div>`;
 
@@ -221,10 +232,13 @@ async function loadComments() {
 }
 
 function renderComment(c, container) {
+  const commentAvatarInner = c.author?.avatar_url
+    ? `<img src="${escapeHtml(c.author.avatar_url)}" alt="${escapeHtml(c.author.display_name||c.author.username||'')}">`
+    : avatarLetter(c.author);
   const div = document.createElement('div');
   div.className = 'comment-item';
   div.innerHTML = `
-    <span class="a-avatar" style="width:34px;height:34px;font-size:.82rem;flex-shrink:0">${avatarLetter(c.author)}</span>
+    <span class="a-avatar" style="width:36px;height:36px;font-size:.85rem;flex-shrink:0">${commentAvatarInner}</span>
     <div class="comment-body-wrap">
       <div class="comment-bubble">
         <span class="comment-author-name">${escapeHtml(c.author?.display_name || c.author?.username || '')}</span>
@@ -285,6 +299,39 @@ async function submitComment() {
   }
 }
 
+// ── Adjacent post navigation ──────────────────────────────────────────────────
+
+async function loadAdjacent() {
+  try {
+    const res  = await fetch(`${API}/posts/${encodeURIComponent(_slug)}/adjacent`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const nav  = document.getElementById('adjacent-nav');
+    if (!nav || (!data.prev && !data.next)) return;
+
+    nav.style.display = 'grid';
+    nav.innerHTML = '';
+
+    if (data.prev) {
+      nav.insertAdjacentHTML('beforeend', `
+        <a class="adjacent-link prev" href="post.html?slug=${encodeURIComponent(data.prev.slug)}">
+          <span class="adjacent-label"><i class="fa-solid fa-arrow-left"></i> Previous</span>
+          <span class="adjacent-title">${escapeHtml(data.prev.title)}</span>
+        </a>`);
+    } else {
+      nav.insertAdjacentHTML('beforeend', `<div></div>`);
+    }
+
+    if (data.next) {
+      nav.insertAdjacentHTML('beforeend', `
+        <a class="adjacent-link next" href="post.html?slug=${encodeURIComponent(data.next.slug)}">
+          <span class="adjacent-label">Next <i class="fa-solid fa-arrow-right"></i></span>
+          <span class="adjacent-title">${escapeHtml(data.next.title)}</span>
+        </a>`);
+    }
+  } catch {}
+}
+
 // ── Related posts ─────────────────────────────────────────────────────────────
 
 async function loadRelated() {
@@ -335,9 +382,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   initReadingBar();
 
-  if (typeof initTheme     === 'function') initTheme();
-  if (typeof renderNavUser === 'function') renderNavUser();
-  if (typeof _initMobileNav === 'function') _initMobileNav();
+  // Nav shadow on scroll
+  window.addEventListener('scroll', () => {
+    document.querySelector('.top-nav')?.classList.toggle('scrolled', window.scrollY > 10);
+  }, { passive: true });
+
+  // auth.js handles initTheme / renderNavUser / _initMobileNav
 
   // Fetch post
   try {
@@ -362,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPost(post);
     loadComments();
     loadRelated();
+    loadAdjacent();
   } catch {
     document.getElementById('article-loading').innerHTML = `
       <div class="feed-empty">

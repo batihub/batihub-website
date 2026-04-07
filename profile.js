@@ -33,9 +33,20 @@ function showToast(msg, type = '') {
 // ── Render profile hero ────────────────────────────────────────────────────────
 
 function renderHero(user) {
-  const avatar = user.avatar_url
-    ? `<div class="profile-hero__avatar"><img src="${escapeHtml(user.avatar_url)}" alt="avatar"></div>`
-    : `<div class="profile-hero__avatar">${avatarLetter(user)}</div>`;
+  const avatarInner = user.avatar_url
+    ? `<img src="${escapeHtml(user.avatar_url)}" alt="avatar">`
+    : avatarLetter(user);
+  const uploadOverlay = _isOwnProfile
+    ? `<span class="avatar-upload-overlay" onclick="_triggerAvatarUpload()" title="Change photo">
+         <i class="fa-solid fa-camera"></i>
+         <span>Change</span>
+       </span>`
+    : '';
+  const avatar = `
+    <div class="profile-hero__avatar-wrap">
+      <div class="profile-hero__avatar">${avatarInner}</div>
+      ${uploadOverlay}
+    </div>`;
 
   const verified = user.is_verified
     ? `<span title="Verified" style="color:var(--accent)"><i class="fa-solid fa-circle-check"></i></span>`
@@ -239,6 +250,58 @@ async function saveProfile() {
     showToast('Error: ' + e.message, 'error');
   }
 }
+
+// ── Avatar upload ─────────────────────────────────────────────────────────────
+
+window._triggerAvatarUpload = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.click();
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const overlay = document.querySelector('.avatar-upload-overlay');
+    if (overlay) { overlay.classList.add('uploading'); overlay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const token = typeof authToken !== 'undefined' ? authToken : null;
+      const res = await fetch(`${API}/admin/media/upload`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: fd,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const { url } = await res.json();
+
+      // Save the new avatar URL to profile
+      const patchRes = await fetch(`${API}/auth/me`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ avatar_url: url }),
+      });
+      if (!patchRes.ok) throw new Error('Profile update failed');
+      const user = await patchRes.json();
+
+      // Update localStorage
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        currentUser.avatar_url = url;
+        localStorage.setItem('baerhub-user', JSON.stringify(currentUser));
+      }
+
+      renderHero(user);
+      renderInfoCard(user);
+      if (typeof renderNavUser === 'function') renderNavUser();
+      showToast('Profile picture updated!', 'success');
+    } catch (e) {
+      showToast('Upload failed: ' + e.message, 'error');
+      if (overlay) { overlay.classList.remove('uploading'); overlay.innerHTML = '<i class="fa-solid fa-camera"></i><span>Change</span>'; }
+    }
+  };
+};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 

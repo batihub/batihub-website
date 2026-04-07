@@ -11,7 +11,7 @@ from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.database import get_session
-from core.security import get_current_user, ROLE_HIERARCHY, require_admin, require_root
+from core.security import get_current_user, ROLE_HIERARCHY, require_admin, require_root, require_author
 from models.models import (
     User, UserRole,
     BlogPost, BlogPostTag, BlogLike, BlogComment,
@@ -288,9 +288,9 @@ async def delete_category(
 async def upload_media(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
-    current_user: UserSession = Depends(require_admin),
+    current_user: UserSession = Depends(require_author),
 ):
-    """Upload an image/video to ImageKit and return the URL."""
+    """Upload an image to ImageKit and return the URL. Available to all authors."""
     try:
         from imagekitio import ImageKit
         ik = ImageKit(

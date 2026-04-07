@@ -247,9 +247,12 @@ function renderNavUser() {
 
     if (authToken && currentUser) {
         const letter = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
+        const avatarInner = currentUser.avatar_url
+            ? `<img src="${escapeHtml(currentUser.avatar_url)}" alt="${escapeHtml(currentUser.username)}">`
+            : letter;
         slot.innerHTML = `
             <div class="nav-user-pill" id="user-pill" onclick="toggleUserMenu(event)">
-                <span class="nav-avatar">${letter}</span>
+                <span class="nav-avatar">${avatarInner}</span>
                 <span class="nav-username">@${escapeHtml(currentUser.username)}</span>
                 <i class="fa-solid fa-chevron-down toggle-icon" style="font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s"></i>
             </div>
