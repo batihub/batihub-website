@@ -245,9 +245,7 @@ async function saveProfile() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  if (typeof initTheme      === 'function') initTheme();
-  if (typeof renderNavUser  === 'function') renderNavUser();
-  if (typeof _initMobileNav === 'function') _initMobileNav();
+  // auth.js handles initTheme / renderNavUser / _initMobileNav
 
   // Determine whose profile to show
   const params = new URLSearchParams(location.search);

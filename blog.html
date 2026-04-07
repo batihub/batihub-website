@@ -90,6 +90,17 @@
 <button id="scroll-top-btn" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
   <i class="fa-solid fa-arrow-up"></i>
 </button>
+
+<button id="create-post-fab" onclick="location.href='admin.html'" title="New post"
+  style="display:none;position:fixed;bottom:28px;right:28px;width:56px;height:56px;
+         border-radius:50%;background:var(--accent,#6366f1);color:#fff;border:none;
+         font-size:1.4rem;cursor:pointer;align-items:center;justify-content:center;
+         box-shadow:0 4px 20px rgba(99,102,241,.55);z-index:200;
+         transition:transform .2s,box-shadow .2s"
+  onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(99,102,241,.7)'"
+  onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(99,102,241,.55)'">
+  <i class="fa-solid fa-plus"></i>
+</button>
 <div id="toast-container"></div>
 
 <footer class="site-footer">

@@ -471,9 +471,7 @@ function closeConfirm() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof initTheme      === 'function') initTheme();
-  if (typeof renderNavUser  === 'function') renderNavUser();
-  if (typeof _initMobileNav === 'function') _initMobileNav();
+  // auth.js handles initTheme / renderNavUser / _initMobileNav
 
   document.addEventListener('auth:navRendered', e => {
     if (!e.detail?.loggedIn) {

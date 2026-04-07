@@ -171,17 +171,24 @@
 function _initHamburger() {
     const navContainer = document.querySelector('.nav-container');
     const navLinks     = document.querySelector('.nav-links');
-    if (!navContainer || !navLinks || document.getElementById('nav-hamburger')) return;
+    if (!navContainer || !navLinks) return;
 
-    const btn = document.createElement('button');
-    btn.id        = 'nav-hamburger';
-    btn.className = 'nav-hamburger';
-    btn.setAttribute('aria-label', 'Menu');
-    btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
-    // Insert hamburger right after the logo
-    const logo = navContainer.querySelector('.nav-logo');
-    if (logo) logo.insertAdjacentElement('afterend', btn);
-    else navContainer.appendChild(btn);
+    // Re-use an existing button if the HTML already has one; otherwise create it.
+    let btn = document.getElementById('nav-hamburger');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id        = 'nav-hamburger';
+        btn.className = 'nav-hamburger';
+        btn.setAttribute('aria-label', 'Menu');
+        btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+        const logo = navContainer.querySelector('.nav-logo');
+        if (logo) logo.insertAdjacentElement('afterend', btn);
+        else navContainer.appendChild(btn);
+    }
+
+    // Guard against double-binding (called from both auth.js and page scripts).
+    if (btn._hamburgerBound) return;
+    btn._hamburgerBound = true;
 
     btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -271,8 +278,11 @@ function renderNavUser() {
         </button>`;
     }
 
-    // Notify the page that nav state changed (pages can listen for this)
-    document.dispatchEvent(new CustomEvent('auth:navRendered', { detail: { loggedIn: !!(authToken && currentUser) } }));
+    // Defer so all DOMContentLoaded handlers finish registering their
+    // auth:navRendered listeners before this fires.
+    setTimeout(() => {
+        document.dispatchEvent(new CustomEvent('auth:navRendered', { detail: { loggedIn: !!(authToken && currentUser) } }));
+    }, 0);
 }
 
 function toggleUserMenu(e) {

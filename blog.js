@@ -233,13 +233,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('load-more-btn')?.addEventListener('click', () => fetchFeed());
 
+  // "All" filter pill
+  document.querySelector('.filter-pill[data-slug=""]')?.addEventListener('click', function() {
+    filterByCategory('', this);
+  });
+
   // Scroll to top button
   window.addEventListener('scroll', () => {
     document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
   });
 
-  // Init shared auth
-  if (typeof initTheme === 'function') initTheme();
-  if (typeof renderNavUser === 'function') renderNavUser();
-  if (typeof _initMobileNav === 'function') _initMobileNav();
+  // Show/hide create-post FAB based on auth role (auth.js dispatches this after init)
+  document.addEventListener('auth:navRendered', () => {
+    const fab  = document.getElementById('create-post-fab');
+    if (!fab) return;
+    const user = typeof currentUser !== 'undefined' ? currentUser : null;
+    if (user && ['author', 'admin', 'root'].includes(user.role)) {
+      fab.style.display = 'flex';
+    }
+  });
+
+  // auth.js handles initTheme / renderNavUser / _initMobileNav
 });
