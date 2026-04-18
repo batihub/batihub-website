@@ -2,8 +2,10 @@
 
 const API = 'https://beelog-poes.onrender.com';
 
-let _profileUsername = null;
-let _isOwnProfile    = false;
+let _profileUsername  = null;
+let _isOwnProfile     = false;
+let _profileNextCursor = null;
+let _profileLoading   = false;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -30,99 +32,94 @@ function showToast(msg, type = '') {
   setTimeout(() => t.remove(), 3200);
 }
 
-// ── Render profile hero ────────────────────────────────────────────────────────
+// ── Render profile identity card (left sidebar) ───────────────────────────────
 
-function renderHero(user) {
+function renderProfileSidebar(user) {
+  const card = document.getElementById('profile-identity-card');
+  if (!card) return;
+
   const avatarInner = user.avatar_url
     ? `<img src="${escapeHtml(user.avatar_url)}" alt="avatar">`
     : avatarLetter(user);
+
   const uploadOverlay = _isOwnProfile
     ? `<span class="avatar-upload-overlay" onclick="_triggerAvatarUpload()" title="Change photo">
          <i class="fa-solid fa-camera"></i>
          <span>Change</span>
        </span>`
     : '';
-  const avatar = `
-    <div class="profile-hero__avatar-wrap">
-      <div class="profile-hero__avatar">${avatarInner}</div>
-      ${uploadOverlay}
-    </div>`;
 
   const verified = user.is_verified
     ? `<span title="Verified" style="color:var(--accent)"><i class="fa-solid fa-circle-check"></i></span>`
     : '';
 
-  const links = [];
-  if (user.website_url) links.push(`<a href="${escapeHtml(user.website_url)}" target="_blank" rel="noopener" title="Website"><i class="fa-solid fa-globe"></i></a>`);
+  const roleLabel = { root: '★ Root', admin: 'Admin', author: 'Author' }[user.role] || user.role;
+
+  const infoItems = [];
+  infoItems.push(`<div class="pid-info-item"><i class="fa-regular fa-calendar"></i><span>Joined ${fmtDate(user.created_at)}</span></div>`);
+  if (user.website_url) {
+    infoItems.push(`<div class="pid-info-item"><i class="fa-solid fa-globe"></i><a href="${escapeHtml(user.website_url)}" target="_blank" rel="noopener">${escapeHtml(user.website_url.replace(/^https?:\/\//, ''))}</a></div>`);
+  }
   if (user.twitter_handle) {
     const handle = user.twitter_handle.replace(/^@/, '');
-    links.push(`<a href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener" title="Twitter/X"><i class="fa-brands fa-x-twitter"></i></a>`);
+    infoItems.push(`<div class="pid-info-item"><i class="fa-brands fa-x-twitter"></i><a href="https://x.com/${encodeURIComponent(handle)}" target="_blank" rel="noopener">@${escapeHtml(handle)}</a></div>`);
   }
 
-  const heroEl = document.getElementById('profile-hero');
-  heroEl.innerHTML = `
-    <div class="profile-hero__content">
-      ${avatar}
-      <h1 class="profile-hero__name">${escapeHtml(user.display_name || user.username)}</h1>
-      <div class="profile-hero__handle">
-        <span>@${escapeHtml(user.username)}</span>
-        ${verified}
-        <span class="cat-badge" style="font-size:.7rem">${user.role}</span>
+  card.innerHTML = `
+    <div class="pid-avatar-wrap">
+      <div class="pid-avatar">${avatarInner}</div>
+      ${uploadOverlay}
+    </div>
+    <div class="pid-name">${escapeHtml(user.display_name || user.username)}</div>
+    <div class="pid-meta">
+      <span class="pid-handle">@${escapeHtml(user.username)}</span>
+      ${verified}
+      <span class="cat-badge" style="font-size:.62rem;padding:2px 7px">${roleLabel}</span>
+    </div>
+    ${user.bio ? `<p class="pid-bio">${escapeHtml(user.bio)}</p>` : ''}
+    <div class="pid-stats">
+      <div class="pid-stat">
+        <span class="pid-stat-val">${user.post_count || 0}</span>
+        <span class="pid-stat-lbl">Posts</span>
       </div>
-      ${user.bio ? `<p class="profile-hero__bio">${escapeHtml(user.bio)}</p>` : ''}
-      <div class="profile-hero__stats">
-        <div class="stat"><span class="val">${user.post_count||0}</span><span class="lbl">Posts</span></div>
-      </div>
-      ${links.length ? `<div class="profile-hero__links">${links.join('')}</div>` : ''}
-    </div>`;
+    </div>
+    ${infoItems.length ? `<div class="pid-info">${infoItems.join('')}</div>` : ''}
+  `;
 }
 
-// ── Render profile info card ───────────────────────────────────────────────────
-
-function renderInfoCard(user) {
-  const card = document.getElementById('profile-info-card');
-  const rows = [];
-  if (user.bio) rows.push(`<div class="profile-info-item"><i class="fa-solid fa-align-left"></i><span>${escapeHtml(user.bio)}</span></div>`);
-  rows.push(`<div class="profile-info-item"><i class="fa-regular fa-calendar"></i><span>Joined ${fmtDate(user.created_at)}</span></div>`);
-  if (user.website_url) rows.push(`<div class="profile-info-item"><i class="fa-solid fa-globe"></i><a href="${escapeHtml(user.website_url)}" target="_blank" rel="noopener">${escapeHtml(user.website_url.replace(/^https?:\/\//, ''))}</a></div>`);
-  if (user.twitter_handle) rows.push(`<div class="profile-info-item"><i class="fa-brands fa-x-twitter"></i><a href="https://x.com/${encodeURIComponent(user.twitter_handle.replace(/^@/,''))}" target="_blank" rel="noopener">@${escapeHtml(user.twitter_handle.replace(/^@/,''))}</a></div>`);
-
-  card.innerHTML = rows.join('') || '<div style="color:var(--text-3);font-size:.875rem">No info provided.</div>';
-}
-
-// ── Render post card for feed ─────────────────────────────────────────────────
+// ── Render post card (no cover image) ─────────────────────────────────────────
 
 function renderProfilePostCard(post) {
-  const img = post.cover_image_url
-    ? `<img class="post-card__img" src="${escapeHtml(post.cover_image_url)}" alt="${escapeHtml(post.title)}" loading="lazy">`
-    : `<div class="post-card__img-placeholder"><i class="fa-regular fa-image"></i></div>`;
-
   const cat = post.category
     ? `<span class="cat-badge">${escapeHtml(post.category.name)}</span>`
     : '';
 
   const draftBadge = post.status === 'draft'
-    ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700">DRAFT</span>'
+    ? '<span class="draft-label">DRAFT</span>'
+    : '';
+
+  const tags = post.tags?.length
+    ? `<div class="ppi-tags">${post.tags.slice(0, 4).map(t =>
+        `<span class="tag-chip">#${escapeHtml(t.name)}</span>`
+      ).join('')}</div>`
     : '';
 
   return `
-    <article class="post-card" onclick="location.href='post.html?slug=${encodeURIComponent(post.slug)}'">
-      ${img}
-      <div class="post-card__body">
-        <div class="post-card__meta">
-          ${cat} ${draftBadge}
-          <span class="read-time"><i class="fa-regular fa-clock"></i> ${post.read_time} min</span>
-        </div>
-        <h2 class="post-card__title">${escapeHtml(post.title)}</h2>
-        ${post.subtitle ? `<p class="post-card__subtitle">${escapeHtml(post.subtitle)}</p>` : ''}
-        <div class="post-card__footer">
-          <span style="font-size:.78rem;color:var(--text-3)">${fmtDate(post.published_at || post.created_at)}</span>
-          <span class="post-stats">
-            <span><i class="fa-regular fa-eye"></i> ${post.view_count}</span>
-            <span><i class="fa-regular fa-heart"></i> ${post.like_count}</span>
-          </span>
-        </div>
+    <article class="profile-post-item" onclick="location.href='post.html?slug=${encodeURIComponent(post.slug)}'">
+      <div class="ppi-top">
+        <div class="ppi-badges">${cat} ${draftBadge}</div>
+        <span class="ppi-date">${fmtDate(post.published_at || post.created_at)}</span>
       </div>
+      <h3 class="ppi-title">${escapeHtml(post.title)}</h3>
+      ${post.subtitle ? `<p class="ppi-subtitle">${escapeHtml(post.subtitle)}</p>` : ''}
+      <div class="ppi-footer">
+        <span class="read-time"><i class="fa-regular fa-clock"></i> ${post.read_time} min</span>
+        <span class="ppi-stats">
+          <span><i class="fa-regular fa-eye"></i> ${post.view_count}</span>
+          <span><i class="fa-regular fa-heart"></i> ${post.like_count}</span>
+        </span>
+      </div>
+      ${tags}
     </article>`;
 }
 
@@ -140,12 +137,7 @@ async function loadProfile(username) {
     document.querySelector('[property="og:description"]').content = user.bio || '';
     document.querySelector('[property="og:image"]').content = user.avatar_url || '';
 
-    renderHero(user);
-    renderInfoCard(user);
-
-    // Show edit controls if own profile
-    _isOwnProfile = typeof currentUser !== 'undefined' && currentUser &&
-      (currentUser.username === username || currentUser.role === 'admin' || currentUser.role === 'root');
+    renderProfileSidebar(user);
 
     if (_isOwnProfile) {
       document.getElementById('own-profile-actions').style.display = 'block';
@@ -153,7 +145,7 @@ async function loadProfile(username) {
     }
 
   } catch (e) {
-    document.getElementById('profile-hero').innerHTML = `
+    document.getElementById('profile-identity-card').innerHTML = `
       <div class="feed-empty">
         <i class="fa-solid fa-user-slash"></i>
         <h3>User not found</h3>
@@ -162,36 +154,60 @@ async function loadProfile(username) {
   }
 }
 
-async function loadProfilePosts(username) {
+// ── Load profile posts (with infinite scroll for other users) ─────────────────
+
+async function loadProfilePosts(username, replace = true) {
+  if (_profileLoading) return;
+  _profileLoading = true;
+
   const feed  = document.getElementById('profile-feed');
   const empty = document.getElementById('profile-empty');
+
+  if (replace) {
+    feed.innerHTML = '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+    _profileNextCursor = null;
+  }
 
   try {
     const headers = {};
     if (typeof authToken !== 'undefined' && authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
     let posts;
+
     if (_isOwnProfile) {
-      // Show drafts too on own profile
+      // Own profile: load all posts (including drafts) — no pagination
       const res = await fetch(`${API}/posts/me/posts`, { headers });
       posts = await res.json();
+      if (replace) feed.innerHTML = '';
+      if (!posts.length) {
+        feed.style.display = 'none';
+        empty.style.display = 'block';
+      } else {
+        posts.forEach(p => feed.insertAdjacentHTML('beforeend', renderProfilePostCard(p)));
+      }
     } else {
-      const res = await fetch(`${API}/posts?author=${encodeURIComponent(username)}&limit=50`);
+      // Other users: paginated
+      const params = new URLSearchParams({ author: username, limit: '20' });
+      if (_profileNextCursor) params.set('before_id', _profileNextCursor);
+      const res  = await fetch(`${API}/posts?${params}`);
       const data = await res.json();
       posts = data.posts || [];
-    }
 
-    feed.innerHTML = '';
-    if (!posts.length) {
-      feed.style.display = 'none';
-      empty.style.display = 'block';
-      return;
-    }
+      if (replace) feed.innerHTML = '';
 
-    posts.forEach(p => feed.insertAdjacentHTML('beforeend', renderProfilePostCard(p)));
+      if (!posts.length && replace) {
+        feed.style.display = 'none';
+        empty.style.display = 'block';
+      } else {
+        posts.forEach(p => feed.insertAdjacentHTML('beforeend', renderProfilePostCard(p)));
+        _profileNextCursor = data.next_cursor || null;
+      }
+    }
 
   } catch {
-    feed.innerHTML = '<div class="feed-empty"><h3>Could not load posts.</h3></div>';
+    if (replace) feed.innerHTML = '<div class="feed-empty"><h3>Could not load posts.</h3></div>';
+  } finally {
+    _profileLoading = false;
   }
 }
 
@@ -236,15 +252,15 @@ async function saveProfile() {
     if (!res.ok) throw new Error('Save failed');
     const user = await res.json();
 
-    // Update localStorage
     if (typeof currentUser !== 'undefined' && currentUser) {
       currentUser.display_name = user.display_name;
+      currentUser.avatar_url   = user.avatar_url;
       localStorage.setItem('baerhub-user', JSON.stringify(currentUser));
     }
 
     toggleEditProfile();
-    renderHero(user);
-    renderInfoCard(user);
+    renderProfileSidebar(user);
+    if (typeof renderNavUser === 'function') renderNavUser();
     showToast('Profile updated!', 'success');
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
@@ -263,12 +279,16 @@ window._triggerAvatarUpload = function() {
     if (!file) return;
 
     const overlay = document.querySelector('.avatar-upload-overlay');
-    if (overlay) { overlay.classList.add('uploading'); overlay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+    if (overlay) {
+      overlay.classList.add('uploading');
+      overlay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
 
     try {
-      const fd = new FormData();
+      const fd  = new FormData();
       fd.append('file', file);
       const token = typeof authToken !== 'undefined' ? authToken : null;
+
       const res = await fetch(`${API}/admin/media/upload`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
@@ -277,7 +297,6 @@ window._triggerAvatarUpload = function() {
       if (!res.ok) throw new Error('Upload failed');
       const { url } = await res.json();
 
-      // Save the new avatar URL to profile
       const patchRes = await fetch(`${API}/auth/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -286,19 +305,24 @@ window._triggerAvatarUpload = function() {
       if (!patchRes.ok) throw new Error('Profile update failed');
       const user = await patchRes.json();
 
-      // Update localStorage
       if (typeof currentUser !== 'undefined' && currentUser) {
         currentUser.avatar_url = url;
         localStorage.setItem('baerhub-user', JSON.stringify(currentUser));
       }
 
-      renderHero(user);
-      renderInfoCard(user);
+      // Update avatar input in edit form
+      const ep = document.getElementById('ep-avatar');
+      if (ep) ep.value = url;
+
+      renderProfileSidebar(user);
       if (typeof renderNavUser === 'function') renderNavUser();
       showToast('Profile picture updated!', 'success');
     } catch (e) {
       showToast('Upload failed: ' + e.message, 'error');
-      if (overlay) { overlay.classList.remove('uploading'); overlay.innerHTML = '<i class="fa-solid fa-camera"></i><span>Change</span>'; }
+      if (overlay) {
+        overlay.classList.remove('uploading');
+        overlay.innerHTML = '<i class="fa-solid fa-camera"></i><span>Change</span>';
+      }
     }
   };
 };
@@ -308,14 +332,11 @@ window._triggerAvatarUpload = function() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // auth.js handles initTheme / renderNavUser / _initMobileNav
-
-  // Determine whose profile to show
   const params = new URLSearchParams(location.search);
   _profileUsername = params.get('user') || (typeof currentUser !== 'undefined' && currentUser?.username) || '';
 
   if (!_profileUsername) {
-    document.getElementById('profile-hero').innerHTML = `
+    document.getElementById('profile-identity-card').innerHTML = `
       <div class="feed-empty">
         <i class="fa-solid fa-user"></i>
         <h3>No user specified</h3>
@@ -324,17 +345,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // After auth state is ready
   document.addEventListener('auth:navRendered', () => {
     _isOwnProfile = typeof currentUser !== 'undefined' && currentUser &&
       (currentUser.username === _profileUsername || currentUser.role === 'admin' || currentUser.role === 'root');
 
     loadProfile(_profileUsername);
-    loadProfilePosts(_profileUsername);
+    loadProfilePosts(_profileUsername, true);
+
+    // Infinite scroll (other users only — own profile loads all at once)
+    const sentinel = document.getElementById('profile-feed-sentinel');
+    if (sentinel && 'IntersectionObserver' in window) {
+      new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && _profileNextCursor && !_isOwnProfile) {
+          loadProfilePosts(_profileUsername, false);
+        }
+      }, { rootMargin: '300px' }).observe(sentinel);
+    }
   });
 
-  // Scroll to top
   window.addEventListener('scroll', () => {
+    document.querySelector('.top-nav')?.classList.toggle('scrolled', window.scrollY > 10);
     document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
-  });
+  }, { passive: true });
 });

@@ -56,6 +56,9 @@
       </button>
     </nav>
     <div class="sidebar-bottom">
+      <a href="search.html" class="admin-nav__item">
+        <i class="fa-solid fa-magnifying-glass"></i><span>Search</span>
+      </a>
       <a href="blog.html" class="admin-nav__item">
         <i class="fa-solid fa-arrow-left"></i><span>Back to Blog</span>
       </a>
@@ -118,9 +121,21 @@
           </div>
 
           <div class="settings-section">
-            <label class="settings-label">Cover Image URL</label>
-            <input type="url" id="post-cover-url" class="settings-input" placeholder="https://…">
+            <label class="settings-label">Cover Image</label>
+            <input type="hidden" id="post-cover-url">
+            <div id="cover-upload-area" class="img-upload-area"
+              onclick="_triggerCoverUpload()"
+              ondragover="event.preventDefault();this.classList.add('drag-over')"
+              ondragleave="this.classList.remove('drag-over')"
+              ondrop="_handleCoverDrop(event)">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Click or drag to upload cover</span>
+            </div>
             <div id="cover-preview" class="cover-preview"></div>
+            <button id="cover-remove-btn" class="btn btn-xs cover-remove-btn"
+              onclick="_removeCover()" style="display:none;margin-top:6px;width:100%">
+              <i class="fa-solid fa-xmark"></i> Remove Cover
+            </button>
           </div>
 
           <div class="settings-section">
@@ -131,7 +146,10 @@
           </div>
 
           <div class="settings-section">
-            <label class="settings-label">Tags <span style="color:var(--text-3);font-weight:400">(Enter to add)</span></label>
+            <label class="settings-label">
+              Tags <span style="color:var(--text-3);font-weight:400">(Enter to add)</span>
+              <span class="info-tip" data-tip="Keywords that help readers discover your post. Press Enter or comma after each tag. Relevant tags improve search and related post matching."><i class="fa-solid fa-circle-info"></i></span>
+            </label>
             <div class="tag-chips-input" id="tag-chips-wrap">
               <input type="text" placeholder="Add tag…" autocomplete="off">
             </div>
@@ -139,7 +157,10 @@
           </div>
 
           <div class="settings-section">
-            <label class="settings-label">Meta Description</label>
+            <label class="settings-label">
+              Meta Description
+              <span class="info-tip" data-tip="A short summary shown in search engine results. Keep it under 160 characters for best SEO. Leaving it blank uses the post subtitle."><i class="fa-solid fa-circle-info"></i></span>
+            </label>
             <textarea id="post-meta" class="settings-input" rows="3"
               placeholder="Brief summary for search engines (≤160 chars)"></textarea>
             <div class="char-hint" id="meta-chars">0 / 160</div>
@@ -149,6 +170,7 @@
             <label class="settings-checkbox">
               <input type="checkbox" id="post-featured">
               <span>Mark as Featured</span>
+              <span class="info-tip" data-tip="The featured post appears prominently at the top of the blog homepage. Only one post is featured at a time — this replaces the previous one."><i class="fa-solid fa-circle-info"></i></span>
             </label>
           </div>
 

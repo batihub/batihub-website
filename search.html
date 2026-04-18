@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search — BeeLog</title>
+  <meta name="description" content="Search BeeLog for posts and authors.">
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="blog.css">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+  <script>
+    const _t = localStorage.getItem('baerhub-theme') || 'light';
+    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-container">
+    <a href="blog.html" class="nav-logo">bee<span class="accent">log</span></a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="blog.html">Blog</a>
+      <a href="profile.html">Profile</a>
+      <a href="search.html" class="nav-search-link active" title="Search" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </a>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <div id="nav-user-slot"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="search-main">
+  <div class="search-hero">
+    <h1 class="search-title">Search BeeLog</h1>
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass search-input-icon"></i>
+      <input type="search" id="search-input" class="search-input"
+        placeholder="Search posts, authors, topics…" autocomplete="off" autofocus>
+      <button id="search-clear" class="search-clear" style="display:none" onclick="clearSearch()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="search-tabs" id="search-tabs">
+      <button class="search-tab active" data-type="all">All</button>
+      <button class="search-tab" data-type="posts">Posts</button>
+      <button class="search-tab" data-type="users">Authors</button>
+    </div>
+  </div>
+
+  <div class="search-body">
+    <div id="search-status" class="search-status"></div>
+    <div id="search-results"></div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<footer class="site-footer">
+  &copy; <span id="year"></span> BeeLog
+</footer>
+
+<script src="auth.js"></script>
+<script src="search.js"></script>
+</body>
+</html>

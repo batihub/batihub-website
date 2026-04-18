@@ -192,10 +192,16 @@ async function fetchCategories() {
 }
 
 function filterByCategory(slug, pillEl) {
-  _activeSlug = slug;
-  document.querySelectorAll('.filter-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.slug === slug);
-  });
+  // Clicking the already-active pill deselects it (show all)
+  if (_activeSlug === slug && slug !== '') {
+    _activeSlug = '';
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  } else {
+    _activeSlug = slug;
+    document.querySelectorAll('.filter-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.slug === slug);
+    });
+  }
   fetchFeed(true);
 }
 
@@ -229,11 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('load-more-btn')?.addEventListener('click', () => fetchFeed());
-
-  // "All" filter pill
-  document.querySelector('.filter-pill[data-slug=""]')?.addEventListener('click', function() {
-    filterByCategory('', this);
-  });
 
   // Nav shadow on scroll
   window.addEventListener('scroll', () => {

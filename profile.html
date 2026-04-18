@@ -33,6 +33,7 @@
     <div class="nav-links" id="nav-links">
       <a href="blog.html">Blog</a>
       <a href="profile.html" class="active">Profile</a>
+      <a href="search.html" class="nav-search-link" title="Search" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
       <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
         <i class="fa-solid fa-moon"></i>
       </button>
@@ -41,29 +42,26 @@
   </div>
 </nav>
 
-<!-- ── Profile Hero ───────────────────────────────────────────────────── -->
-<div id="profile-hero" class="profile-hero">
-  <!-- Filled by JS -->
-  <div class="profile-hero__loading">
-    <div class="skeleton" style="width:80px;height:80px;border-radius:50%;margin-bottom:14px"></div>
-    <div class="skeleton" style="width:180px;height:28px;margin-bottom:10px;border-radius:8px"></div>
-    <div class="skeleton" style="width:260px;height:16px;border-radius:6px"></div>
-  </div>
-</div>
-
-<!-- ── Profile Content ────────────────────────────────────────────────── -->
+<!-- ── Profile Layout ─────────────────────────────────────────────────── -->
 <div class="profile-layout">
-  <!-- Info sidebar -->
+
+  <!-- Left column: identity card + edit form -->
   <aside class="profile-sidebar">
-    <div id="profile-info-card" class="profile-info-card sidebar-card">
-      <!-- Filled by JS -->
+    <div class="profile-identity-card sidebar-card" id="profile-identity-card">
+      <div class="pid-loading">
+        <div class="skeleton" style="width:88px;height:88px;border-radius:50%;margin:0 auto 16px"></div>
+        <div class="skeleton" style="width:60%;height:22px;margin:0 auto 10px;border-radius:6px"></div>
+        <div class="skeleton" style="width:40%;height:14px;margin:0 auto;border-radius:6px"></div>
+      </div>
     </div>
+
     <div id="own-profile-actions" style="display:none">
       <button class="btn btn-secondary" style="width:100%" onclick="toggleEditProfile()">
         <i class="fa-solid fa-pen"></i> Edit Profile
       </button>
     </div>
-    <!-- Edit form (hidden by default) -->
+
+    <!-- Edit form -->
     <div id="edit-profile-form" class="sidebar-card edit-profile-form" style="display:none">
       <h3 class="edit-profile-title">Edit Profile</h3>
       <div class="edit-field">
@@ -75,7 +73,7 @@
         <textarea id="ep-bio" class="settings-input" rows="3" placeholder="Tell readers about yourself…"></textarea>
       </div>
       <div class="edit-field">
-        <label>Avatar URL</label>
+        <label>Avatar URL <span style="color:var(--text-3);font-weight:400;font-size:.68rem">(or use camera icon above)</span></label>
         <input type="url" id="ep-avatar" class="settings-input" placeholder="https://…">
       </div>
       <div class="edit-field">
@@ -93,20 +91,22 @@
     </div>
   </aside>
 
-  <!-- Posts column -->
+  <!-- Right column: posts list -->
   <section class="profile-posts">
     <div class="profile-posts__header">
       <h2 class="view-title" id="posts-section-title">Posts</h2>
     </div>
-    <div class="feed" id="profile-feed">
+    <div id="profile-feed" class="profile-post-list">
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
     </div>
+    <div id="profile-feed-sentinel"></div>
     <div id="profile-empty" class="feed-empty" style="display:none">
       <i class="fa-regular fa-file-lines"></i>
       <h3>No posts yet</h3>
     </div>
   </section>
+
 </div>
 
 <button id="scroll-top-btn" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">

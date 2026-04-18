@@ -309,6 +309,68 @@
 [data-theme="dark"] .user-role-badge.admin  { background: var(--accent-light); color: var(--accent-text); }
 [data-theme="dark"] .user-role-badge.author { background: #052e16; color: #86efac; }
 
+/* ── Tooltips ─────────────────────────────────────────────────────────────────── */
+.info-tip {
+  position: relative; display: inline-flex; cursor: help;
+  color: var(--text-3); font-size: .78rem; margin-left: 4px;
+  vertical-align: middle;
+}
+.info-tip::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--text); color: var(--bg);
+  font-size: .72rem; padding: 8px 11px; border-radius: 7px;
+  width: 220px; max-width: 90vw;
+  font-weight: 400; text-align: left; line-height: 1.5;
+  opacity: 0; pointer-events: none; transition: opacity .15s;
+  z-index: 300; white-space: normal;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+.info-tip:hover::after { opacity: 1; }
+
+/* ── Cover remove button ──────────────────────────────────────────────────────── */
+.cover-remove-btn {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--danger); transition: all .15s; display: flex; align-items: center; gap: 6px;
+}
+.cover-remove-btn:hover { background: #fef2f2; border-color: var(--danger); }
+[data-theme="dark"] .cover-remove-btn:hover { background: #450a0a; }
+
+/* ── Tag suggestion ───────────────────────────────────────────────────────────── */
+#tag-suggestion {
+  margin-top: 6px; font-size: .75rem; color: var(--text-3);
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+}
+#tag-suggestion > span { font-size: .72rem; flex-shrink: 0; }
+.tag-suggest-btn {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-2); padding: 2px 9px; border-radius: 20px;
+  font-size: .72rem; cursor: pointer; transition: all .15s;
+}
+.tag-suggest-btn:hover {
+  background: var(--accent-light); color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* ── Dark mode Quill toolbar ──────────────────────────────────────────────────── */
+[data-theme="dark"] .ql-toolbar.ql-snow {
+  filter: none !important;
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+}
+[data-theme="dark"] .ql-toolbar .ql-fill { fill: var(--text-2) !important; }
+[data-theme="dark"] .ql-toolbar .ql-stroke { stroke: var(--text-2) !important; }
+[data-theme="dark"] .ql-toolbar button:hover .ql-fill,
+[data-theme="dark"] .ql-toolbar button.ql-active .ql-fill { fill: var(--accent) !important; }
+[data-theme="dark"] .ql-toolbar button:hover .ql-stroke,
+[data-theme="dark"] .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent) !important; }
+[data-theme="dark"] .ql-picker { color: var(--text-2) !important; }
+[data-theme="dark"] .ql-picker-options {
+  background: var(--surface) !important; border-color: var(--border) !important;
+}
+[data-theme="dark"] .ql-picker-label { color: var(--text-2) !important; }
+
 /* ── Confirm Modal ───────────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 9000;

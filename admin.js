@@ -150,11 +150,14 @@ function newPost() {
           document.getElementById('post-title').value    = d.title || '';
           document.getElementById('post-subtitle').value = d.subtitle || '';
           if (d.body_delta && _quill) _quill.setContents(JSON.parse(d.body_delta));
-          document.getElementById('post-tags').value     = (d.tags || []).join(', ');
+          const _w = document.getElementById('tag-chips-wrap');
+          if (_w?._setTags) _w._setTags(d.tags || []);
           document.getElementById('post-meta').value     = d.meta_description || '';
           if (d.cover_image_url) {
             document.getElementById('post-cover-url').value = d.cover_image_url;
             updateCoverPreview(d.cover_image_url);
+            const area = document.getElementById('cover-upload-area');
+            if (area) area.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Cover set — click to change';
           }
           setAutosaveStatus('restored');
         }
@@ -174,7 +177,14 @@ function resetEditor() {
   document.getElementById('post-meta').value         = '';
   document.getElementById('post-featured').checked   = false;
   document.getElementById('cover-preview').innerHTML = '';
+  const removeBtn = document.getElementById('cover-remove-btn');
+  if (removeBtn) removeBtn.style.display = 'none';
+  _resetCoverArea();
   document.getElementById('save-feedback').textContent = '';
+  document.getElementById('meta-chars').textContent    = '0 / 160';
+  document.getElementById('meta-chars').style.color   = '';
+  const suggest = document.getElementById('tag-suggestion');
+  if (suggest) suggest.remove();
   if (_quill) _quill.setText('');
   setStatus('draft');
   setAutosaveStatus('');
@@ -201,7 +211,14 @@ async function editPost(slug) {
     if (_wrap?._setTags) _wrap._setTags(post.tags?.map(t => t.name) || []);
     document.getElementById('post-meta').value      = post.meta_description || '';
     document.getElementById('post-featured').checked = !!post.featured;
-    if (post.cover_image_url) updateCoverPreview(post.cover_image_url);
+
+    if (post.cover_image_url) {
+      updateCoverPreview(post.cover_image_url);
+      const area = document.getElementById('cover-upload-area');
+      if (area) area.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Cover set — click to change';
+    } else {
+      _resetCoverArea();
+    }
 
     if (_quill) {
       if (post.body_delta) {
@@ -217,6 +234,8 @@ async function editPost(slug) {
       const sel = document.getElementById('post-category');
       if (sel) sel.value = post.category_id;
     }
+    const metaLen = (post.meta_description || '').length;
+    document.getElementById('meta-chars').textContent = `${metaLen} / 160`;
     setAutosaveStatus('loaded');
   } catch (e) {
     showToast('Failed to load post: ' + e.message, 'error');
@@ -303,24 +322,86 @@ function setAutosaveStatus(state) {
 }
 
 function updateCoverPreview(url) {
-  const p = document.getElementById('cover-preview');
-  if (p) p.innerHTML = url
-    ? `<img src="${escapeHtml(url)}" alt="cover preview" onerror="this.parentElement.innerHTML='Invalid URL'">`
+  const p   = document.getElementById('cover-preview');
+  const btn = document.getElementById('cover-remove-btn');
+  if (!p) return;
+  p.innerHTML = url
+    ? `<img src="${escapeHtml(url)}" alt="cover preview" onerror="this.parentElement.innerHTML='<span style=font-size:.8rem;color:var(--danger)>Could not load image</span>'">`
     : '';
+  if (btn) btn.style.display = url ? '' : 'none';
 }
+
+// ── Cover image upload ────────────────────────────────────────────────────────
+
+function _resetCoverArea() {
+  const area = document.getElementById('cover-upload-area');
+  if (area) area.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>Click or drag to upload cover</span>';
+}
+
+window._triggerCoverUpload = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.click();
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    await _uploadCoverFile(file);
+  };
+};
+
+window._handleCoverDrop = function(e) {
+  e.preventDefault();
+  const area = document.getElementById('cover-upload-area');
+  if (area) area.classList.remove('drag-over');
+  const file = e.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) _uploadCoverFile(file);
+};
+
+async function _uploadCoverFile(file) {
+  const area = document.getElementById('cover-upload-area');
+  if (area) area.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+
+  try {
+    const fd  = new FormData();
+    fd.append('file', file);
+    const token = typeof authToken !== 'undefined' ? authToken : null;
+    const res = await fetch(`${API}/admin/media/upload`, {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: fd,
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+
+    document.getElementById('post-cover-url').value = data.url;
+    updateCoverPreview(data.url);
+    if (area) area.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Uploaded — click to change';
+    showToast('Cover image uploaded!', 'success');
+  } catch (e) {
+    _resetCoverArea();
+    showToast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+window._removeCover = function() {
+  document.getElementById('post-cover-url').value = '';
+  updateCoverPreview('');
+  _resetCoverArea();
+};
 
 // ── Autosave to localStorage ──────────────────────────────────────────────────
 
 function startAutosave() {
   clearInterval(_autosave);
   _autosave = setInterval(() => {
-    if (!_quill || _editSlug) return; // Only autosave new (unsaved) posts
+    if (!_quill || _editSlug) return;
     const draft = {
       title:            document.getElementById('post-title')?.value || '',
       subtitle:         document.getElementById('post-subtitle')?.value || '',
       body_delta:       JSON.stringify(_quill.getContents()),
       cover_image_url:  document.getElementById('post-cover-url')?.value || '',
-      tags:             (document.getElementById('post-tags')?.value || '').split(',').map(t=>t.trim()).filter(Boolean),
+      tags:             document.getElementById('tag-chips-wrap')?._getTags?.() || [],
       meta_description: document.getElementById('post-meta')?.value || '',
       saved_at:         new Date().toISOString(),
     };
@@ -485,7 +566,6 @@ function _quillImageHandler() {
     const file = input.files[0];
     if (!file) return;
 
-    // Show uploading indicator
     const range = _quill.getSelection(true);
     _quill.insertText(range.index, '\n[Uploading image…]\n', 'user');
     setAutosaveStatus('saving');
@@ -502,7 +582,6 @@ function _quillImageHandler() {
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
 
-      // Remove placeholder text and insert image
       _quill.deleteText(range.index, '[Uploading image…]\n'.length + 1);
       _quill.insertEmbed(range.index, 'image', data.url, 'user');
       _quill.setSelection(range.index + 1);
@@ -519,8 +598,8 @@ function _quillImageHandler() {
 // ── Tag chip input ────────────────────────────────────────────────────────────
 
 function _initTagChips() {
-  const wrap    = document.getElementById('tag-chips-wrap');
-  const hidden  = document.getElementById('post-tags');
+  const wrap   = document.getElementById('tag-chips-wrap');
+  const hidden = document.getElementById('post-tags');
   if (!wrap || !hidden) return;
 
   let _tags = [];
@@ -553,16 +632,64 @@ function _initTagChips() {
     }
   });
 
-  // Expose for external reads (editPost uses post-tags hidden input directly)
   wrap._getTags = () => _tags;
   wrap._setTags = (arr) => { _tags = arr.filter(Boolean); renderChips(); };
 }
 
+// ── Auto keyword suggestion from title ────────────────────────────────────────
+
+let _suggestTimer = null;
+
+function _debounceSuggestTags() {
+  clearTimeout(_suggestTimer);
+  _suggestTimer = setTimeout(suggestTagsFromTitle, 900);
+}
+
+function suggestTagsFromTitle() {
+  const title = document.getElementById('post-title')?.value || '';
+  if (title.length < 4) return;
+  const wrap = document.getElementById('tag-chips-wrap');
+  if (!wrap?._getTags) return;
+  if (wrap._getTags().length > 0) return;
+
+  const stop = new Set(['a','an','the','and','or','but','in','on','at','to','for','of','with','by','from',
+    'is','are','was','were','be','been','have','has','do','does','how','what','when','where','why',
+    'this','that','these','those','will','can','not','its','your','our','their','i','you','we','my']);
+
+  const words = title.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !stop.has(w));
+
+  const unique = [...new Set(words)].slice(0, 4);
+  if (!unique.length) return;
+
+  let suggest = document.getElementById('tag-suggestion');
+  if (!suggest) {
+    suggest = document.createElement('div');
+    suggest.id = 'tag-suggestion';
+    document.getElementById('tag-chips-wrap').insertAdjacentElement('afterend', suggest);
+  }
+  suggest.innerHTML = '<span>Suggested:</span> ' +
+    unique.map(t => `<button type="button" class="tag-suggest-btn" onclick="addSuggestedTag('${escapeHtml(t)}')">${escapeHtml(t)}</button>`).join('');
+}
+
+window.addSuggestedTag = function(tag) {
+  const wrap = document.getElementById('tag-chips-wrap');
+  if (!wrap?._setTags || !wrap?._getTags) return;
+  const cur = wrap._getTags();
+  if (!cur.includes(tag)) wrap._setTags([...cur, tag]);
+  const suggest = document.getElementById('tag-suggestion');
+  if (suggest) {
+    const btn = [...suggest.querySelectorAll('button')].find(b => b.textContent === tag);
+    if (btn) btn.remove();
+    if (!suggest.querySelectorAll('button').length) suggest.remove();
+  }
+};
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  // auth.js handles initTheme / renderNavUser / _initMobileNav
-
   document.addEventListener('auth:navRendered', e => {
     if (!e.detail?.loggedIn) {
       setTimeout(() => typeof openLoginModal === 'function' && openLoginModal(), 400);
@@ -571,65 +698,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const role = (typeof currentUser !== 'undefined' && currentUser?.role) || '';
 
-    // Show admin-only nav items
     if (role === 'admin' || role === 'root') {
       document.getElementById('admin-divider')?.style && (document.getElementById('admin-divider').style.display = '');
       document.getElementById('users-nav-btn')?.style && (document.getElementById('users-nav-btn').style.display = '');
     }
 
-    // Show admin panel link in dropdown for author role too
-    if (role === 'admin' || role === 'root' || role === 'author') {
-      document.getElementById('admin-link-item')?.style && (document.getElementById('admin-link-item').style.display = '');
+    // Init Quill only once (guard against multiple auth:navRendered fires)
+    if (!_quill) {
+      _quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        placeholder: 'Write your post here…',
+        modules: {
+          toolbar: {
+            container: [
+              [{ header: [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              ['blockquote', 'code-block'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['link', 'image', 'video'],
+              [{ color: [] }, { background: [] }],
+              ['clean'],
+            ],
+            handlers: { image: _quillImageHandler },
+          },
+        },
+      });
+      _quill.on('text-change', () => setAutosaveStatus(''));
+
+      // Tag chip input
+      _initTagChips();
+
+      // Cover drag & drop / upload
+      _resetCoverArea();
+
+      // Meta description char counter
+      document.getElementById('post-meta')?.addEventListener('input', e => {
+        const len  = e.target.value.length;
+        const hint = document.getElementById('meta-chars');
+        if (hint) {
+          hint.textContent = `${len} / 160`;
+          hint.style.color = len > 160 ? 'var(--danger)' : '';
+        }
+      });
+
+      // Status buttons
+      document.querySelectorAll('.status-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          document.querySelectorAll('.status-btn').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+        });
+      });
+
+      // Auto-suggest tags from title
+      document.getElementById('post-title')?.addEventListener('input', _debounceSuggestTags);
+
+      startAutosave();
     }
 
-    // Init Quill with custom image upload handler
-    _quill = new Quill('#quill-editor', {
-      theme: 'snow',
-      placeholder: 'Write your post here…',
-      modules: {
-        toolbar: {
-          container: [
-            [{ header: [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            ['blockquote', 'code-block'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link', 'image', 'video'],
-            [{ color: [] }, { background: [] }],
-            ['clean'],
-          ],
-          handlers: { image: _quillImageHandler },
-        },
-      },
-    });
-    _quill.on('text-change', () => setAutosaveStatus(''));
-
-    // Tag chip input
-    _initTagChips();
-
-    // Cover URL live preview
-    document.getElementById('post-cover-url')?.addEventListener('input', e => {
-      updateCoverPreview(e.target.value.trim());
-    });
-
-    // Meta description char counter
-    document.getElementById('post-meta')?.addEventListener('input', e => {
-      const len = e.target.value.length;
-      const hint = document.getElementById('meta-chars');
-      if (hint) {
-        hint.textContent = `${len} / 160`;
-        hint.style.color = len > 160 ? 'var(--danger)' : '';
-      }
-    });
-
-    // Status buttons
-    document.querySelectorAll('.status-btn').forEach(b => {
-      b.addEventListener('click', () => {
-        document.querySelectorAll('.status-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      });
-    });
-
-    // Post tabs
+    // Post tabs (re-bind safe — each render replaces HTML)
     document.querySelectorAll('#posts-tabs .tab').forEach(t => {
       t.addEventListener('click', () => {
         document.querySelectorAll('#posts-tabs .tab').forEach(x => x.classList.remove('active'));
@@ -640,7 +766,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     populateCategorySelect();
 
-    // URL param: ?edit=slug
     const params = new URLSearchParams(location.search);
     if (params.get('edit')) {
       editPost(params.get('edit'));
@@ -648,7 +773,5 @@ document.addEventListener('DOMContentLoaded', () => {
       loadPosts();
       loadStats();
     }
-
-    startAutosave();
   });
 });

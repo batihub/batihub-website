@@ -159,6 +159,64 @@ async def get_feed(
     return PostFeedOut(posts=out, next_cursor=next_cursor, total=total)
 
 
+# ── Search posts & users ─────────────────────────────────────────────────────
+
+@router.get("/search")
+async def search(
+    q:    str            = Query(..., min_length=1, max_length=200),
+    type: str            = Query("all"),
+    limit: int           = Query(20, ge=1, le=50),
+    session: AsyncSession = Depends(get_session),
+    current_user: Optional[UserSession] = Depends(get_optional_user),
+):
+    from sqlmodel import select as _sel, or_
+    q_clean  = q.strip()
+    pattern  = f"%{q_clean}%"
+    results  = {"query": q_clean, "posts": [], "users": []}
+
+    if type in ("all", "posts"):
+        post_q = (
+            _sel(BlogPost)
+            .where(BlogPost.status == PostStatus.PUBLISHED)
+            .where(or_(
+                BlogPost.title.ilike(pattern),
+                BlogPost.subtitle.ilike(pattern),
+                BlogPost.meta_description.ilike(pattern),
+            ))
+            .order_by(BlogPost.published_at.desc())
+            .limit(limit)
+        )
+        posts_orm = (await session.exec(post_q)).all()
+        uid = current_user.id if current_user else None
+        results["posts"] = [await _build_post_card(p, session, uid) for p in posts_orm]
+
+    if type in ("all", "users"):
+        user_q = (
+            _sel(User)
+            .where(or_(
+                User.username.ilike(pattern),
+                User.display_name.ilike(pattern),
+                User.bio.ilike(pattern),
+            ))
+            .limit(10)
+        )
+        users_orm = (await session.exec(user_q)).all()
+        results["users"] = [
+            {
+                "id":           u.id,
+                "username":     u.username,
+                "display_name": u.display_name or u.username,
+                "avatar_url":   u.avatar_url,
+                "bio":          u.bio,
+                "post_count":   u.post_count,
+                "is_verified":  u.is_verified,
+            }
+            for u in users_orm
+        ]
+
+    return results
+
+
 # ── Single post (by slug) ─────────────────────────────────────────────────────
 
 @router.get("/{slug}", response_model=PostOut)
