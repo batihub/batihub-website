@@ -33,7 +33,7 @@ async def init_db():
     # Import all models so SQLModel.metadata knows about them
     from models.models import (  # noqa: F401
         User, BlogCategory, BlogPost, BlogTag, BlogPostTag,
-        BlogLike, BlogComment, BlogMedia,
+        BlogLike, BlogComment, BlogMedia, BlogPostView,
     )
 
     # Step 1: create new tables in its own transaction

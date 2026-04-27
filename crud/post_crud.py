@@ -347,9 +347,11 @@ async def delete_post(session: AsyncSession, post: BlogPost) -> bool:
 
 # ── View count ────────────────────────────────────────────────────────────────
 
-async def increment_view(session: AsyncSession, post: BlogPost) -> None:
+async def increment_view(session: AsyncSession, post: BlogPost, viewer_id: Optional[int] = None) -> None:
+    from models.models import BlogPostView
     post.view_count += 1
     session.add(post)
+    session.add(BlogPostView(post_id=post.id, viewer_id=viewer_id))
     await session.commit()
 
 

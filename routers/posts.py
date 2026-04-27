@@ -239,8 +239,8 @@ async def get_post(
         if not is_owner and level < ROLE_HIERARCHY[UserRole.ADMIN]:
             raise HTTPException(status_code=404, detail="Post not found")
 
-    bg_tasks.add_task(crud.increment_view, session, post)
     uid = current_user.id if current_user else None
+    bg_tasks.add_task(crud.increment_view, session, post, uid)
     return await _build_post_out(post, session, uid)
 
 

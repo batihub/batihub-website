@@ -52,12 +52,13 @@ function switchView(name, btnEl) {
     const btn = document.querySelector(`[data-view="${name}"]`);
     if (btn) btn.classList.add('active');
   }
-  const titles = { posts:'Posts', editor:'Editor', categories:'Categories', users:'Users' };
+  const titles = { posts:'Posts', editor:'Editor', categories:'Categories', users:'Users', analytics:'Analytics' };
   document.getElementById('nav-page-title').textContent = titles[name] || name;
 
   if (name === 'posts')      { loadPosts(); loadStats(); }
   if (name === 'categories') loadCategories();
   if (name === 'users')      loadUsers();
+  if (name === 'analytics')  loadAnalytics();
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -521,6 +522,119 @@ async function changeRole(userId, role) {
   } catch (e) { showToast('Error: ' + e.message, 'error'); loadUsers(); }
 }
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+async function loadAnalytics() {
+  const list     = document.getElementById('analytics-list');
+  const statsBar = document.getElementById('analytics-stats');
+  list.innerHTML = '<div class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+  statsBar.innerHTML = '';
+
+  try {
+    const posts = await apiReq('/admin/analytics');
+
+    const totalViews  = posts.reduce((s, p) => s + (p.view_count || 0), 0);
+    const totalUnique = posts.reduce((s, p) => s + (p.unique_viewers || 0), 0);
+    const totalAnon   = posts.reduce((s, p) => s + (p.anon_views || 0), 0);
+    statsBar.innerHTML = `
+      <div class="stat-card"><div class="stat-val">${totalViews}</div><div class="stat-lbl">Total Views</div></div>
+      <div class="stat-card"><div class="stat-val">${totalUnique}</div><div class="stat-lbl">Member Views</div></div>
+      <div class="stat-card"><div class="stat-val">${totalAnon}</div><div class="stat-lbl">Anonymous Views</div></div>
+      <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-lbl">Posts Tracked</div></div>`;
+
+    if (!posts.length) {
+      list.innerHTML = '<div class="table-loading">No published posts with views yet.</div>';
+      return;
+    }
+
+    list.innerHTML = posts.map(p => `
+      <div class="post-row">
+        <div style="min-width:0;flex:1">
+          <div class="post-row__title">${escapeHtml(p.title)}</div>
+          <div class="post-row__meta">
+            ${p.author ? escapeHtml(p.author) + ' · ' : ''}
+            ${p.published_at ? fmtDate(p.published_at) : 'Unpublished'}
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;align-items:center;flex-shrink:0;text-align:center">
+          <div>
+            <div style="font-weight:700;font-size:1rem">${p.view_count || 0}</div>
+            <div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em">Total</div>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:var(--accent)">${p.unique_viewers || 0}</div>
+            <div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em">Members</div>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:1rem">${p.anon_views || 0}</div>
+            <div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em">Anon</div>
+          </div>
+        </div>
+        <div class="post-row__actions">
+          ${(p.unique_viewers > 0) ? `
+          <button class="btn btn-ghost btn-xs" onclick="openViewers(${p.id}, ${JSON.stringify(escapeHtml(p.title))})">
+            <i class="fa-solid fa-users"></i> Viewers
+          </button>` : ''}
+          <a class="btn btn-ghost btn-xs" href="post.html?slug=${encodeURIComponent(p.slug)}" target="_blank">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
+      </div>`).join('');
+
+  } catch (e) {
+    list.innerHTML = `<div class="table-loading">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function openViewers(postId, title) {
+  document.getElementById('viewers-title').textContent = title;
+  document.getElementById('viewers-stats').innerHTML   = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  document.getElementById('viewers-list').innerHTML    = '';
+  document.getElementById('viewers-modal').style.display = 'flex';
+
+  try {
+    const data = await apiReq(`/admin/analytics/${postId}/viewers`);
+
+    document.getElementById('viewers-stats').innerHTML = `
+      <span><strong>${data.total_views}</strong> total views</span>
+      <span style="color:var(--border)">|</span>
+      <span><strong style="color:var(--accent)">${data.unique_viewers}</strong> member${data.unique_viewers !== 1 ? 's' : ''}</span>
+      <span style="color:var(--border)">|</span>
+      <span><strong>${data.anon_views}</strong> anonymous</span>`;
+
+    if (!data.viewers.length) {
+      document.getElementById('viewers-list').innerHTML =
+        '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0">No logged-in viewers recorded yet.</div>';
+      return;
+    }
+
+    document.getElementById('viewers-list').innerHTML = data.viewers.map(v => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div class="a-avatar" style="width:36px;height:36px;flex-shrink:0;font-size:.9rem;overflow:hidden">
+          ${v.avatar_url
+            ? `<img src="${escapeHtml(v.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+            : ((v.display_name || v.username || '?')[0]).toUpperCase()}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:.88rem">${escapeHtml(v.display_name || v.username)}</div>
+          <div style="font-size:.75rem;color:var(--text-3)">@${escapeHtml(v.username)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:.85rem;font-weight:700">${v.view_count}&times;</div>
+          <div style="font-size:.72rem;color:var(--text-3)">${fmtDate(v.last_viewed)}</div>
+        </div>
+      </div>`).join('');
+
+  } catch (e) {
+    document.getElementById('viewers-list').innerHTML =
+      `<div style="color:var(--danger);font-size:.85rem">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function closeViewers() {
+  document.getElementById('viewers-modal').style.display = 'none';
+}
+
 // ── Confirm delete ────────────────────────────────────────────────────────────
 
 function confirmDelete(type, id, name) {
@@ -700,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (role === 'admin' || role === 'root') {
       document.getElementById('admin-divider')?.style && (document.getElementById('admin-divider').style.display = '');
-      document.getElementById('users-nav-btn')?.style && (document.getElementById('users-nav-btn').style.display = '');
+      document.getElementById('users-nav-btn')?.style  && (document.getElementById('users-nav-btn').style.display  = '');
     }
 
     // Init Quill only once (guard against multiple auth:navRendered fires)

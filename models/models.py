@@ -191,3 +191,14 @@ class BlogMedia(SQLModel, table=True):
     created_at: datetime      = Field(default_factory=datetime.utcnow)
 
     uploader: Optional[User] = Relationship(back_populates="media")
+
+
+# ── BlogPostView ─────────────────────────────────────────────────────────────────
+
+class BlogPostView(SQLModel, table=True):
+    __tablename__ = "blog_post_view"
+
+    id:         Optional[int] = Field(default=None, primary_key=True)
+    post_id:    int           = Field(foreign_key="blog_post.id", index=True)
+    viewer_id:  Optional[int] = Field(default=None, foreign_key="user.id", index=True)
+    created_at: datetime      = Field(default_factory=datetime.utcnow, index=True)

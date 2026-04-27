@@ -15,7 +15,7 @@ from core.security import get_current_user, ROLE_HIERARCHY, require_admin, requi
 from models.models import (
     User, UserRole,
     BlogPost, BlogPostTag, BlogLike, BlogComment,
-    BlogCategory, BlogTag, BlogMedia,
+    BlogCategory, BlogTag, BlogMedia, BlogPostView,
     PostStatus,
 )
 from schemas.schemas import (
@@ -196,14 +196,135 @@ async def delete_user(
     if user.id == current_user.id:
         raise HTTPException(400, "Cannot delete yourself")
 
-    # Soft-delete posts
+    # Delete all of the user's posts and their related data
     posts = (await session.exec(select(BlogPost).where(BlogPost.author_id == user_id))).all()
     for p in posts:
-        p.status = PostStatus.ARCHIVED
-        session.add(p)
+        for obj in (await session.exec(select(BlogPostTag).where(BlogPostTag.post_id == p.id))).all():
+            await session.delete(obj)
+        for obj in (await session.exec(select(BlogLike).where(BlogLike.post_id == p.id))).all():
+            await session.delete(obj)
+        for obj in (await session.exec(select(BlogComment).where(BlogComment.post_id == p.id))).all():
+            await session.delete(obj)
+        for obj in (await session.exec(select(BlogPostView).where(BlogPostView.post_id == p.id))).all():
+            await session.delete(obj)
+        await session.delete(p)
+
+    # Delete user's likes on other posts (update those posts' like_count)
+    likes = (await session.exec(select(BlogLike).where(BlogLike.user_id == user_id))).all()
+    for like in likes:
+        post = await session.get(BlogPost, like.post_id)
+        if post:
+            post.like_count = max(0, post.like_count - 1)
+            session.add(post)
+        await session.delete(like)
+
+    # Delete user's comments on other posts (update comment_count)
+    comments = (await session.exec(select(BlogComment).where(BlogComment.author_id == user_id))).all()
+    for comment in comments:
+        if not comment.is_deleted:
+            post = await session.get(BlogPost, comment.post_id)
+            if post:
+                post.comment_count = max(0, post.comment_count - 1)
+                session.add(post)
+        await session.delete(comment)
+
+    # Delete user's media and view records
+    for obj in (await session.exec(select(BlogMedia).where(BlogMedia.author_id == user_id))).all():
+        await session.delete(obj)
+    for obj in (await session.exec(select(BlogPostView).where(BlogPostView.viewer_id == user_id))).all():
+        await session.delete(obj)
 
     await session.delete(user)
     await session.commit()
+
+
+# ── Analytics ─────────────────────────────────────────────────────────────────
+
+@router.get("/analytics")
+async def get_analytics(
+    limit: int = 30,
+    session: AsyncSession = Depends(get_session),
+    _: UserSession = Depends(require_admin),
+):
+    from sqlalchemy import text
+    rows = (await session.execute(text("""
+        SELECT
+            bp.id, bp.slug, bp.title, bp.view_count, bp.published_at,
+            u.username AS author,
+            COUNT(DISTINCT bpv.viewer_id) FILTER (WHERE bpv.viewer_id IS NOT NULL) AS unique_viewers,
+            COUNT(bpv.id)               FILTER (WHERE bpv.viewer_id IS NULL)      AS anon_views
+        FROM blog_post bp
+        LEFT JOIN "user"        u   ON bp.author_id = u.id
+        LEFT JOIN blog_post_view bpv ON bp.id        = bpv.post_id
+        WHERE bp.status = 'published'
+        GROUP BY bp.id, u.username
+        ORDER BY bp.view_count DESC
+        LIMIT :limit
+    """), {"limit": limit})).all()
+
+    return [
+        {
+            "id":             r.id,
+            "slug":           r.slug,
+            "title":          r.title,
+            "view_count":     r.view_count,
+            "unique_viewers": r.unique_viewers,
+            "anon_views":     r.anon_views,
+            "author":         r.author or "deleted",
+            "published_at":   r.published_at.isoformat() if r.published_at else None,
+        }
+        for r in rows
+    ]
+
+
+@router.get("/analytics/{post_id}/viewers")
+async def get_post_viewers(
+    post_id: int,
+    limit: int = 100,
+    session: AsyncSession = Depends(get_session),
+    _: UserSession = Depends(require_admin),
+):
+    post = await session.get(BlogPost, post_id)
+    if not post:
+        raise HTTPException(404, "Post not found")
+
+    from sqlalchemy import text
+    viewer_rows = (await session.execute(text("""
+        SELECT
+            u.username, u.display_name, u.avatar_url,
+            COUNT(bpv.id)        AS view_count,
+            MAX(bpv.created_at)  AS last_viewed
+        FROM blog_post_view bpv
+        JOIN "user" u ON bpv.viewer_id = u.id
+        WHERE bpv.post_id = :post_id
+        GROUP BY u.id, u.username, u.display_name, u.avatar_url
+        ORDER BY MAX(bpv.created_at) DESC
+        LIMIT :limit
+    """), {"post_id": post_id, "limit": limit})).all()
+
+    anon_views = (await session.execute(text("""
+        SELECT COUNT(*) FROM blog_post_view
+        WHERE post_id = :post_id AND viewer_id IS NULL
+    """), {"post_id": post_id})).scalar() or 0
+
+    viewers = [
+        {
+            "username":     r.username,
+            "display_name": r.display_name,
+            "avatar_url":   r.avatar_url,
+            "view_count":   r.view_count,
+            "last_viewed":  r.last_viewed.isoformat(),
+        }
+        for r in viewer_rows
+    ]
+
+    return {
+        "post":           {"id": post.id, "title": post.title, "slug": post.slug},
+        "total_views":    post.view_count,
+        "unique_viewers": len(viewers),
+        "anon_views":     anon_views,
+        "viewers":        viewers,
+    }
 
 
 # ── Category management ───────────────────────────────────────────────────────
