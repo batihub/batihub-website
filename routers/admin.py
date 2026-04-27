@@ -196,6 +196,29 @@ async def delete_user(
     if user.id == current_user.id:
         raise HTTPException(400, "Cannot delete yourself")
 
+    # ── Legacy chat/tweet tables (still in DB, FK → user.id) ──────────────────
+    # Use savepoints so a missing/renamed table doesn't abort the transaction.
+    from sqlalchemy import text as _t
+    _legacy = [
+        'DELETE FROM comment       WHERE author_id  = :u',
+        'DELETE FROM comment       WHERE tweet_id IN (SELECT id FROM tweet WHERE author_id = :u)',
+        'DELETE FROM "like"        WHERE user_id    = :u',
+        'DELETE FROM "like"        WHERE tweet_id IN (SELECT id FROM tweet WHERE author_id = :u)',
+        'DELETE FROM tweet         WHERE author_id  = :u',
+        'DELETE FROM message       WHERE sender_id  = :u',
+        'DELETE FROM roomkeybundle WHERE user_id    = :u',
+        'DELETE FROM roommember    WHERE user_id    = :u',
+    ]
+    for i, sql in enumerate(_legacy):
+        await session.execute(_t(f"SAVEPOINT lsp{i}"))
+        try:
+            await session.execute(_t(sql), {"u": user_id})
+            await session.execute(_t(f"RELEASE SAVEPOINT lsp{i}"))
+        except Exception as _e:
+            await session.execute(_t(f"ROLLBACK TO SAVEPOINT lsp{i}"))
+            log.warning(f"Legacy user-delete cleanup skipped ({sql[:50]}): {_e}")
+
+    # ── Blog tables ───────────────────────────────────────────────────────────
     # Delete all of the user's posts and their related data
     posts = (await session.exec(select(BlogPost).where(BlogPost.author_id == user_id))).all()
     for p in posts:
