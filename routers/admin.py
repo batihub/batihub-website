@@ -196,27 +196,38 @@ async def delete_user(
     if user.id == current_user.id:
         raise HTTPException(400, "Cannot delete yourself")
 
-    # ── Legacy chat/tweet tables (still in DB, FK → user.id) ──────────────────
-    # Use savepoints so a missing/renamed table doesn't abort the transaction.
+    # ── Legacy chat/tweet/room tables (still in DB, FK → user.id) ────────────
+    # Use begin_nested() (SQLAlchemy-managed SAVEPOINTs) so a missing table or
+    # column never aborts the outer transaction.
     from sqlalchemy import text as _t
     _legacy = [
+        # tweet children before tweets
         'DELETE FROM comment       WHERE author_id  = :u',
         'DELETE FROM comment       WHERE tweet_id IN (SELECT id FROM tweet WHERE author_id = :u)',
         'DELETE FROM "like"        WHERE user_id    = :u',
         'DELETE FROM "like"        WHERE tweet_id IN (SELECT id FROM tweet WHERE author_id = :u)',
         'DELETE FROM tweet         WHERE author_id  = :u',
+        # direct chat references
         'DELETE FROM message       WHERE sender_id  = :u',
         'DELETE FROM roomkeybundle WHERE user_id    = :u',
         'DELETE FROM roommember    WHERE user_id    = :u',
+        # room children before rooms (creator_id variant)
+        'DELETE FROM message       WHERE room_id IN (SELECT id FROM room WHERE creator_id = :u)',
+        'DELETE FROM roomkeybundle WHERE room_id IN (SELECT id FROM room WHERE creator_id = :u)',
+        'DELETE FROM roommember    WHERE room_id IN (SELECT id FROM room WHERE creator_id = :u)',
+        'DELETE FROM room          WHERE creator_id = :u',
+        # owner_id variant (some schemas use this)
+        'DELETE FROM message       WHERE room_id IN (SELECT id FROM room WHERE owner_id = :u)',
+        'DELETE FROM roomkeybundle WHERE room_id IN (SELECT id FROM room WHERE owner_id = :u)',
+        'DELETE FROM roommember    WHERE room_id IN (SELECT id FROM room WHERE owner_id = :u)',
+        'DELETE FROM room          WHERE owner_id   = :u',
     ]
-    for i, sql in enumerate(_legacy):
-        await session.execute(_t(f"SAVEPOINT lsp{i}"))
+    for sql in _legacy:
         try:
-            await session.execute(_t(sql), {"u": user_id})
-            await session.execute(_t(f"RELEASE SAVEPOINT lsp{i}"))
+            async with session.begin_nested():
+                await session.execute(_t(sql), {"u": user_id})
         except Exception as _e:
-            await session.execute(_t(f"ROLLBACK TO SAVEPOINT lsp{i}"))
-            log.warning(f"Legacy user-delete cleanup skipped ({sql[:50]}): {_e}")
+            log.warning(f"Legacy cleanup skipped ({sql[:55]}): {_e}")
 
     # ── Blog tables ───────────────────────────────────────────────────────────
     # Delete all of the user's posts and their related data
@@ -279,7 +290,7 @@ async def get_analytics(
         FROM blog_post bp
         LEFT JOIN "user"        u   ON bp.author_id = u.id
         LEFT JOIN blog_post_view bpv ON bp.id        = bpv.post_id
-        WHERE bp.status = 'published'
+        WHERE bp.status::text = 'published'
         GROUP BY bp.id, u.username
         ORDER BY bp.view_count DESC
         LIMIT :limit
